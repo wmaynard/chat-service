@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	public class RoomNotFoundException : Exception
 	{

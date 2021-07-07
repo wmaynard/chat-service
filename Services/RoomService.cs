@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using chat_service.Models;
-using chat_service.Settings;
-using chat_service.Utilities;
 using MongoDB.Driver;
+using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Settings;
+using Rumble.Platform.ChatService.Utilities;
 
-namespace chat_service.Services
+namespace Rumble.Platform.ChatService.Services
 {
 	public class RoomService
 	{

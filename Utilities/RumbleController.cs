@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	public class RumbleController : ControllerBase
 	{

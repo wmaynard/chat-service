@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using chat_service.Utilities;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.ChatService.Utilities;
 
-namespace chat_service.Models
+namespace Rumble.Platform.ChatService.Models
 {
 	[BsonIgnoreExtraElements]
 	public class Room

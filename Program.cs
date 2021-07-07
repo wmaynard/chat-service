@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace chat_service
+namespace Rumble.Platform.ChatService
 {
 	public class Program
 	{

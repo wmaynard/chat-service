@@ -1,4 +1,4 @@
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	public static class ErrorCodes
 	{

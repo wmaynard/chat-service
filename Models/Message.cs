@@ -1,7 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace chat_service.Models
+namespace Rumble.Platform.ChatService.Models
 {
 	public class Message
 	{

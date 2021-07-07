@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using chat_service.Services;
-using chat_service.Settings;
-using chat_service.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -15,8 +12,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.ChatService.Settings;
+using Rumble.Platform.ChatService.Utilities;
 
-namespace chat_service
+namespace Rumble.Platform.ChatService
 {
 	public class Startup
 	{

@@ -1,6 +1,6 @@
 using System;
 
-namespace chat_service
+namespace Rumble.Platform.ChatService
 {
 	public class WeatherForecast
 	{

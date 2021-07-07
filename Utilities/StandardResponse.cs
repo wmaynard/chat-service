@@ -1,4 +1,4 @@
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	/// <summary>
 	/// This class is a wrapper for all JSON responses.

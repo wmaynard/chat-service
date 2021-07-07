@@ -1,4 +1,4 @@
-namespace chat_service.Settings
+namespace Rumble.Platform.ChatService.Settings
 {
 	public class ChatDBSettings : IChatDBSettings
 	{

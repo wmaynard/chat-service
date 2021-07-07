@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using chat_service.Models;
-using chat_service.Services;
-using chat_service.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.ChatService.Utilities;
 
-namespace chat_service.Controllers
+namespace Rumble.Platform.ChatService.Controllers
 {
 	[ApiController, Route(template: "room"), Produces(contentType: "application/json")]
 	public class RoomController : RumbleController

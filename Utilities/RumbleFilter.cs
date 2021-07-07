@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	/// <summary>
 	/// This class is designed to catch Exceptions that the API throws.  Our API should not be dumping stack traces

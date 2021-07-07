@@ -1,4 +1,4 @@
-namespace chat_service.Utilities
+namespace Rumble.Platform.ChatService.Utilities
 {
 	/// <summary>
 	/// This class is used whenever an API call encounters an error.  Its purpose is to limit the amount of information
