@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using chat_service.Services;
 using chat_service.Settings;
+using chat_service.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -39,7 +40,7 @@ namespace chat_service
 			
 			services.AddControllers(config =>
 			{
-				// TODO: Add a filter here to create uniform response format
+				config.Filters.Add(new RumbleFilter());
 			}).AddNewtonsoftJson();
 		}
 

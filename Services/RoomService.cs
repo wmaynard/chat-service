@@ -17,8 +17,13 @@ namespace chat_service.Services
 		}
 
 		// basic CRUD operations
-		public List<Room> List() => _collection.Find(filter: r => true).ToList();
+		public List<Room> List()
+		{
+			var foo = _collection.Find(filter: r => true);
+			return _collection.Find(filter: r => true).ToList();
+		}
 		public Room Get(string id) => _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
 		public void Create(Room room) => _collection.InsertOne(document: room);
 		public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);
 		public void Remove(Room room) => _collection.DeleteOne(filter: r => r.Id == room.Id);

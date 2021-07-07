@@ -1,15 +1,50 @@
+using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace chat_service.Models
 {
+	[BsonIgnoreExtraElements]
 	public class Room
 	{
+		public const string TYPE_GLOBAL = "global";
+		public const string TYPE_DIRECT_MESSAGE = "dm";
+		public const string TYPE_GUILD = "guild";
+		public const string TYPE_UNKNOWN = "unknown";
+		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
+		[BsonElement("capacity")]
+		public int Capacity { get; set; }
+		[BsonElement("guildId")]
+		public string GuildId { get; set; }
+		[BsonElement("language")]
+		public string Language { get; set; }
+		[BsonElement("messages")]
+		public Message[] Messages { get; set; }
+		[BsonElement("memberIds")]
+		public HashSet<string> MemberIds { get; set; }
 
-		[BsonElement("someProperty")]
-		public string SomeProperty { get; set; }
+		public Room ()
+		{
+			MemberIds = new HashSet<string>();
+		}
+
+		[BsonElement("type")]
+		public string Type { get; set; }
+
+		private static string ValidateType(string s)
+		{
+			switch (s)
+			{
+				case TYPE_GLOBAL:
+				case TYPE_DIRECT_MESSAGE:
+				case TYPE_GUILD:
+					return s;
+				default:
+					return TYPE_UNKNOWN;
+			}
+		}
 	}
 }
 
@@ -18,11 +53,12 @@ namespace chat_service.Models
 ROOM:
 {
 	_id: deadbeefdeadbeefdeadbeef
-	language: en-US
-	type: global | dm | guild
-	guildId: deadbeefdeadbeefdeadbeef
 	capacity: 50
+	guildId: deadbeefdeadbeefdeadbeef
+	language: en-US
 	messages: []
+	memberIds: []
+	type: global | dm | guild
 }
 
 MESSAGE:
