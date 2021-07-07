@@ -5,5 +5,6 @@ namespace chat_service.Utilities
 		public const string AUTHENTICATION = "authentication";
 		public const string BAD_JSON = "invalid json";
 		public const string UNKNOWN = "unknown";
+		public const string ROOM_NOT_FOUND = "invalid room";
 	}
 }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using chat_service.Utilities;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -23,10 +25,11 @@ namespace chat_service.Models
 		[BsonElement("messages")]
 		public Message[] Messages { get; set; }
 		[BsonElement("memberIds")]
-		public HashSet<string> MemberIds { get; set; }
+		public HashSet<string> MemberIds { get; private set; }
 
 		public Room ()
 		{
+			Messages = Array.Empty<Message>();
 			MemberIds = new HashSet<string>();
 		}
 
@@ -45,6 +48,25 @@ namespace chat_service.Models
 					return TYPE_UNKNOWN;
 			}
 		}
+
+		public bool AddMember(string accountId)
+		{
+			if (MemberIds.Contains(accountId))
+				throw new AlreadyInRoomException();
+			if (MemberIds.Count >= Capacity)
+				throw new RoomFullException();
+			return MemberIds.Add(accountId);
+		}
+
+		public bool RemoveMember(string accountId)
+		{
+			if (!MemberIds.Remove(accountId))
+				throw new NotInRoomException();
+			return true;
+		}
+
+		[BsonIgnore]
+		public bool IsFull => MemberIds.Count >= Capacity;
 	}
 }
 

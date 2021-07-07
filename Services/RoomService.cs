@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using chat_service.Models;
 using chat_service.Settings;
+using chat_service.Utilities;
 using MongoDB.Driver;
 
 namespace chat_service.Services
@@ -22,7 +24,14 @@ namespace chat_service.Services
 			var foo = _collection.Find(filter: r => true);
 			return _collection.Find(filter: r => true).ToList();
 		}
-		public Room Get(string id) => _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+
+		public Room Get(string id)
+		{
+			Room output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+			if (output == null)
+				throw new RoomNotFoundException();
+			return output;
+		}
 		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
 		public void Create(Room room) => _collection.InsertOne(document: room);
 		public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);

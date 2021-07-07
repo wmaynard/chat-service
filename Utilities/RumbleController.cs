@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace chat_service.Utilities
 {
@@ -13,12 +14,20 @@ namespace chat_service.Utilities
 			throw new Exception(message, innerException: exception);
 		}
 
-		public override OkObjectResult Ok(object value)
+		public ObjectResult Problem(string detail) => Problem(value: new { DebugText = detail });
+
+		public OkObjectResult Problem(object value)
 		{
-			return base.Ok(Merge(new {Success = true}, value));
+			return base.Ok(Merge(new { Success = false }, value));
 		}
 
-		private object Merge(object foo, object bar)
+		public new OkObjectResult Ok() => Ok(null);
+		public override OkObjectResult Ok(object value)
+		{
+			return base.Ok(Merge(new { Success = true }, value));
+		}
+
+		private static object Merge(object foo, object bar)
 		{
 			if (foo == null || bar == null)
 				return foo ?? bar ?? new ExpandoObject();
@@ -26,16 +35,10 @@ namespace chat_service.Utilities
 			ExpandoObject expando = new ExpandoObject();
 			IDictionary<string, object> result = (IDictionary<string, object>)expando;
 			foreach (PropertyInfo fi in foo.GetType().GetProperties())
-				result[fi.Name] = fi.GetValue(foo, null);
+				result[JsonNamingPolicy.CamelCase.ConvertName(fi.Name)] = fi.GetValue(foo, null);
 			foreach (PropertyInfo fi in bar.GetType().GetProperties())
-				result[fi.Name] = fi.GetValue(bar, null);
+				result[JsonNamingPolicy.CamelCase.ConvertName(fi.Name)] = fi.GetValue(bar, null);
 			return result;
-		}
-
-		private string Uncapitalize(string s)
-		{
-			// TODO: Figure out why OK responses are capitalized
-			return null;
 		}
 	}
 }

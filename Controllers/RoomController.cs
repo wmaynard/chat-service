@@ -20,17 +20,53 @@ namespace chat_service.Controllers
 		
 
 		[HttpPost, Route(template: "create")]
-		public void Create([FromBody] JObject body)
+		public ActionResult<Room> Create([FromBody] JObject body)
 		{
 			Room r = body.ToObject<Room>();
 			_roomService.Create(r);
+			return Ok(r);
 		}
 
 		[HttpPost, Route(template: "join")]
-		public void Join([FromBody] JObject body)
+		public ActionResult<Room> Join([FromBody] JObject body)
 		{
 			string roomId = body["roomId"].ToString();
 			string aid = body["aid"].ToString();
+
+			try
+			{
+				Room r = _roomService.Get(roomId);
+				r.AddMember(aid);
+				_roomService.Update(r);
+				return Ok(r);
+			}
+			catch (RoomFullException ex)
+			{
+				return Problem(ex.Message);
+			}
+			catch (AlreadyInRoomException ex)
+			{
+				return Problem(ex.Message);
+			}
+		}
+
+		[HttpPost, Route(template: "leave")]
+		public ActionResult<Room> Leave([FromBody] JObject body)
+		{
+			string roomId = body["roomId"].ToString();
+			string aid = body["aid"].ToString();
+
+			try
+			{
+				Room r = _roomService.Get(roomId);
+				r.RemoveMember(aid);
+				_roomService.Update(r);
+				return Ok();
+			}
+			catch (NotInRoomException ex)
+			{
+				return Problem(ex.Message);
+			}
 		}
 
 		[HttpPost, Route(template: "global/join")]
@@ -47,12 +83,13 @@ namespace chat_service.Controllers
 				if (output.MemberIds.Add(aid))
 					_roomService.Update(output);
 			}
-			catch (Exception ex)
+			catch (InvalidOperationException)
 			{
 				output = new Room()
 				{
-					Language = language, 
-					Capacity = 50	// TODO: Remove Magic Number
+					Capacity = 50,	// TODO: Remove Magic Number
+					Language = language,
+					Type = Room.TYPE_GLOBAL
 				};
 				output.MemberIds.Add(aid);
 				_roomService.Create(output);
@@ -60,13 +97,13 @@ namespace chat_service.Controllers
 
 			return Ok(output);
 		}
-
 		[HttpPost, Route(template: "nuke")]
-		public void NukeRooms()
+		public ActionResult NukeRooms()
 		{
 			List<Room> rooms = _roomService.List();
 			foreach (Room r in rooms)
 				_roomService.Remove(r);
+			return Ok(new { RoomsDestroyed = rooms.Count });
 		}
 	}
 }

@@ -45,6 +45,11 @@ namespace chat_service.Utilities
 					errorCode: ErrorCodes.AUTHENTICATION,
 					debugText: message
 				));
+			else if (ex is RoomNotFoundException)
+				context.Result = new BadRequestObjectResult(new ErrorResponse(
+					errorCode: ErrorCodes.ROOM_NOT_FOUND,
+					debugText: message
+				));
 			else									// Everything else
 			{
 				context.Result = new BadRequestObjectResult(new ErrorResponse(
