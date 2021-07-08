@@ -1,17 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
 	[ApiController, Route(template: "room"), Produces(contentType: "application/json")]
 	public class RoomController : RumbleController
 	{
+		// TODO: /global/switch
+		// TODO: Destroy empty global rooms
+		// TODO: JWTs
+		// TODO: Squelch bad player (blacklist, delete all posts)
+		
 		private readonly RoomService _roomService;
 		public RoomController(RoomService service) => _roomService = service;
 
@@ -28,15 +35,16 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "join")]
-		public ActionResult<Room> Join([FromBody] JObject body)
+		public ActionResult<Room> Join([FromHeader] string bearer, [FromBody] JObject body)
 		{
 			string roomId = body["roomId"].ToString();
 			string aid = body["aid"].ToString();
+			PlayerInfo author = PlayerInfo.FromJToken(body["author"]);
 
 			try
 			{
 				Room r = _roomService.Get(roomId);
-				r.AddMember(aid);
+				r.AddMember(author);
 				_roomService.Update(r);
 				return Ok(r);
 			}
@@ -72,27 +80,32 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "global/join")]
 		public ActionResult<Room> JoinGlobal([FromBody] JObject body)
 		{
-			string aid = body["aid"].ToString();	// TODO: Get from JWT
-			string language = body["language"].ToString();
+			string aid = ExtractRequiredValue("aid", body).ToString();
+			string language = ExtractRequiredValue("language", body).ToString();
 			List<Room> globals = _roomService.GetGlobals(language);
+			PlayerInfo author = PlayerInfo.FromJToken(body["author"]);
 
 			Room output;
 			try
 			{
-				output = globals.First(r => r.MemberIds.Count < r.Capacity);
-				if (output.MemberIds.Add(aid))
+				output = globals.First(r => !r.IsFull);
+				if (output.AddMember(author))
 					_roomService.Update(output);
 			}
-			catch (InvalidOperationException)
+			catch (InvalidOperationException)	// All rooms with the same language are full.
 			{
 				output = new Room()
 				{
-					Capacity = 50,	// TODO: Remove Magic Number
+					Capacity = 50, // TODO: Remove Magic Number
 					Language = language,
 					Type = Room.TYPE_GLOBAL
 				};
-				output.MemberIds.Add(aid);
+				output.AddMember(author);
 				_roomService.Create(output);
+			}
+			catch (AlreadyInRoomException ex)
+			{
+				throw new BadHttpRequestException(ex.Message);
 			}
 
 			return Ok(output);

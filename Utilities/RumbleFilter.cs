@@ -1,7 +1,9 @@
 using System;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
@@ -47,7 +49,12 @@ namespace Rumble.Platform.ChatService.Utilities
 				));
 			else if (ex is RoomNotFoundException)
 				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ErrorCodes.ROOM_NOT_FOUND,
+					errorCode: ChatErrorCodes.ROOM_NOT_FOUND,
+					debugText: message
+				));
+			else if (ex is BadHttpRequestException)
+				context.Result = new BadRequestObjectResult(new ErrorResponse(
+					errorCode: ErrorCodes.BAD_JSON,
 					debugText: message
 				));
 			else									// Everything else

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Utilities;
@@ -13,83 +14,62 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_DIRECT_MESSAGE = "dm";
 		public const string TYPE_GUILD = "guild";
 		public const string TYPE_UNKNOWN = "unknown";
+
+		public const int MESSAGE_CAPACITY = 200;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
 		[BsonElement("capacity")]
 		public int Capacity { get; set; }
+		[BsonElement("created")]
+		public long CreatedTimestamp { get; set; }
 		[BsonElement("guildId")]
 		public string GuildId { get; set; }
 		[BsonElement("language")]
 		public string Language { get; set; }
 		[BsonElement("messages")]
-		public Message[] Messages { get; set; }
-		[BsonElement("memberIds")]
-		public HashSet<string> MemberIds { get; private set; }
+		public List<Message> Messages { get; set; }
+		[BsonElement("members")]
+		public HashSet<PlayerInfo> Members { get; set; }
 
 		public Room ()
 		{
-			Messages = Array.Empty<Message>();
-			MemberIds = new HashSet<string>();
+			CreatedTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			Messages = new List<Message>();
+			Members = new HashSet<PlayerInfo>();
 		}
 
 		[BsonElement("type")]
 		public string Type { get; set; }
 
-		private static string ValidateType(string s)
+		public bool AddMember(PlayerInfo playerInfo)
 		{
-			switch (s)
-			{
-				case TYPE_GLOBAL:
-				case TYPE_DIRECT_MESSAGE:
-				case TYPE_GUILD:
-					return s;
-				default:
-					return TYPE_UNKNOWN;
-			}
-		}
-
-		public bool AddMember(string accountId)
-		{
-			if (MemberIds.Contains(accountId))
+			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
 				throw new AlreadyInRoomException();
-			if (MemberIds.Count >= Capacity)
+			if (Members.Count >= Capacity)
 				throw new RoomFullException();
-			return MemberIds.Add(accountId);
+			return Members.Add(playerInfo);
 		}
 
-		public bool RemoveMember(string accountId)
+		public IEnumerable<Message> AddMessage(Message msg, long lastReadTimestamp)
 		{
-			if (!MemberIds.Remove(accountId))
+			if (!Members.Any(m => m.AccountId == msg.AccountId))
 				throw new NotInRoomException();
-			return true;
+			Messages.Add(msg);
+			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
+			if (Messages.Count > MESSAGE_CAPACITY)
+				Messages.RemoveRange(0, MESSAGE_CAPACITY - Messages.Count);
+			return Messages.Where(m => m.Timestamp > lastReadTimestamp);
+		}
+
+		public void RemoveMember(string accountId)
+		{
+			if (!Members.Any(m => m.AccountId == accountId))
+				throw new NotInRoomException();
+			Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
 		}
 
 		[BsonIgnore]
-		public bool IsFull => MemberIds.Count >= Capacity;
+		public bool IsFull => Members.Count >= Capacity;
 	}
 }
-
-/*
-
-ROOM:
-{
-	_id: deadbeefdeadbeefdeadbeef
-	capacity: 50
-	guildId: deadbeefdeadbeefdeadbeef
-	language: en-US
-	messages: []
-	memberIds: []
-	type: global | dm | guild
-}
-
-MESSAGE:
-{
-	_id: deadbeefdeadbeefdeadbeef
-	aid: deadbeefdeadbeefdeadbeef
-	isSticky: true | false
-	text: Hello, World!
-	timestamp: 1622074219
-	type: activity | chat | announcement
-	formatting: none | urgent | server
-*/
