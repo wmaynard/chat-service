@@ -1,8 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using Platform.CSharp.Common.Web;
+using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
@@ -18,23 +26,49 @@ namespace Rumble.Platform.ChatService.Controllers
 		// TODO: Sticky (probably should be limited to certain roles; should stickies be a different array?)
 		// TODO: /message/read roomIds
 		private readonly RoomService _roomService;
-		public MessageController(RoomService service) => _roomService = service;
+		private readonly IConfiguration _config;
+		// public MessageController(RoomService service) => _roomService = service;
+		// public MessageController(IConfiguration config) => _config = config;
+		public MessageController(RoomService service, IConfiguration config)
+		{
+			_config = config;
+			_roomService = service;
+		}
 
+		/// <summary>
+		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
+		/// </summary>
+		/// <param name="bearer">The Authorization header from a request.  Tokens are provided by player-service.</param>
+		/// <param name="body">The JSON body.  Expected body example:
+		///	{
+		///		"roomId": "badfoodbadfoodbadfoodbad",
+		///		"lastRead": 1625704809,
+		///		"message": {
+		///			"aid": "deadbeefdeadbeefdeadbeef",
+		///			"isSticky": false,
+		///			"text": "Hello, World!"
+		///		}
+		///	}
+		/// </param>
+		/// <returns>Unread JSON messages from the room, as specified by "lastRead".</returns>
+		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
+		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "send")]
-		public ActionResult<Room> Send([FromHeader(Name = "token")] string bearer, [FromBody] JObject body)
+		public ActionResult<Room> Send([FromHeader(Name = "Authorization")] string bearer, [FromBody] JObject body)
 		{
 			try
 			{
+				TokenInfo ti = ValidateToken(_config["player-service-verify"], bearer);
 				long lastRead = ExtractOptionalValue("lastRead", body)?.ToObject<long>() ?? 0;
 				string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 				Message msg = Message.FromJToken(body["message"]).Validate();
-
-				// TODO: Make sure bearer aid == msg.userInfo.aid
+				if (msg.AccountId != ti.AccountId)
+					throw new InvalidTokenException("Token ID does not match message author ID.");
 
 				Room room = _roomService.Get(roomId);
 				IEnumerable<Message> unreads = room.AddMessage(msg, lastRead);
 				_roomService.Update(room);
-				return Ok(new { UnreadMessages = unreads });
+				return Ok(new {UnreadMessages = unreads});
 			}
 			catch (ArgumentException ex)
 			{
@@ -44,9 +78,19 @@ namespace Rumble.Platform.ChatService.Controllers
 			{
 				throw new BadHttpRequestException(ex.Message);
 			}
-			return Ok();
+			catch (UnauthorizedAccessException ex)
+			{
+				throw new BadHttpRequestException(ex.Message);
+			}
+			return Problem();
 		}
 		
+		/// <summary>
+		/// Verifies that a message conforms to a standard format.  The text and author's account ID must not be null.
+		/// </summary>
+		/// <param name="msg">The message to validate.</param>
+		/// <returns>The message itself is returned so this can be used in a chained assignment.</returns>
+		/// <exception cref="BadHttpRequestException">Thrown whenever a message is invalid.</exception>
 		private static Message Validate(Message msg)
 		{
 			if (msg.Text == null)

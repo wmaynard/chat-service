@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
+using Platform.CSharp.Common.Web;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
@@ -42,7 +43,7 @@ namespace Rumble.Platform.ChatService.Utilities
 					errorCode: ErrorCodes.BAD_JSON,
 					debugText: message
 				));
-			else if (ex is AuthException)			// Thrown when token is invalid
+			else if (ex is InvalidTokenException)			// Thrown when token is invalid
 				context.Result = new BadRequestObjectResult(new ErrorResponse(
 					errorCode: ErrorCodes.AUTHENTICATION,
 					debugText: message
