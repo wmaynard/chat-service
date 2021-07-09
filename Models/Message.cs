@@ -66,30 +66,4 @@ namespace Rumble.Platform.ChatService.Models
 			return this;
 		}
 	}
-
-	public class PlayerInfo
-	{
-		public const string KEY_ACCOUNT_ID = "aid";
-		public const string KEY_AVATAR = "avatar";
-		public const string KEY_SCREENNAME = "sn";
-		
-		[BsonElement(KEY_ACCOUNT_ID)]
-		public string AccountId { get; set; }
-		
-		[BsonElement(KEY_AVATAR)]
-		public string Avatar { get; set; }
-		
-		[BsonElement(KEY_SCREENNAME)]
-		public string ScreenName { get; set; }
-
-		public static PlayerInfo FromJToken(JToken input)
-		{
-			return new PlayerInfo()
-			{
-				AccountId = input[KEY_ACCOUNT_ID]?.ToObject<string>(),
-				Avatar = input[KEY_AVATAR]?.ToObject<string>(),
-				ScreenName = input[KEY_SCREENNAME]?.ToObject<string>()
-			};
-		}
-	}
 }

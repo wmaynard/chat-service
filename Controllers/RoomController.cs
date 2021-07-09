@@ -18,6 +18,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		// TODO: Destroy empty global rooms
 		// TODO: JWTs
 		// TODO: Squelch bad player (blacklist, delete all posts)
+		// TODO: RoomUpdate Model (for fetching unread messages for players)
 		
 		private readonly RoomService _roomService;
 		public RoomController(RoomService service) => _roomService = service;
@@ -34,12 +35,21 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(r);
 		}
 
+		[HttpPost, Route(template: "getUsersRooms")]
+		public ActionResult<List<Room>> GetRoomsForUser([FromBody] JObject body)
+		{
+			string aid = ExtractRequiredValue("aid", body).ToObject<string>();
+			List<Room> rooms = _roomService.GetRoomsForUser(aid);
+			
+			return rooms;
+		}
+
 		[HttpPost, Route(template: "join")]
 		public ActionResult<Room> Join([FromHeader] string bearer, [FromBody] JObject body)
 		{
 			string roomId = body["roomId"].ToString();
-			string aid = body["aid"].ToString();
-			PlayerInfo author = PlayerInfo.FromJToken(body["author"]);
+			// string aid = body["aid"].ToString();
+			PlayerInfo author = PlayerInfo.FromJToken(body["playerInfo"]);
 
 			try
 			{

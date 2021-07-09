@@ -10,6 +10,15 @@ namespace Rumble.Platform.ChatService.Models
 	[BsonIgnoreExtraElements]
 	public class Room
 	{
+		public const string KEY_ID = "id";
+		public const string KEY_CAPACITY = "capacity";
+		public const string KEY_CREATED_TIMESTAMP = "created";
+		public const string KEY_GUILD_ID = "guildId";
+		public const string KEY_LANGUAGE = "language";
+		public const string KEY_MESSAGES = "messages";
+		public const string KEY_MEMBERS = "members";
+		public const string KEY_TYPE = "type";
+	
 		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
 		public const string TYPE_GUILD = "guild";
@@ -19,17 +28,17 @@ namespace Rumble.Platform.ChatService.Models
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
-		[BsonElement("capacity")]
+		[BsonElement(KEY_CAPACITY)]
 		public int Capacity { get; set; }
-		[BsonElement("created")]
+		[BsonElement(KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
-		[BsonElement("guildId")]
+		[BsonElement(KEY_GUILD_ID)]
 		public string GuildId { get; set; }
-		[BsonElement("language")]
+		[BsonElement(KEY_LANGUAGE)]
 		public string Language { get; set; }
-		[BsonElement("messages")]
+		[BsonElement(KEY_MESSAGES)]
 		public List<Message> Messages { get; set; }
-		[BsonElement("members")]
+		[BsonElement(KEY_MEMBERS)]
 		public HashSet<PlayerInfo> Members { get; set; }
 
 		public Room ()
@@ -39,7 +48,7 @@ namespace Rumble.Platform.ChatService.Models
 			Members = new HashSet<PlayerInfo>();
 		}
 
-		[BsonElement("type")]
+		[BsonElement(KEY_TYPE)]
 		public string Type { get; set; }
 
 		public bool AddMember(PlayerInfo playerInfo)

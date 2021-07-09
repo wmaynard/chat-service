@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
@@ -33,6 +35,17 @@ namespace Rumble.Platform.ChatService.Services
 			return output;
 		}
 		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
+
+		public List<Room> GetRoomsForUser(string aid)
+		{
+			// CLI equivalents:
+			// db.rooms.find({members: {$elemMatch: {aid: "deadbeefdeadbeefdeadbeef"} } })
+			// db.rooms.find({"members.aid": "deadbeefdeadbeefdeadbeef"})
+			FilterDefinition<Room> filter = Builders<Room>.Filter.Eq("members.aid", aid);
+			List<Room> output = _collection.Find(filter).ToList();
+
+			return output;
+		}
 		public void Create(Room room) => _collection.InsertOne(document: room);
 		public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);
 		public void Remove(Room room) => _collection.DeleteOne(filter: r => r.Id == room.Id);
