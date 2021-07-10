@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Chat Sandbox</title>
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		body {
+			position: relative;
+			display: contents;
+			height: 100%;
+			width: 100%;
+		}
+		body div.userInput,
+		body div.roomList,
+		body div.chatArea,
+		body div.header {
+			position: absolute;
+		}
+		body div.header {
+			width: 70%;
+			height: 10%;
+			background-color: rgba(0, 0, 0, .1);
+		}
+		body div.chatArea {
+			width: 70%;
+			height: 60%;
+			top: 10%;
+			background-color: rgba(255, 255, 0, .1);
+		}
+		body div.userInput {
+			background-color: rgba(0, 255, 255, .1);
+			width: calc(70% - 6em);
+			height: 30%;
+			bottom: 0;
+			padding: 0 3em;
+			display: grid;
+		}
+		body div.roomList {
+			background-color: rgba(255, 0, 255, .1);
+			width: 30%;
+			height: 100%;
+			right: 0;
+		}
+		div.message {
+			position: relative;
+		}
+		div.message div.avatar {
+			/*position: absolute;*/
+			/*left: 0;*/
+			/*bottom: 0;*/
+			width: 50px;
+			height: 50px;
+			background-color: rgba(255, 0, 0, .1);
+			word-break: break-word;
+		}
+		div.message div.text {
+			/*position: absolute;*/
+			/*left: 50px;*/
+			/*bottom: 0;*/
+		}
+	</style>
+	<script>
+		var elementCount = 0;
+		function get(url, data, token, handler) {
+			request(url, data, false, token, handler);
+		}
+		function post(url, data, token, handler, handler) {
+			request(url, data, true, token);
+		}
+		function request(url, data, isPost, token, handler) {
+			var xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				if (handler)
+					handler(JSON.parse(this.responseText));
+			};
+
+
+			xhr.open(isPost ? "POST" : "GET", url, true);
+			xhr.setRequestHeader("Content-Type", "application/json");
+			if (token)
+				xhr.setRequestHeader("Authorization", token);
+			
+			// xhr.send(JSON.stringify(data));
+			xhr.send(data);
+		}
+		function elem(id) {
+			return document.getElementById(id);
+		}
+		function make(tag, parentId) {
+			var ele = document.createElement(tag);
+			ele.id = "element_" + (++elementCount);
+			if (parentId) {
+				var parent = elem(parentId);
+				parent.appendChild(ele);
+			}
+			return ele;
+		}
+		function sendMessage() {
+			var sn = elem("username").value;
+			var msg = elem("messageText").value;
+			var token = elem("token").value;
+			if (!token.startsWith("Bearer "))
+				token = "Bearer " + token;
+			localStorage.setItem("sn", sn);
+			localStorage.setItem("t", token);
+			
+			
+			
+			console.log("Sending message:", sn, msg, token);
+		}
+		function createRoom(room) {
+			var btn = make("button", "roomList");
+			btn.innerText = "Room: " + room.id;
+			btn.onclick = function() {
+				changeRoom(room);
+			};
+		}
+		function changeRoom(room) {
+			elem("roomName").innerText = room.id;
+			elem("chatArea").innerHTML = "";
+			
+			function getAuthor(aid) {
+				var output = null;
+				room.members.forEach(function (m) {
+					if (m.accountId == aid)
+						output = { sn: m.screenName, avatar: m.avatar };
+				});
+				return output;
+			}
+			
+			room.messages.forEach(function(m) {
+				var div = make("div", "chatArea");
+				var avatar = make("div", div.id);
+				var textDiv = make("div", div.id);
+				var span = make("span", textDiv.id);
+				
+				var author = getAuthor(m.accountId);
+				
+				div.className = "message";
+				avatar.className = "avatar";
+				textDiv.className = "text";
+				
+				span.innerText = author.sn + " : " + m.text;
+				avatar.innerText = author.avatar;
+				lastRead = Math.max(lastRead, m.timestamp);
+			});
+		}
+		function getUnreads() {
+			var body = {
+				lastRead: lastRead
+			};
+			get("/messages/unread", body, getToken(), function(data) {
+				console.log(data);
+			});
+		}
+		function getToken() {
+			return elem("token").innerText;
+		}
+		var lastRead = 0;
+		window.onload = function() {
+			get("/room/list", null, null, function(data) {
+				data.forEach(function(room) {
+					createRoom(room);
+				});
+				
+			});
+			var un = localStorage.getItem("sn");
+			var token = localStorage.getItem("t");
+			
+			if (un)
+				elem("username").value = un;
+			if (token)
+				elem("token").value = token;
+			elem("messageText").focus();
+			window.setInterval(function(){
+				console.log("update");
+			}, 5000);
+		};
+		
+		// TODO: Update chat client on interval
+	</script>
+</head>
+<body>
+	<div class="header">
+		<h1>Chat Demo</h1>
+		<h3>Viewing Room: <span id="roomName"></span></h3>
+	</div>
+	<div id="chatArea" class="chatArea"></div>
+	<div id="roomList" class="roomList"></div>
+	<div class="userInput">
+		<input id="username" placeholder="Your Screenname">
+		<textarea id="token" placeholder="A valid token from /player/launch (e.g. 'ey6bad.........')"></textarea>
+		<input id="messageText" placeholder="Say something!">
+		<button id="send" onclick="sendMessage(this)">Send Message</button>
+	</div>
+</body>
+</html>

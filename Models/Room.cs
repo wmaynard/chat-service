@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using RestSharp.Validation;
 using Rumble.Platform.ChatService.Utilities;
 
 namespace Rumble.Platform.ChatService.Models
@@ -25,6 +27,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_UNKNOWN = "unknown";
 
 		public const int MESSAGE_CAPACITY = 200;
+		public const int GLOBAL_PLAYER_CAPACITY = 50;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
@@ -32,7 +35,7 @@ namespace Rumble.Platform.ChatService.Models
 		public int Capacity { get; set; }
 		[BsonElement(KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
-		[BsonElement(KEY_GUILD_ID)]
+		[BsonElement(KEY_GUILD_ID), BsonIgnoreIfNull]
 		public string GuildId { get; set; }
 		[BsonElement(KEY_LANGUAGE)]
 		public string Language { get; set; }
@@ -51,34 +54,97 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(KEY_TYPE)]
 		public string Type { get; set; }
 
-		public bool AddMember(PlayerInfo playerInfo)
+		/// <summary>
+		/// Adds an account ID to the Room.  If the player already exists in the room, an AlreadyInRoomException is
+		/// thrown.  If the Room is at capacity, a RoomFullException is thrown.
+		/// </summary>
+		/// <param name="playerInfo">A PlayerInfo object, parsed from a JToken.</param>
+		/// <exception cref="AlreadyInRoomException">Indicates the account ID is already in the Room.</exception>
+		/// <exception cref="RoomFullException">Indicates the Room is already full, or became full as the account was joining.</exception>
+		public void AddMember(PlayerInfo playerInfo)
 		{
 			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
 				throw new AlreadyInRoomException();
 			if (Members.Count >= Capacity)
 				throw new RoomFullException();
-			return Members.Add(playerInfo);
+			Members.Add(playerInfo);
 		}
 
-		public IEnumerable<Message> AddMessage(Message msg, long lastReadTimestamp)
+		/// <summary>
+		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
+		/// is thrown.
+		/// </summary>
+		/// <param name="msg">The Message to add.</param>
+		public void AddMessage(Message msg)
 		{
-			if (!Members.Any(m => m.AccountId == msg.AccountId))
-				throw new NotInRoomException();
+			RequireMember(msg.AccountId);
 			Messages.Add(msg);
+			
 			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
 			if (Messages.Count > MESSAGE_CAPACITY)
-				Messages.RemoveRange(0, MESSAGE_CAPACITY - Messages.Count);
-			return Messages.Where(m => m.Timestamp > lastReadTimestamp);
+				Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
+		}
+		/// <summary>
+		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
+		/// is thrown.
+		/// </summary>
+		/// <param name="msg">The Message to add.</param>
+		/// <param name="lastReadTimestamp">The timestamp from the last read message of the client.</param>
+		/// <returns>An IEnumerable of Messages.  Deprecated with the use of RoomUpdate.</returns>
+		public IEnumerable<Message> AddMessage(Message msg, long lastReadTimestamp)
+		{
+			AddMessage(msg);
+			return MessagesSince(lastReadTimestamp);
 		}
 
+		/// <summary>
+		/// Removes an account ID from the Room.  If the account is not a Member, a NotInRoomException is thrown.
+		/// </summary>
+		/// <param name="accountId">The account ID to remove.</param>
 		public void RemoveMember(string accountId)
 		{
-			if (!Members.Any(m => m.AccountId == accountId))
-				throw new NotInRoomException();
+			RequireMember(accountId);
 			Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
+		}
+
+		/// <summary>
+		/// Wrapper for a LINQ query to look for an accountID in the Room.
+		/// </summary>
+		/// <param name="accountId">The account ID to look for.</param>
+		/// <returns>True if the account is found, otherwise false.</returns>
+		public bool HasMember(string accountId)
+		{
+			return Members.Any(m => m.AccountId == accountId);
+		}
+
+		/// <summary>
+		/// Checks to make sure an account exists as a Member.  If the account ID isn't found, a NotInRoomException
+		/// is thrown.
+		/// </summary>
+		/// <param name="accountId">The account ID to look for.</param>
+		/// <exception cref="NotInRoomException">Indicates that the account does not exist in the given room.</exception>
+		private void RequireMember(string accountId)
+		{
+			if (!HasMember(accountId))
+				throw new NotInRoomException();
+		}
+
+		/// <summary>
+		/// Retrieve all Messages that occur after a provided timestamp.  Used in generating RoomUpdates.
+		/// </summary>
+		/// <param name="timestamp">A Unix timestamp.</param>
+		/// <returns>An IEnumerable of all Messages after the timestamp.</returns>
+		public IEnumerable<Message> MessagesSince(long timestamp)
+		{
+			return Messages.Where(m => m.Timestamp > timestamp);
 		}
 
 		[BsonIgnore]
 		public bool IsFull => Members.Count >= Capacity;
+
+		public object ToResponseObject()
+		{
+			return new {Room = this};
+		}
 	}
 }

@@ -17,14 +17,16 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_ANNOUNCEMENT = "announcement";
 		public const string TYPE_UNKNOWN = "unknown";
 
+		public const string KEY_ID = "id";
 		public const string KEY_IS_STICKY = "isSticky";
 		public const string KEY_TEXT = "text";
 		public const string KEY_TIMESTAMP = "timestamp";
 		public const string KEY_TYPE = "type";
 		public const string KEY_AID = "aid";
-
+		
+		[BsonElement(KEY_ID)]
 		public string Id { get; set; }
-		[BsonElement(KEY_IS_STICKY)]
+		[BsonElement(KEY_IS_STICKY), BsonIgnoreIfNull]
 		public bool IsSticky { get; set; }
 		[BsonElement(KEY_TEXT)]
 		public string Text { get; set; }
@@ -42,7 +44,13 @@ namespace Rumble.Platform.ChatService.Models
 			IsSticky = false;
 		}
 
-		internal static Message FromJToken(JToken input)
+		/// <summary>
+		/// Parses a JToken coming from a request to instantiate a new Message.
+		/// </summary>
+		/// <param name="input">The JToken corresponding to a message object.</param>
+		/// <param name="accountId">The account ID for the author.  This should always come from the Rumble.Controller.TokenInfo object.</param>
+		/// <returns>A new Message object.</returns>
+		internal static Message FromJToken(JToken input, string accountId)
 		{
 			return new Message()
 			{
@@ -51,7 +59,7 @@ namespace Rumble.Platform.ChatService.Models
 				Text = input[KEY_TEXT]?.ToObject<string>(),
 				Timestamp = input[KEY_TIMESTAMP]?.ToObject<long>() ?? DateTimeOffset.Now.ToUnixTimeSeconds(),
 				Type = input[KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
-				AccountId = input[KEY_AID]?.ToObject<string>()
+				AccountId = accountId
 			};
 		}
 

@@ -18,11 +18,11 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(KEY_SCREENNAME)]
 		public string ScreenName { get; set; }
 
-		public static PlayerInfo FromJToken(JToken input)
+		public static PlayerInfo FromJToken(JToken input, string accountId)
 		{
 			return new PlayerInfo()
 			{
-				AccountId = input[KEY_ACCOUNT_ID]?.ToObject<string>(),
+				AccountId = accountId,
 				Avatar = input[KEY_AVATAR]?.ToObject<string>(),
 				ScreenName = input[KEY_SCREENNAME]?.ToObject<string>()
 			};
