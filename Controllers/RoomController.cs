@@ -46,7 +46,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <param name="body">The JSON body.  'playerInfo', 'roomId', and 'language' are required fields.
 		/// Expected body example:
 		///	{
-		///		"language": "en-US",
 		///		"playerInfo": {
 		///			"avatar": "demon_axe_thrower",
 		///			"sn": "Corky Douglas"
@@ -67,7 +66,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				Room r = _roomService.Get(roomId);
 				r.AddMember(player);
 				_roomService.Update(r);
-				return Ok(r);
+				return Ok(new {Room = r});
 			}
 			catch (RoomFullException ex)
 			{
@@ -86,10 +85,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <param name="body">The JSON body.  'playerInfo' and 'roomId' are required fields.
 		/// Expected body example:
 		///	{
-		///		"playerInfo": {
-		///			"avatar": "demon_axe_thrower",
-		///			"sn": "Corky Douglas"
-		///		},
 		///		"roomId": "deadbeefdeadbeefdeadbeef"
 		///	}
 		/// </param>
