@@ -1,9 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using platform_CSharp_library.Web;
 using Platform.CSharp.Common.Web;
+using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
@@ -15,17 +20,19 @@ namespace Rumble.Platform.ChatService.Utilities
 	/// </summary>
 	public class RumbleFilter : IActionFilter
 	{
-		public void OnActionExecuting(ActionExecutingContext context)
-		{
-		}
+		public RumbleFilter(){}
+		
+		public void OnActionExecuting(ActionExecutingContext context){}
 
 		/// <summary>
 		/// This triggers after an action executes, but before any uncaught Exceptions are dealt with.  Here we can
 		/// make sure we prevent stack traces from going out and return a BadRequestResult instead (for example).
+		/// Dumping too much information out to bad requests is unnecessary risk for bad actors.
 		/// </summary>
 		/// <param name="context"></param>
 		public void OnActionExecuted(ActionExecutedContext context)
 		{
+			
 			// {
 			// 	"success": false,
 			// 	"errorCode": "authentication",
@@ -34,37 +41,27 @@ namespace Rumble.Platform.ChatService.Utilities
 			if (context.Exception == null)
 				return;
 
-			context.ExceptionHandled = true;
-			string message = context.Exception.Message;
 			Exception ex = context.Exception?.InnerException ?? context.Exception;
-			
-			if (ex is JsonSerializationException)	// Thrown when our model can't read a POST body
-				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ErrorCodes.BAD_JSON,
-					debugText: message
-				));
-			else if (ex is InvalidTokenException)			// Thrown when token is invalid
-				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ErrorCodes.AUTHENTICATION,
-					debugText: message
-				));
-			else if (ex is RoomNotFoundException)
-				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ChatErrorCodes.ROOM_NOT_FOUND,
-					debugText: message
-				));
-			else if (ex is BadHttpRequestException)
-				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ErrorCodes.BAD_JSON,
-					debugText: message
-				));
-			else									// Everything else
+
+			string code = ex switch
 			{
-				context.Result = new BadRequestObjectResult(new ErrorResponse(
-					errorCode: ErrorCodes.UNKNOWN,
-					debugText: "Unhandled exception"
-				));
-			}
+				JsonSerializationException => "Invalid JSON.",
+				ArgumentNullException => ex.Message,
+				RumbleException => ex.Message,
+				BadHttpRequestException => ex.Message,
+				_ => $"Unhandled or unexpected exception. ({ex.GetType().Name})" // TODO: Log these as warnings
+			};
+			string debug = ex switch
+			{
+				RumbleException exception => exception.Detail,
+				_ => "(No information provided)"
+			};
+
+			context.Result = new BadRequestObjectResult(new ErrorResponse(
+				errorCode: code,
+				debugText: debug
+			));
+			context.ExceptionHandled = true;
 		}
 	}
 }

@@ -1,13 +1,12 @@
 using System;
 using System.Runtime.Serialization;
+using platform_CSharp_library.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
-	public class RoomNotFoundException : Exception
+	public class RoomNotFoundException : RumbleException
 	{
-		public RoomNotFoundException() : this("Room not found."){}
-		public RoomNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context){}
-		public RoomNotFoundException(string message) : base(message){}
-		public RoomNotFoundException(string message, Exception inner) : base(message, inner) {}
+		public RoomNotFoundException() : base("Room not found."){}
+		public RoomNotFoundException(string roomId) : base($"Room {roomId} not found."){}
 	}
 }

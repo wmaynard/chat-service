@@ -32,13 +32,10 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.AddSwaggerGen(c =>
-			{
-				c.SwaggerDoc("v1", new OpenApiInfo {Title = "chat_service", Version = "v1"});
-			});
 			services.Configure<ChatDBSettings>(Configuration.GetSection(key: nameof(ChatDBSettings)));
 			services.AddSingleton<IChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
 			services.AddSingleton<RoomService>();
+			services.AddSingleton<MessageService>();
 			
 			services.AddControllers(config =>
 			{

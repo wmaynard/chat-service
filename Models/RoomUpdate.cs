@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -9,32 +10,49 @@ namespace Rumble.Platform.ChatService.Models
 	/// </summary>
 	public class RoomUpdate
 	{
-		public const string KEY_UNREAD_MESSAGES = "unreadMessages";
+		private const string KEY_UNREAD_MESSAGES = "unreadMessages";
 		
-		[BsonElement(Room.KEY_ID)]
-		public string Id { get; set; }
-		[BsonElement(KEY_UNREAD_MESSAGES)]
-		public IEnumerable<Message> UnreadMessages { get; set; }
-		[BsonElement(Room.KEY_MEMBERS)]
-		public IEnumerable<PlayerInfo> Members { get; set; }
+		[JsonProperty, BsonElement(Room.KEY_ID)]
+		private string Id { get; set; }
+		[JsonProperty, BsonElement(KEY_UNREAD_MESSAGES)]
+		private Message[] UnreadMessages { get; set; }
+		[JsonProperty, BsonElement(Room.KEY_MEMBERS)]
+		private IEnumerable<PlayerInfo> Members { get; set; }
 
-		public static RoomUpdate FromRoom(Room room, long lastRead = 0)
+		/// <summary>
+		/// Creates a RoomUpdate from a given room and timestamp.
+		/// </summary>
+		/// <param name="room">The room to retrieve unread messages from.</param>
+		/// <param name="lastRead">The timestamp from the last read message.</param>
+		/// <returns>A new RoomUpdate object.</returns>
+		private static RoomUpdate FromRoom(Room room, long lastRead = 0)
 		{
 			return new RoomUpdate()
 			{
 				Id = room.Id,
-				UnreadMessages = room.MessagesSince(lastRead),
+				UnreadMessages = room.MessagesSince(lastRead).ToArray(),
 				Members = room.Members
 			};
 		}
-
+		/// <summary>
+		/// Standardizes the RoomUpdates for JSON output by returning a new Object with property RoomUpdates.
+		/// </summary>
+		/// <param name="room">The Room to retrieve updates from.</param>
+		/// <param name="lastRead">The timestamp from the last read message.</param>
+		/// <returns>A new Object with a RoomUpdates property.</returns>
 		public static object GenerateResponseFrom(Room room, long lastRead)
 		{
 			return new
 			{
-				RoomUpdates = new RoomUpdate[] {FromRoom(room, lastRead)}
+				RoomUpdates = new RoomUpdate[] { FromRoom(room, lastRead) }
 			};
 		}
+		/// <summary>
+		/// Standardizes the RoomUpdates for JSON output by returning a new Object with property RoomUpdates.
+		/// </summary>
+		/// <param name="rooms">The Rooms to retrieve updates from.</param>
+		/// <param name="lastRead">The timestamp from the last read message.</param>
+		/// <returns>A new Object with a RoomUpdates property.</returns>
 		public static object GenerateResponseFrom(IEnumerable<Room> rooms, long lastRead)
 		{
 			return new

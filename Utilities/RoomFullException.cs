@@ -1,13 +1,12 @@
 using System;
 using System.Runtime.Serialization;
+using platform_CSharp_library.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
-	public class RoomFullException : Exception
+	public class RoomFullException : RumbleException
 	{
-		public RoomFullException() : this("Room is at capacity."){}
-		public RoomFullException(SerializationInfo info, StreamingContext context) : base(info, context){}
-		public RoomFullException(string message) : base(message){}
-		public RoomFullException(string message, Exception inner) : base(message, inner) {}
+		public RoomFullException() : base("Room is at capacity."){}
+		public RoomFullException(string roomId) : base($"Room {roomId} is at capacity."){}
 	}
 }

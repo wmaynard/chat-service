@@ -1,13 +1,13 @@
 using System;
 using System.Runtime.Serialization;
+using platform_CSharp_library.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
-	public class AlreadyInRoomException : Exception
+	public class AlreadyInRoomException : RumbleException
 	{
-		public AlreadyInRoomException() : this("Already in room."){}
-		public AlreadyInRoomException(SerializationInfo info, StreamingContext context) : base(info, context){}
-		public AlreadyInRoomException(string message) : base(message){}
-		public AlreadyInRoomException(string message, Exception inner) : base(message, inner) {}
+		public AlreadyInRoomException() : base("Already in room."){}
+		public AlreadyInRoomException(string userId, string roomId) 
+			: base($"User {userId} is already in room {roomId}."){}
 	}
 }
