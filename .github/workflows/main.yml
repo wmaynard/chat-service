@@ -18,7 +18,9 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: |
+        nuget sources add -name github -Source https://nuget.pkg.github.com/cdre/index.json -StorePasswordInClearText -Username ericsheris-rumble -Password ${{secrets.RUMBLE_NUGET_PAT}}
+        dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
     - name: Upload a Build Artifact
