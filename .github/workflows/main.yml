@@ -18,10 +18,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+        source-url: https://nuget.pkg.github.com/cdre/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.RUMBLE_NUGET_PAT}}
     - name: Restore dependencies
-      run: |
-        nuget sources add -name github -Source https://nuget.pkg.github.com/cdre/index.json -StorePasswordInClearText -Username ericsheris-rumble -Password ${{secrets.RUMBLE_NUGET_PAT}}
-        dotnet restore
+      run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
     - name: Upload a Build Artifact
