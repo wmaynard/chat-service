@@ -104,6 +104,8 @@
 			request(url, data, true, token, handler);
 		}
 		function request(url, data, isPost, token, handler) {
+			if (data != null && !data.lastRead)
+				data.lastRead = 0;	// dirty kluge to fix the newly required "lastRead" field on all requests.
 			var xhr = new XMLHttpRequest();
 			xhr.onload = function() {
 				if (handler)
