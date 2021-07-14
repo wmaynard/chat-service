@@ -15,7 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\platform-csharp-library\platform-csharp-library.csproj" />
+	  <ProjectReference Include="..\platform-csharp-common\platform-csharp-common.csproj" />
 	</ItemGroup>
 
 </Project>
