@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Driver;
 using Newtonsoft.Json.Linq;
 using Platform.CSharp.Common.Web;
 using Rumble.Platform.ChatService.Models;
@@ -119,49 +120,67 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: PATH_JOIN_GLOBAL)]
 		public ActionResult<Room> JoinGlobal([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
-			string language = ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
-			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), token.AccountId);
-			
-			// If this is specified, the user is switching global rooms.
-			string roomId = ExtractOptionalValue(POST_KEY_ROOM_ID, body)?.ToObject<string>();
-
-			List<Room> globals = _roomService.GetGlobals(language);
-			Room joined;
-
 			try
 			{
-				joined = roomId != null 
-					? globals.First(g => g.Id == roomId)
-					: globals.First(g => !g.IsFull);
-				
-				// Remove the player from every global room they're not in.  This is useful if they're switching rooms
-				// and to clean up rooms without proper calls to /rooms/leave.  TODO: Clean out orphaned users
-				foreach (Room r in globals.Where(g => g.HasMember(player.AccountId) && g.Id != joined.Id))
+				TokenInfo token = ValidateToken(auth);
+				string language = ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
+				PlayerInfo player =
+					PlayerInfo.FromJToken(ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), token.AccountId);
+
+				// If this is specified, the user is switching global rooms.
+				string roomId = ExtractOptionalValue(POST_KEY_ROOM_ID, body)?.ToObject<string>();
+
+				List<Room> globals = _roomService.GetGlobals(language);
+				Room joined;
+
+				try
 				{
-					r.RemoveMember(player.AccountId);
-					_roomService.Update(r);
-					
+					joined = roomId != null
+						? globals.First(g => g.Id == roomId)
+						: globals.First(g => !g.IsFull);
+
+					// Remove the player from every global room they're not in.  This is useful if they're switching rooms
+					// and to clean up rooms without proper calls to /rooms/leave.  TODO: Clean out orphaned users
+					foreach (Room r in globals.Where(g => g.HasMember(player.AccountId) && g.Id != joined.Id))
+					{
+						r.RemoveMember(player.AccountId);
+						_roomService.Update(r);
+
+					}
+
+					joined.AddMember(player);
+					_roomService.Update(joined);
 				}
-				joined.AddMember(player);
-				_roomService.Update(joined);
-			}
-			catch (InvalidOperationException)	// All rooms with the same language are full
-			{
-				if (roomId != null)
-					throw new BadHttpRequestException("That room does not exist or does not match your language setting.");
-				joined = new Room()
+				catch (InvalidOperationException) // All rooms with the same language are full
 				{
-					Capacity = Room.GLOBAL_PLAYER_CAPACITY,
-					Language = language,
-					Type = Room.TYPE_GLOBAL
-				};
-				joined.AddMember(player);
-				_roomService.Create(joined);
+					if (roomId != null)
+						throw new BadHttpRequestException(
+							"That room does not exist or does not match your language setting.");
+					joined = new Room()
+					{
+						Capacity = Room.GLOBAL_PLAYER_CAPACITY,
+						Language = language,
+						Type = Room.TYPE_GLOBAL
+					};
+					joined.AddMember(player);
+					_roomService.Create(joined);
+				}
+				
+				object updates = GetAllUpdates(token, body);
+				return Ok(Merge(updates, joined.ToResponseObject()));
+			}
+			catch (Exception me)
+			{
+				string error = "";
+				do
+				{
+					error += me.Message + "\n";
+				} while ((me = me.InnerException) != null);
+
+				return Problem(new {Error = error, Exception = me});
 			}
 
-			object updates = GetAllUpdates(token, body);
-			return Ok(Merge(updates, joined.ToResponseObject()));
+			return Problem();
 		}
 		
 		[HttpGet, Route(template: "list")]
