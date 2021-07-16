@@ -67,7 +67,6 @@ namespace Rumble.Platform.ChatService
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
 			services.AddSingleton<BanDBSettings>(provider => provider.GetRequiredService<IOptions<BanDBSettings>>().Value);
 			services.AddSingleton<RoomService>();
-			services.AddSingleton<MessageService>();
 			services.AddSingleton<BanHammerService>();
 			
 			services.AddControllers(config =>
