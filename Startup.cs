@@ -44,31 +44,30 @@ namespace Rumble.Platform.ChatService
 			// run the service from Terminal with the command "dotnet {path}/chat-service.dll".  This will circumnavigate
 			// Rider's restrictions as well.
 			string mongoConnection = Environment.GetEnvironmentVariable("MONGODB_URI");
+			Log.Write($"mongoConnection: '{mongoConnection}'");
 			if (mongoConnection == null)
 				throw new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");
 #endif
+			Log.Write("Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
 				settings.CollectionName = "rooms";
 				settings.ConnectionString = mongoConnection;
 			});
-			services.Configure<BanDBSettings>(settings =>
-			{
-				settings.CollectionName = "restrictions";
-				settings.ConnectionString = mongoConnection;
-			});
+			Log.Write("Initializing ReportDBSettings");
 			services.Configure<ReportDBSettings>(settings =>
 			{
 				settings.CollectionName = "restrictions";
 				settings.ConnectionString = mongoConnection;
 			});
 
-			
+			Log.Write("Creating Settings Providers");
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
-			services.AddSingleton<BanDBSettings>(provider => provider.GetRequiredService<IOptions<BanDBSettings>>().Value);
-			services.AddSingleton<RoomService>();
-			services.AddSingleton<BanHammerService>();
 			
+			Log.Write("Creating Service Singletons");
+			services.AddSingleton<RoomService>();
+			
+			Log.Write("Adding Controllers");
 			services.AddControllers(config =>
 			{
 				config.Filters.Add(new RumbleFilter());
@@ -78,6 +77,7 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
+			Log.Write("Starting file server");
 			app.UseFileServer(new FileServerOptions()
 			{
 				FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "StaticFiles")),

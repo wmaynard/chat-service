@@ -164,11 +164,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(Merge(updates, joined.ToResponseObject()));
 		}
 		
-#region Debug Only Functions
-#if DEBUG
 		[HttpGet, Route(template: "list")]
 		public ActionResult<List<Room>> Get() => _roomService.List();
 		
+#region Debug Only Functions
+// TODO: These MUST be removed before going live
 		[HttpPost, Route(template: "create")]
 		public ActionResult<Room> Create([FromBody] JObject body)
 		{
@@ -202,7 +202,6 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok();
 		}
-#endif
 #endregion Debug Only Functions
 	}
 }

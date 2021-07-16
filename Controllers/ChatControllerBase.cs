@@ -15,6 +15,10 @@ namespace Rumble.Platform.ChatService.Controllers
 		
 		protected override string TokenAuthEndpoint => _config["player-service-verify"];
 
+		public ChatControllerBase(IConfiguration config)
+		{
+			_config = config;
+		}
 		public ChatControllerBase(RoomService service, IConfiguration config)
 		{
 			_config = config;

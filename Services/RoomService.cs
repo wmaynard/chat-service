@@ -16,11 +16,13 @@ namespace Rumble.Platform.ChatService.Services
 	{
 		private readonly IMongoCollection<Room> _collection;
 
-		public RoomService(IChatDBSettings settings)
+		public RoomService(ChatDBSettings settings)
 		{
+			Log.Write("Creating RoomService...");
 			MongoClient client = new MongoClient(settings.ConnectionString);
 			IMongoDatabase db = client.GetDatabase(settings.DatabaseName);
 			_collection = db.GetCollection<Room>(settings.CollectionName);
+			Log.Write("Done.");
 		}
 
 		// basic CRUD operations
