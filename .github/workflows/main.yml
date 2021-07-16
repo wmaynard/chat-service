@@ -1,4 +1,4 @@
-name: .NET
+name: Chat-Service - Build and Deploy
 
 on:
   workflow_dispatch:
