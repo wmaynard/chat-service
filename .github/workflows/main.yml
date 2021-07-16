@@ -42,10 +42,10 @@ jobs:
         aws s3 cp chat-service.zip s3://rumble-tower-eng-builds/chat-service/chatservice.zip
     - name: Create EB application
       run: |
-        aws elasticbeanstalk create-application-version --region us-east-1 --application-name chat-service --version-label ${GITHUB_REF##*/} --source-bundle S3Bucket=rumble-tower-eng-builds,S3Key=chat-service/chatservice.zip
+        aws elasticbeanstalk create-application-version --region us-east-1 --application-name chat-service --version-label ${{ github.sha }} --source-bundle S3Bucket=rumble-tower-eng-builds,S3Key=chat-service/chatservice.zip
     - name: Update EB environment
       run: |
-        aws elasticbeanstalk update-environment --region us-east-1 --application-name chat-service --environment-name ChatService-Dev --version-label ${GITHUB_REF##*/}
+        aws elasticbeanstalk update-environment --region us-east-1 --application-name chat-service --environment-name ChatService-Dev --version-label ${{ github.sha }}
 
 # Configure AWS Creds (main account)
     - name: Configure AWS credentials
@@ -65,6 +65,6 @@ jobs:
         ECR_REPOSITORY: chat-service
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/} .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}-latest .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}-latest
