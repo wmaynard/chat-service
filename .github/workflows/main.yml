@@ -25,14 +25,46 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.4
-      with:
-        # Artifact name
-        name: chat-service
-        # A file, directory or wildcard pattern that describes what to upload
-        path: bin/Release/net5.0/**/*
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: error
 
-    
+    - name: Create source
+      run: |
+        zip -r chat-service bin/Release/net5.0/
+
+# Confugre AWS Creds (towereng for dev deploy)
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_GHACTIONS_TOWER_ACCESS }}
+        aws-secret-access-key: ${{ secrets.AWS_GHACTIONS_TOWER_SECRET }}
+        aws-region: us-east-1
+    - name: Copy files to s3 bucket
+      run: |
+        aws s3 cp chat-service.zip s3://rumble-tower-eng-builds/chat-service/chatservice.zip
+    - name: Create EB application
+      run: |
+        aws elasticbeanstalk create-application-version --region us-east-1 --application-name chat-service --version-label ${GITHUB_REF##*/} --source-bundle S3Bucket=rumble-tower-eng-builds,S3Key=chat-service/chat-service.zip
+    - name: Update EB environment
+      run: |
+        aws elasticbeanstalk update-environment --region us-east-1 --application-name chat-service --environment-name ChatService-Dev --version-label ${GITHUB_REF##*/}
+
+# # Confugre AWS Creds (main account)
+#     - name: Configure AWS credentials
+#       uses: aws-actions/configure-aws-credentials@v1
+#       with:
+#         aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY }}
+#         aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_KEY }}
+#         aws-region: us-east-1
+# # Login to Elastic Container Repository
+#     - name: Login to Amazon ECR
+#       id: login-ecr
+#       uses: aws-actions/amazon-ecr-login@v1
+# # Build and push image
+#     - name: Build, tag, and push image to Amazon ECR
+#       env:
+#         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#         ECR_REPOSITORY: chat-service
+#         IMAGE_TAG: ${{ github.sha }}
+#       run: |
+#         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/} .
+#         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#         docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}
