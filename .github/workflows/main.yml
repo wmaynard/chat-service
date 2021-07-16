@@ -28,7 +28,9 @@ jobs:
 
     - name: Create source
       run: |
-        zip -r chat-service bin/Release/net5.0/
+        pushd bin/Release/net5.0/
+        zip -r $GITHUB_WORKSPACE/chat-service.zip .
+        popd
 
 # Configure AWS Creds (towereng for dev deploy)
     - name: Configure AWS credentials
