@@ -1,6 +1,6 @@
 namespace Rumble.Platform.ChatService.Settings
 {
-	public class ChatDBSettings : IMongoDBSettings
+	public class ReportDBSettings : IMongoDBSettings
 	{
 		public string CollectionName { get; set; }
 		public string ConnectionString { get; set; }

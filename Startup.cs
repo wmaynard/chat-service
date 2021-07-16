@@ -32,10 +32,43 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.Configure<ChatDBSettings>(Configuration.GetSection(key: nameof(ChatDBSettings)));
-			services.AddSingleton<IChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
+#if DEBUG
+			string mongoConnection = "mongodb://localhost:27017";
+#endif
+#if RELEASE
+			// Important note: at the time of this comment, it seems that the only possible way to get Rider to use
+			// environment variables is to add those into launchSettings.json as opposed to regular env vars.  These
+			// vars show up under the configurations, but are only read-only.
+			// Rather than risk accidentally committing sensitive information into the repo, we'll use conditional
+			// compilation as a workaround.  If you need to test the configuration against your local environment variables,
+			// run the service from Terminal with the command "dotnet {path}/chat-service.dll".  This will circumnavigate
+			// Rider's restrictions as well.
+			string mongoConnection = Environment.GetEnvironmentVariable("MONGODB_URI");
+			if (mongoConnection == null)
+				throw new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");
+#endif
+			services.Configure<ChatDBSettings>(settings =>
+			{
+				settings.CollectionName = "rooms";
+				settings.ConnectionString = mongoConnection;
+			});
+			services.Configure<BanDBSettings>(settings =>
+			{
+				settings.CollectionName = "restrictions";
+				settings.ConnectionString = mongoConnection;
+			});
+			services.Configure<ReportDBSettings>(settings =>
+			{
+				settings.CollectionName = "restrictions";
+				settings.ConnectionString = mongoConnection;
+			});
+
+			
+			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
+			services.AddSingleton<BanDBSettings>(provider => provider.GetRequiredService<IOptions<BanDBSettings>>().Value);
 			services.AddSingleton<RoomService>();
 			services.AddSingleton<MessageService>();
+			services.AddSingleton<BanHammerService>();
 			
 			services.AddControllers(config =>
 			{

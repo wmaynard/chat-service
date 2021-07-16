@@ -27,9 +27,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public const string POST_KEY_PLAYER_INFO = "playerInfo";
 		public const string POST_KEY_LANGUAGE = "language";
 		
-		// TODO: /global/switch
 		// TODO: Destroy empty global rooms
-		// TODO: JWTs
 		// TODO: Squelch bad player (blacklist, delete all posts)
 		// protected override string TokenAuthEndpoint => _config["player-service-verify"];
 		
@@ -138,7 +136,7 @@ namespace Rumble.Platform.ChatService.Controllers
 					: globals.First(g => !g.IsFull);
 				
 				// Remove the player from every global room they're not in.  This is useful if they're switching rooms
-				// and to clean up rooms without proper calls to /rooms/leave.  TODO: InRoomSince datetime so we can clean out orphaned users?
+				// and to clean up rooms without proper calls to /rooms/leave.  TODO: Clean out orphaned users
 				foreach (Room r in globals.Where(g => g.HasMember(player.AccountId) && g.Id != joined.Id))
 				{
 					r.RemoveMember(player.AccountId);
