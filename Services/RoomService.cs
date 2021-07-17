@@ -28,7 +28,6 @@ namespace Rumble.Platform.ChatService.Services
 		// basic CRUD operations
 		public List<Room> List()
 		{
-			var foo = _collection.Find(filter: r => true);
 			return _collection.Find(filter: r => true).ToList();
 		}
 

@@ -1,8 +1,10 @@
 using System;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Rumble.Platform.ChatService.Models
@@ -23,6 +25,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string KEY_TIMESTAMP = "timestamp";
 		public const string KEY_TYPE = "type";
 		public const string KEY_AID = "aid";
+		public const string KEY_REPORTED = "flagged";
 		
 		[BsonElement(KEY_ID)]
 		public string Id { get; set; }
@@ -36,6 +39,8 @@ namespace Rumble.Platform.ChatService.Models
 		public string Type { get; set; }
 		[BsonElement(KEY_AID)]
 		public string AccountId { get; set; }
+		[BsonElement(KEY_REPORTED), BsonIgnoreIfNull, JsonPropertyName("HopefullyRenameMe")]
+		public bool? Reported { get; set; }
 
 		public Message()
 		{

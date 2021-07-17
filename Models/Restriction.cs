@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -23,13 +25,13 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }
 		[BsonElement(KEY_REPORTER)]
-		public string ReporterID { get; set; }
+		public PlayerInfo Reporter { get; set; }
 		[BsonElement(KEY_REASON), BsonIgnoreIfNull]
 		public string Reason { get; set; }
 		[BsonElement(KEY_MESSAGE_LOG)]
-		public Message[] Log { get; set; }
+		public IEnumerable<Message> Log { get; set; }
 		[BsonElement(KEY_PLAYERS)]
-		public PlayerInfo[] Players { get; set; }
+		public IEnumerable<PlayerInfo> Players { get; set; }
 		[BsonElement(KEY_STATUS)]
 		public string Status { get; set; }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
@@ -8,13 +9,14 @@ namespace Rumble.Platform.ChatService.Services
 	{
 		private readonly IMongoCollection<Report> _collection;
 
-		public ReportService(ChatDBSettings settings)
+		public ReportService(ReportDBSettings settings)
 		{
 			MongoClient client = new MongoClient(settings.ConnectionString);
 			IMongoDatabase db = client.GetDatabase(settings.DatabaseName);
 			_collection = db.GetCollection<Report>(settings.CollectionName);
 		}
 
+		public List<Report> List() => _collection.Find(filter: r => true).ToList();
 		public void Create(Report report) => _collection.InsertOne(document: report);
 
 		public void Update(Report report) =>

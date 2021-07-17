@@ -57,20 +57,25 @@ namespace Rumble.Platform.ChatService
 			Log.Write("Initializing ReportDBSettings");
 			services.Configure<ReportDBSettings>(settings =>
 			{
-				settings.CollectionName = "restrictions";
+				settings.CollectionName = "reports";
 				settings.ConnectionString = mongoConnection;
 			});
 
 			Log.Write("Creating Settings Providers");
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
+			services.AddSingleton<ReportDBSettings>(provider => provider.GetRequiredService<IOptions<ReportDBSettings>>().Value);
 			
 			Log.Write("Creating Service Singletons");
 			services.AddSingleton<RoomService>();
+			services.AddSingleton<ReportService>();
 			
 			Log.Write("Adding Controllers");
 			services.AddControllers(config =>
 			{
 				config.Filters.Add(new RumbleFilter());
+			}).AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.IgnoreNullValues = true;
 			}).AddNewtonsoftJson();
 		}
 
