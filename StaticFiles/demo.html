@@ -247,7 +247,7 @@
 			try {
 				var body = { lastRead: lastRead };
 				if (currentRoom)
-					post("/messages/unread", body, getToken(), unreadHandler);
+					post("/message/unread", body, getToken(), unreadHandler);
 			} catch{}
 			finally {
 				if (keepChecking) {
@@ -284,7 +284,7 @@
 				},
 				roomId: currentRoom.id
 			}
-			post("/messages/send", body, getToken(), unreadHandler);
+			post("/message/send", body, getToken(), unreadHandler);
 			start();
 			input.value = "";
 			input.focus();
