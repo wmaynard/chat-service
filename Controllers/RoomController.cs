@@ -54,7 +54,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// </param>
 		/// <returns>A JSON response containing the Room's data.</returns>
 		[HttpPost, Route(template: PATH_JOIN)]
-		public ActionResult<Room> Join([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Join([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string roomId = ExtractRequiredValue(POST_KEY_ROOM_ID, body).ToString();
@@ -118,7 +118,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// </param>
 		/// <returns>A JSON response containing the Room's data.</returns>
 		[HttpPost, Route(template: PATH_JOIN_GLOBAL)]
-		public ActionResult<Room> JoinGlobal([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult JoinGlobal([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			try
 			{
@@ -187,11 +187,11 @@ namespace Rumble.Platform.ChatService.Controllers
 #region Debug Only Functions
 // TODO: These MUST be removed before going live
 		[HttpPost, Route(template: "create")]
-		public ActionResult<Room> Create([FromBody] JObject body)
+		public ActionResult Create([FromBody] JObject body)
 		{
 			Room r = body.ToObject<Room>();
 			_roomService.Create(r);
-			return Ok(r);
+			return Ok(new { Room = r});
 		}
 		/// <summary>
 		/// Here be dragons.  Wipe out ALL rooms.  Only intended for debugging.  Must be removed before Chat goes live.

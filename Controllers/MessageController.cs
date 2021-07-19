@@ -87,7 +87,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// </param>
 		/// <returns></returns>
 		[HttpPost, Route(template: "unread")]
-		public ActionResult<IEnumerable<RoomUpdate>> GetUnread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult GetUnread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
 			try
 			{
@@ -120,7 +120,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
 		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "send")]
-		public ActionResult<IEnumerable<RoomUpdate>> Send([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Send([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
