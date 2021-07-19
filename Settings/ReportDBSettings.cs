@@ -4,6 +4,6 @@ namespace Rumble.Platform.ChatService.Settings
 	{
 		public string CollectionName { get; set; }
 		public string ConnectionString { get; set; }
-		public string DatabaseName => "ChatDB";
+		public string DatabaseName { get; set; }
 	}
 }

@@ -34,6 +34,7 @@ namespace Rumble.Platform.ChatService
 		{
 #if DEBUG
 			string mongoConnection = "mongodb://localhost:27017";
+			string database = "ChatDB";
 #endif
 #if RELEASE
 			// Important note: at the time of this comment, it seems that the only possible way to get Rider to use
@@ -44,6 +45,7 @@ namespace Rumble.Platform.ChatService
 			// run the service from Terminal with the command "dotnet {path}/chat-service.dll".  This will circumnavigate
 			// Rider's restrictions as well.
 			string mongoConnection = Environment.GetEnvironmentVariable("MONGODB_URI");
+			string database = "player-service-107";
 			Log.Write($"mongoConnection: '{mongoConnection}'");
 			if (mongoConnection == null)
 				throw new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");
@@ -53,12 +55,14 @@ namespace Rumble.Platform.ChatService
 			{
 				settings.CollectionName = "rooms";
 				settings.ConnectionString = mongoConnection;
+				settings.DatabaseName = database;
 			});
 			Log.Write("Initializing ReportDBSettings");
 			services.Configure<ReportDBSettings>(settings =>
 			{
 				settings.CollectionName = "reports";
 				settings.ConnectionString = mongoConnection;
+				settings.DatabaseName = database;
 			});
 
 			Log.Write("Creating Settings Providers");
