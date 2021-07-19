@@ -37,5 +37,16 @@ namespace Rumble.Platform.ChatService.Controllers
 			preUpdateAction?.Invoke(rooms);
 			return RoomUpdate.GenerateResponseFrom(rooms, timestamp);
 		}
+
+		protected string CreateExceptionMessage(Exception ex)
+		{
+			string output = "";
+			do
+			{
+				output += ex.Message + "\n";
+			} while ((ex = ex.InnerException) != null);
+
+			return output[..^1]; // Equivalent to .Substring(0, output.Length - 1)?
+		}
 	}
 }

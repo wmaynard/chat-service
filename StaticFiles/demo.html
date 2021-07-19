@@ -241,6 +241,8 @@
 			var chat = elem("chatArea");
 			chat.scrollTop = chat.scrollHeight;
 		}
+		var keepChecking = true;
+		var stopped = true;
 		function checkUnreadMessages() {
 			try {
 				var body = { lastRead: lastRead };
@@ -248,7 +250,13 @@
 					post("/messages/unread", body, getToken(), unreadHandler);
 			} catch{}
 			finally {
-				window.setTimeout(checkUnreadMessages, unreadCheckInterval);
+				if (keepChecking) {
+					window.setTimeout(checkUnreadMessages, unreadCheckInterval);
+				}
+				else {
+					keepChecking = true;
+					stopped = false;
+				}
 			}
 		}
 		function unreadHandler(data) {
@@ -264,8 +272,6 @@
 				});
 			});
 			unreads?.forEach(createMessage);
-			// if (unreads.length == 0)
-			// 	console.log("No new messages found.");
 		}
 		function sendMessage() {
 			if (!currentRoom)
@@ -279,6 +285,7 @@
 				roomId: currentRoom.id
 			}
 			post("/messages/send", body, getToken(), unreadHandler);
+			start();
 			input.value = "";
 			input.focus();
 		}
@@ -309,8 +316,17 @@
 			if (token)
 				elem("token").value = token;
 			elem("messageText").focus();
-			checkUnreadMessages();
+			start();
 		};
+		function stop() {
+			keepChecking = false;
+		}
+		function start() {
+			if (stopped) {
+				checkUnreadMessages();
+				stopped = false;
+			}
+		}
 	</script>
 </head>
 <body>

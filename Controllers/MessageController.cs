@@ -89,9 +89,16 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "unread")]
 		public ActionResult<IEnumerable<RoomUpdate>> GetUnread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			try
+			{
+				TokenInfo token = ValidateToken(auth);
 
-			return Ok(GetAllUpdates(token, body));
+				return Ok(GetAllUpdates(token, body));
+			}
+			catch (Exception ex)
+			{
+				return Problem(new {DebugInfo = CreateExceptionMessage(ex)});
+			}
 		}
 
 		/// <summary>

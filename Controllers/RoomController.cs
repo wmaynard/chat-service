@@ -179,8 +179,6 @@ namespace Rumble.Platform.ChatService.Controllers
 
 				return Problem(new {Error = error, Exception = me});
 			}
-
-			return Problem();
 		}
 		
 		[HttpGet, Route(template: "list")]
