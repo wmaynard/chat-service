@@ -21,7 +21,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route(template: "messages"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "message"), Produces(contentType: "application/json")]
 	public class MessageController : ChatControllerBase
 	{
 		// TODO: DeleteMessage > Admin only, or admin & owner?  Can guild moderate messages?
