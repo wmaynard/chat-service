@@ -64,14 +64,23 @@ namespace Rumble.Platform.ChatService
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
+			Log.Write("Initializing SettingsDBSettings");
+			services.Configure<SettingsDBSettings>(settings =>
+			{
+				settings.CollectionName = "settings";
+				settings.ConnectionString = mongoConnection;
+				settings.DatabaseName = database;
+			});
 
 			Log.Write("Creating Settings Providers");
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
 			services.AddSingleton<ReportDBSettings>(provider => provider.GetRequiredService<IOptions<ReportDBSettings>>().Value);
+			services.AddSingleton<SettingsDBSettings>(provider => provider.GetRequiredService<IOptions<SettingsDBSettings>>().Value);
 			
 			Log.Write("Creating Service Singletons");
 			services.AddSingleton<RoomService>();
 			services.AddSingleton<ReportService>();
+			services.AddSingleton<SettingsService>();
 			
 			Log.Write("Adding Controllers");
 			services.AddControllers(config =>
