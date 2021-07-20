@@ -22,14 +22,14 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(KEY_SCREENNAME)]
 		public string ScreenName { get; set; }
 
-		public static PlayerInfo FromJToken(JToken input, string accountId)
+		public static PlayerInfo FromJToken(JToken input, string accountId = null)
 		{
 			return new PlayerInfo()
 			{
-				AccountId = accountId,
+				AccountId = accountId ?? input[KEY_ACCOUNT_ID].ToObject<string>(),
 				Avatar = input[KEY_AVATAR]?.ToObject<string>(),
 				ScreenName = input[KEY_SCREENNAME]?.ToObject<string>(),
-				InRoomSince = DateTimeOffset.Now.ToUnixTimeSeconds()
+				InRoomSince = DateTimeOffset.Now.ToUnixTimeSeconds()	// TODO: We're using this in places other than Rooms now; only assign when joining a room
 			};
 		}
 	}

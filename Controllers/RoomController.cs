@@ -37,39 +37,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		public RoomController(RoomService service, IConfiguration config) : base(service, config){}
 
 		/// <summary>
-		/// Adds a user to a room.  Similar to /global/join, but 'roomId' must be specified.
-		/// TODO: Exception when not a global room to prevent misuse?
-		/// </summary>
-		/// <param name="auth">The token issued from player-service's /player/launch.</param>
-		/// <param name="body">The JSON body.  'playerInfo', 'roomId', and 'language' are required fields.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809,
-		///		"playerInfo": {
-		///			"avatar": "demon_axe_thrower",
-		///			"sn": "Corky Douglas"
-		///		},
-		///		"roomId": "deadbeefdeadbeefdeadbeef"
-		///	}
-		/// </param>
-		/// <returns>A JSON response containing the Room's data.</returns>
-		[HttpPost, Route(template: PATH_JOIN)]
-		public ActionResult Join([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateToken(auth);
-			string roomId = ExtractRequiredValue(POST_KEY_ROOM_ID, body).ToString();
-			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), token.AccountId);
-
-			Room room = _roomService.Get(roomId);
-			room.AddMember(player);
-			_roomService.Update(room);
-
-			object updates = GetAllUpdates(token, body);	// TODO: This causes a second hit to mongo, which isn't ideal.
-			object output = Merge(updates, room.ToResponseObject());
-			return Ok(Merge(updates, room.ToResponseObject()));
-		}
-
-		/// <summary>
 		/// Intended for use when a user is logging out and needs to exit a room, or leaves a guild chat.
 		/// </summary>
 		/// <param name="auth">The token issued from player-service's /player/launch.</param>
@@ -183,42 +150,5 @@ namespace Rumble.Platform.ChatService.Controllers
 		
 		[HttpGet, Route(template: "list")]
 		public ActionResult<List<Room>> Get() => _roomService.List();
-		
-#region Debug Only Functions
-// TODO: These MUST be removed before going live
-		[HttpPost, Route(template: "create")]
-		public ActionResult Create([FromBody] JObject body)
-		{
-			Room r = body.ToObject<Room>();
-			_roomService.Create(r);
-			return Ok(new { Room = r});
-		}
-		/// <summary>
-		/// Here be dragons.  Wipe out ALL rooms.  Only intended for debugging.  Must be removed before Chat goes live.
-		/// </summary>
-		[HttpPost, Route(template: "nuke")]
-		public ActionResult NukeRooms()
-		{
-			List<Room> rooms = _roomService.List();
-			foreach (Room r in rooms)
-				_roomService.Remove(r);
-			return Ok(new { RoomsDestroyed = rooms.Count });
-		}
-
-
-		[HttpPost, Route(template: "clear")]
-		public ActionResult ClearRooms()
-		{
-			List<Room> rooms = _roomService.List();
-			foreach (Room r in rooms)
-			{
-				r.Members.Clear();
-				r.Messages.Clear();
-				_roomService.Update(r);
-			}
-
-			return Ok();
-		}
-#endregion Debug Only Functions
 	}
 }

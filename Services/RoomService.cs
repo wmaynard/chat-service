@@ -38,6 +38,14 @@ namespace Rumble.Platform.ChatService.Services
 				throw new RoomNotFoundException();
 			return output;
 		}
+
+		public Room GetSticky()
+		{
+			Room output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
+			if (output == null)
+				throw new RoomNotFoundException();
+			return output;
+		}
 		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
 
 		public List<Room> GetRoomsForUser(string aid)

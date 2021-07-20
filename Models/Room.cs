@@ -25,6 +25,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_DIRECT_MESSAGE = "dm";
 		public const string TYPE_GUILD = "guild";
 		public const string TYPE_UNKNOWN = "unknown";
+		public const string TYPE_STICKY = "sticky";
 
 		public const int MESSAGE_CAPACITY = 200;
 		public const int GLOBAL_PLAYER_CAPACITY = 50;

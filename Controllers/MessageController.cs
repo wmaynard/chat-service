@@ -29,17 +29,13 @@ namespace Rumble.Platform.ChatService.Controllers
 		// TODO: Sticky (probably should be limited to certain roles; should stickies be a different array?)
 		// TODO: Mongo.updateMany
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
-
-		public MessageController(RoomService service, IConfiguration config) : base(service, config) { }
-
-		[HttpPost, Route(template: "schedule")]
-		public ActionResult Schedule([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		private ReportService _reportService;
+		
+		public MessageController(ReportService reports, RoomService service, IConfiguration config) : base(service, config)
 		{
-			// Should the scope be local to one room?  One language?  Globally?  All valid options?
-			// Should probably have a model for ScheduledMessage, stored separately from rooms
-			// Require elevated auth
-			throw new NotImplementedException();
+			_reportService = reports;
 		}
+		
 		/// <summary>
 		/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
@@ -57,7 +53,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
 		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "broadcast")]
-		public ActionResult BroadcastActivity([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Broadcast([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId).Validate();
@@ -73,34 +69,36 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(updates);
 		}
-		
-		/// <summary>
-		/// Retrieves all unread messages for a user based on a timestamp.  This timestamp should be the most recent
-		/// timestamp from any message in the user's chat rooms.
-		/// </summary>
-		/// <param name="auth">The Authorization header from a request.  Tokens are provided by player-service.</param>
-		/// <param name="body">The JSON body.  'lastRead' is a required field.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809
-		///	}
-		/// </param>
-		/// <returns></returns>
-		[HttpPost, Route(template: "unread")]
-		public ActionResult GetUnread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+
+		[HttpPost, Route(template: "report")]
+		public ActionResult ReportM([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
-			try
-			{
-				TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateToken(auth);
+			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
+			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 
-				return Ok(GetAllUpdates(token, body));
-			}
-			catch (Exception ex)
+			Room room = _roomService.Get(roomId);
+
+			List<Message> ordered = room.Messages.OrderByDescending(m => m.Timestamp).ToList();
+			int position = ordered.IndexOf(ordered.First(m => m.Id == messageId));
+			int start = position > Report.COUNT_MESSAGES_AFTER_REPORTED ? position - Report.COUNT_MESSAGES_AFTER_REPORTED : 0;
+			IEnumerable<Message> logs = ordered.Skip(start).Take(Report.COUNT_MESSAGES_FOR_REPORT).OrderBy(m => m.Timestamp);
+			IEnumerable<PlayerInfo> players = room.Members
+				.Where(p => logs.Select(m => m.AccountId)
+					.Contains(p.AccountId));
+			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);
+			
+			Report report = new Report()
 			{
-				return Problem(new {DebugInfo = CreateExceptionMessage(ex)});
-			}
+				Reporter = reporter,
+				Log = logs,
+				Players = players
+			};
+			report.Log.First(m => m.Id == messageId).Reported = true;
+			
+			_reportService.Create(report);
+			return Ok(new { Report = report });
 		}
-
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
@@ -134,6 +132,25 @@ namespace Rumble.Platform.ChatService.Controllers
 			});
 
 			return Ok(updates);
+		}
+		/// <summary>
+		/// Retrieves all unread messages for a user based on a timestamp.  This timestamp should be the most recent
+		/// timestamp from any message in the user's chat rooms.
+		/// </summary>
+		/// <param name="auth">The Authorization header from a request.  Tokens are provided by player-service.</param>
+		/// <param name="body">The JSON body.  'lastRead' is a required field.
+		/// Expected body example:
+		///	{
+		///		"lastRead": 1625704809
+		///	}
+		/// </param>
+		/// <returns></returns>
+		[HttpPost, Route(template: "unread")]
+		public ActionResult Unread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+
+			return Ok(GetAllUpdates(token, body));
 		}
 	}
 }

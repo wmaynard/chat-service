@@ -26,6 +26,8 @@ namespace Rumble.Platform.ChatService.Models
 		public const string KEY_TYPE = "type";
 		public const string KEY_AID = "aid";
 		public const string KEY_REPORTED = "flagged";
+		public const string KEY_VISIBLE = "visibleFrom";
+		public const string KEY_EXPIRATION = "expiration";
 		
 		[BsonElement(KEY_ID)]
 		public string Id { get; set; }
@@ -41,7 +43,10 @@ namespace Rumble.Platform.ChatService.Models
 		public string AccountId { get; set; }
 		[BsonElement(KEY_REPORTED), BsonIgnoreIfNull, JsonPropertyName("HopefullyRenameMe")]
 		public bool? Reported { get; set; }
-
+		[BsonElement(KEY_VISIBLE)]
+		public long? VisibleFrom { get; set; }
+		[BsonElement(KEY_EXPIRATION)]
+		public long? Expiration { get; set; }
 		public Message()
 		{
 			Type = TYPE_CHAT;
@@ -64,6 +69,8 @@ namespace Rumble.Platform.ChatService.Models
 				Text = input[KEY_TEXT]?.ToObject<string>(),
 				Timestamp = input[KEY_TIMESTAMP]?.ToObject<long>() ?? DateTimeOffset.Now.ToUnixTimeSeconds(),
 				Type = input[KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
+				VisibleFrom = input[KEY_VISIBLE]?.ToObject<long?>(),
+				Expiration = input[KEY_EXPIRATION]?.ToObject<long?>(),
 				AccountId = accountId
 			};
 		}

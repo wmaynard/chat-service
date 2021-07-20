@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "user"), Produces(contentType: "application/json")]
 	public class UserController : ChatControllerBase
 	{
-		private const int COUNT_MESSAGES_FOR_REPORT = 25;
+		
 		private ReportService _reportService;
 
 		public UserController(ReportService reportService, RoomService roomService, IConfiguration config) : base(roomService, config)
@@ -36,38 +37,10 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Problem();
 		}
 
-		[HttpGet, Route(template: "reports/list")]
+		[HttpPost, Route(template: "report/list")]
 		public ActionResult ListReports()
 		{
 			return Ok(new { Reports = _reportService.List() });
-		}
-		
-		[HttpPost, Route(template: "report")]
-		public ActionResult Report([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateToken(auth);
-			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
-			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
-
-			Room room = _roomService.Get(roomId);
-
-			// TODO: Only use messages from around the messageId
-			IEnumerable<Message> logs = room.Messages.OrderByDescending(m => m.Timestamp).Take(COUNT_MESSAGES_FOR_REPORT);
-			IEnumerable<PlayerInfo> players = room.Members
-				.Where(p => logs.Select(m => m.AccountId)
-					.Contains(p.AccountId));
-			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);
-			
-			Report report = new Report()
-			{
-				Reporter = reporter,
-				Log = logs,
-				Players = players
-			};
-			report.Log.First(m => m.Id == messageId).Reported = true;
-			
-			_reportService.Create(report);
-			return Ok(new { Report = report });
 		}
 	}
 }
