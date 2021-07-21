@@ -7,7 +7,7 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public class Report
 	{
-		public const int COUNT_MESSAGES_FOR_REPORT = 25;
+		public const int COUNT_MESSAGES_BEFORE_REPORTED = 25;
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;
 		
 		public const string KEY_ID = "id";

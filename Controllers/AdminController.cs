@@ -6,14 +6,24 @@ using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
+	// TODO: Magic Values
+	// TODO: Documentation
+	// TODO: Check bans on chat login
 	[ApiController, Route(template: "admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{
-		public AdminController(RoomService rooms, IConfiguration config) : base(rooms, config) {}
+		private BanService _banService;
 
+		public AdminController(BanService bans, RoomService rooms, IConfiguration config) : base(rooms, config)
+		{
+			_banService = bans;
+		}
+
+		#region messages
 		[HttpPost, Route(template: "messages/delete")]
 		public ActionResult DeleteMessage([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
@@ -38,7 +48,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Room room;
 			try
 			{
-				room = _roomService.GetSticky();
+				room = _roomService.GetStickyRoom();
 				room.Messages.Add(message);
 				_roomService.Update(room);
 			}
@@ -62,23 +72,39 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
 
-			Room room = _roomService.GetSticky();
+			Room room = _roomService.GetStickyRoom();
 			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
 			_roomService.Update(room);
 			
 			return Ok(room.ToResponseObject());
 		}
+		#endregion messages
 
+		#region players
 		[HttpPost, Route(template: "players/ban")]
 		public ActionResult Ban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			throw new NotImplementedException();
+			TokenInfo token = ValidateToken(auth); // TODO: ValidateAdminToken
+			string accountId = ExtractRequiredValue("accountId", body).ToObject<string>();
+			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
+			long? expiration = ExtractOptionalValue("expiration", body)?.ToObject<long>();
+
+			Ban ban = new Ban(accountId, reason, expiration, _roomService.GetRoomsForUser(accountId));
+			_banService.Create(ban);
+
+			return Ok(ban.ResponseObject);
 		}
 
 		[HttpPost, Route(template: "players/unban")]
 		public ActionResult Unban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			throw new NotImplementedException();
+			TokenInfo token = ValidateToken(auth);
+			string banId = ExtractRequiredValue("banId", body).ToObject<string>();
+			
+			_banService.Remove(banId);
+
+			return Ok();
 		}
+		#endregion players
 	}
 }

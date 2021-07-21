@@ -147,5 +147,14 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			return new {Room = this};
 		}
+
+		public IEnumerable<Message> Snapshot(string messageId, int before, int after)
+		{
+			List<Message> ordered = Messages.OrderBy(m => m.Timestamp).ToList();
+			int position = ordered.IndexOf(ordered.First(m => m.Id == messageId));
+			int start = position > before ? position - before : 0;
+
+			return ordered.Skip(start).Take(after + before);
+		}
 	}
 }

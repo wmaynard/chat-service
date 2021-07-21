@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using RestSharp.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {

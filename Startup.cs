@@ -17,6 +17,7 @@ using Microsoft.OpenApi.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService
 {
@@ -71,16 +72,25 @@ namespace Rumble.Platform.ChatService
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
+			Log.Write("Initializing BanDBSettings");
+			services.Configure<BanDBSettings>(settings =>
+			{
+				settings.CollectionName = "bans";
+				settings.ConnectionString = mongoConnection;
+				settings.DatabaseName = database;
+			});
 
 			Log.Write("Creating Settings Providers");
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
 			services.AddSingleton<ReportDBSettings>(provider => provider.GetRequiredService<IOptions<ReportDBSettings>>().Value);
 			services.AddSingleton<SettingsDBSettings>(provider => provider.GetRequiredService<IOptions<SettingsDBSettings>>().Value);
-			
+			services.AddSingleton<BanDBSettings>(provider => provider.GetRequiredService<IOptions<BanDBSettings>>().Value);
+
 			Log.Write("Creating Service Singletons");
 			services.AddSingleton<RoomService>();
 			services.AddSingleton<ReportService>();
 			services.AddSingleton<SettingsService>();
+			services.AddSingleton<BanService>();
 			
 			Log.Write("Adding Controllers");
 			services.AddControllers(config =>

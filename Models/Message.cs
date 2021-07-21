@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -84,6 +85,11 @@ namespace Rumble.Platform.ChatService.Models
 			if (AccountId == null)
 				throw new ArgumentNullException("UserInfo.AccountId", $"'{KEY_AID}.{PlayerInfo.KEY_ACCOUNT_ID}' cannot be null.");
 			return this;
+		}
+
+		public static object GenerateStickyResponseFrom(IEnumerable<Message> stickies)
+		{
+			return new { Stickies = stickies };
 		}
 	}
 }

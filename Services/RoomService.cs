@@ -39,12 +39,29 @@ namespace Rumble.Platform.ChatService.Services
 			return output;
 		}
 
-		public Room GetSticky()
+		public Room GetStickyRoom(bool all = false)
 		{
 			Room output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
 			if (output == null)
 				throw new RoomNotFoundException();
 			return output;
+		}
+
+		public IEnumerable<Message> GetStickyMessages(bool all = false)
+		{
+			try
+			{
+				Room sticky = GetStickyRoom();
+				long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+				return all
+					? sticky.Messages
+					: sticky.Messages.Where(m => m.VisibleFrom < timestamp && m.Expiration > timestamp);
+			}
+			catch (RoomNotFoundException)
+			{
+				return Array.Empty<Message>();
+			}
+			throw new Exception("Couldn't retrieve sticky messages.");
 		}
 		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
 

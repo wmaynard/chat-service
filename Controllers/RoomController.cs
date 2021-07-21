@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using Newtonsoft.Json.Linq;
-using Platform.CSharp.Common.Web;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;

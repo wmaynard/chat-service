@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Rumble.Platform.ChatService.Models
 { // TODO: Update all models with JsonProperty(Name = ... )
-	public class ChatSettings
+	public class ChatSettings	// "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
 	{
 		public const string KEY_ID = "id";
 		private const string KEY_ACCOUNT_ID = "aid";

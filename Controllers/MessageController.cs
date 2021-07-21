@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Platform.CSharp.Common.Web;
 using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -71,7 +70,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "report")]
-		public ActionResult ReportM([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Report([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
@@ -79,10 +78,11 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			Room room = _roomService.Get(roomId);
 
-			List<Message> ordered = room.Messages.OrderByDescending(m => m.Timestamp).ToList();
-			int position = ordered.IndexOf(ordered.First(m => m.Id == messageId));
-			int start = position > Report.COUNT_MESSAGES_AFTER_REPORTED ? position - Report.COUNT_MESSAGES_AFTER_REPORTED : 0;
-			IEnumerable<Message> logs = ordered.Skip(start).Take(Report.COUNT_MESSAGES_FOR_REPORT).OrderBy(m => m.Timestamp);
+			// List<Message> ordered = room.Messages.OrderByDescending(m => m.Timestamp).ToList();
+			// int position = ordered.IndexOf(ordered.First(m => m.Id == messageId));
+			// int start = position > Report.COUNT_MESSAGES_AFTER_REPORTED ? position - Report.COUNT_MESSAGES_AFTER_REPORTED : 0;
+			// IEnumerable<Message> logs = ordered.Skip(start).Take(Report.COUNT_MESSAGES_FOR_REPORT).OrderBy(m => m.Timestamp);
+			IEnumerable<Message> logs = room.Snapshot(messageId, Models.Report.COUNT_MESSAGES_BEFORE_REPORTED, Models.Report.COUNT_MESSAGES_AFTER_REPORTED);
 			IEnumerable<PlayerInfo> players = room.Members
 				.Where(p => logs.Select(m => m.AccountId)
 					.Contains(p.AccountId));
@@ -151,6 +151,15 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 
 			return Ok(GetAllUpdates(token, body));
+		}
+
+		[HttpPost, Route(template: "sticky")]
+		public ActionResult StickyList([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
+
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) });
 		}
 	}
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.Serialization;
-using platform_CSharp_library.Web;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
