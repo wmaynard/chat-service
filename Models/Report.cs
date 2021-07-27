@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -36,6 +37,9 @@ namespace Rumble.Platform.ChatService.Models
 		public IEnumerable<PlayerInfo> Players { get; set; }
 		[BsonElement(KEY_STATUS)]
 		public string Status { get; set; }
+		
+		[JsonIgnore]
+		public object ResponseObject => new { Report = this };
 
 		public Report()
 		{

@@ -10,27 +10,28 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
+	[ApiController, Route("chat")]
 	public class TopController : RumbleController
 	{
-		private IConfiguration _config;
 		protected override string TokenAuthEndpoint => _config["player-service-verify"];
 
 		// public TopController(IConfiguration config) => _config = config;
 
-		private readonly BanService _banService;
+		private readonly BanMongoService _banMongoService;
 		private readonly ReportService _reportService;
 		private readonly RoomService _roomService;
 		private readonly SettingsService _settingsService;
 
-		public TopController(BanService bans, ReportService reports, RoomService rooms, SettingsService settings, IConfiguration config)
+		public TopController(BanMongoService bansMongo, ReportService reports, RoomService rooms, SettingsService settings, IConfiguration config)
+			: base(config)
 		{
-			_banService = bans;
+			_banMongoService = bansMongo;
 			_reportService = reports;
 			_roomService = rooms;
 			_settingsService = settings;
-			_config = config;
 		}
 
+		// Called when an account is logging in to chat.  Returns sticky messages, bans applied, and user settings.
 		[HttpPost, Route(template: "launch")]
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
@@ -39,7 +40,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
-			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
+			IEnumerable<Ban> bans = _banMongoService.GetBansForUser(token.AccountId);
 			ChatSettings settings = _settingsService.Get(token.AccountId);
 
 			return Ok(Merge(
@@ -49,6 +50,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			));
 		}
 
+		// Required for load balancers.  Verifies that all services are healthy.
 		[HttpGet, Route(template: "health")]
 		public ActionResult HealthCheck()
 		{

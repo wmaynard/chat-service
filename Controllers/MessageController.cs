@@ -20,17 +20,14 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route(template: "message"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/messages"), Produces(contentType: "application/json")]
 	public class MessageController : ChatControllerBase
 	{
-		// TODO: DeleteMessage > Admin only, or admin & owner?  Can guild moderate messages?
-		// TODO: Announcement
-		// TODO: Sticky (probably should be limited to certain roles; should stickies be a different array?)
 		// TODO: Mongo.updateMany
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
 		private ReportService _reportService;
 		
-		public MessageController(ReportService reports, RoomService service, IConfiguration config) : base(service, config)
+		public MessageController(ReportService reports, RoomService rooms, IConfiguration config) : base(rooms, config)
 		{
 			_reportService = reports;
 		}
@@ -52,7 +49,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
 		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "broadcast")]
-		public ActionResult Broadcast([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Broadcast([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId).Validate();
@@ -70,18 +67,14 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "report")]
-		public ActionResult Report([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Report([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 
 			Room room = _roomService.Get(roomId);
-
-			// List<Message> ordered = room.Messages.OrderByDescending(m => m.Timestamp).ToList();
-			// int position = ordered.IndexOf(ordered.First(m => m.Id == messageId));
-			// int start = position > Report.COUNT_MESSAGES_AFTER_REPORTED ? position - Report.COUNT_MESSAGES_AFTER_REPORTED : 0;
-			// IEnumerable<Message> logs = ordered.Skip(start).Take(Report.COUNT_MESSAGES_FOR_REPORT).OrderBy(m => m.Timestamp);
+			
 			IEnumerable<Message> logs = room.Snapshot(messageId, Models.Report.COUNT_MESSAGES_BEFORE_REPORTED, Models.Report.COUNT_MESSAGES_AFTER_REPORTED);
 			IEnumerable<PlayerInfo> players = room.Members
 				.Where(p => logs.Select(m => m.AccountId)
@@ -97,7 +90,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 			
 			_reportService.Create(report);
-			return Ok(new { Report = report });
+			return Ok(report.ResponseObject);	// TODO: udpates
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
@@ -118,7 +111,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
 		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "send")]
-		public ActionResult Send([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Send([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
@@ -146,7 +139,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// </param>
 		/// <returns></returns>
 		[HttpPost, Route(template: "unread")]
-		public ActionResult Unread([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult Unread([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 
@@ -154,12 +147,12 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "sticky")]
-		public ActionResult StickyList([FromHeader(Name = "Authorization")] string auth, [FromBody] JObject body)
+		public ActionResult StickyList([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
 
-			return Ok(new { Stickies = _roomService.GetStickyMessages(all) });
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }); // TODO: Add stickies to GetAllUpdates
 		}
 	}
 }

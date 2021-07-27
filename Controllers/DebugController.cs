@@ -9,11 +9,12 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route(template: "debug"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/debug"), Produces(contentType: "application/json")]
 	public class DebugController : ChatControllerBase
 	{
 		public DebugController(RoomService rooms, IConfiguration config) : base(rooms, config){}
 		
+		#if DEBUG
 		[HttpPost, Route(template: "rooms/clear")]
 		public ActionResult ClearRooms()
 		{
@@ -25,7 +26,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Update(r);
 			}
 
-			return Ok();
+			return Ok(new { Rooms = rooms });
 		}
 		[HttpPost, Route(template: "rooms/create")]
 		public ActionResult Create([FromBody] JObject body)
@@ -36,7 +37,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 		/// <summary>
 		/// Adds a user to a room.  Similar to /global/join, but 'roomId' must be specified.
-		/// TODO: Exception when not a global room to prevent misuse?
 		/// </summary>
 		/// <param name="auth">The token issued from player-service's /player/launch.</param>
 		/// <param name="body">The JSON body.  'playerInfo', 'roomId', and 'language' are required fields.
@@ -63,7 +63,6 @@ namespace Rumble.Platform.ChatService.Controllers
 			_roomService.Update(room);
 
 			object updates = GetAllUpdates(token, body);	// TODO: This causes a second hit to mongo, which isn't ideal.
-			object output = Merge(updates, room.ToResponseObject());
 			return Ok(Merge(updates, room.ToResponseObject()));
 		}
 		/// <summary>
@@ -77,5 +76,6 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Remove(r);
 			return Ok(new { RoomsDestroyed = rooms.Count });
 		}
+		#endif
 	}
 }

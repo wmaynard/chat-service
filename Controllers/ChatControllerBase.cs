@@ -11,17 +11,12 @@ namespace Rumble.Platform.ChatService.Controllers
 	public abstract class ChatControllerBase : RumbleController
 	{
 		protected RoomService _roomService;
-		protected IConfiguration _config;
 		
 		protected override string TokenAuthEndpoint => _config["player-service-verify"];
 
-		public ChatControllerBase(IConfiguration config)
+		public ChatControllerBase(IConfiguration config) : base(config){}
+		public ChatControllerBase(RoomService service, IConfiguration config) : base(config)
 		{
-			_config = config;
-		}
-		public ChatControllerBase(RoomService service, IConfiguration config)
-		{
-			_config = config;
 			_roomService = service;
 		}
 

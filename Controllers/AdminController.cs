@@ -13,21 +13,28 @@ namespace Rumble.Platform.ChatService.Controllers
 	// TODO: Magic Values
 	// TODO: Documentation
 	// TODO: Check bans on chat login
-	[ApiController, Route(template: "admin"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{
-		private BanService _banService;
+		private BanMongoService _banMongoService;
 
-		public AdminController(BanService bans, RoomService rooms, IConfiguration config) : base(rooms, config)
+		public AdminController(BanMongoService bansMongo, RoomService rooms, IConfiguration config) : base(rooms, config)
 		{
-			_banService = bans;
+			_banMongoService = bansMongo;
+		}
+
+		[HttpGet, Route(template: "rooms/list")]
+		public ActionResult ListAllRooms([FromHeader(Name = AUTH)] string auth)
+		{
+			TokenInfo token = ValidateToken(auth);
+			return Ok(new {Rooms = _roomService.List()});
 		}
 
 		#region messages
 		[HttpPost, Route(template: "messages/delete")]
 		public ActionResult DeleteMessage([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateToken(auth, superuser: true);
 			string[] messageIds = ExtractRequiredValue("messageIds", body).ToObject<string[]>();
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 
@@ -41,8 +48,13 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateToken(auth, superuser: true);
 			Message message = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId);
+			long expires = ExtractRequiredValue("expiration", body).ToObject<long>();
+			long visibleFrom = ExtractOptionalValue("visibleFrom", body)?.ToObject<long>() ?? 0;
+
+			message.Expiration = expires;
+			message.VisibleFrom = visibleFrom;
 			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
 
 			Room room;
@@ -60,6 +72,7 @@ namespace Rumble.Platform.ChatService.Controllers
 					Type = Room.TYPE_STICKY,
 					Language = language
 				};
+				room.Messages.Add(message);
 				_roomService.Create(room);
 			}
 
@@ -69,7 +82,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/unsticky")]
 		public ActionResult Unsticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateToken(auth, superuser: true);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
 
 			Room room = _roomService.GetStickyRoom();
@@ -81,30 +94,47 @@ namespace Rumble.Platform.ChatService.Controllers
 		#endregion messages
 
 		#region players
-		[HttpPost, Route(template: "players/ban")]
+		[HttpPost, Route(template: "ban/player")]
 		public ActionResult Ban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth); // TODO: ValidateAdminToken
+			TokenInfo token = ValidateToken(auth, superuser: true); // TODO: ValidateAdminToken
 			string accountId = ExtractRequiredValue("accountId", body).ToObject<string>();
 			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
 			long? expiration = ExtractOptionalValue("expiration", body)?.ToObject<long>();
 
 			Ban ban = new Ban(accountId, reason, expiration, _roomService.GetRoomsForUser(accountId));
-			_banService.Create(ban);
+			_banMongoService.Create(ban);
 
 			return Ok(ban.ResponseObject);
 		}
 
-		[HttpPost, Route(template: "players/unban")]
+		[HttpPost, Route(template: "ban/lift")]
 		public ActionResult Unban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateToken(auth, superuser: true);
 			string banId = ExtractRequiredValue("banId", body).ToObject<string>();
 			
-			_banService.Remove(banId);
+			_banMongoService.Remove(banId);
 
 			return Ok();
 		}
+
+		[HttpGet, Route(template: "ban/list")]
+		public ActionResult ListBans([FromHeader(Name = AUTH)] string auth)
+		{
+			try
+			{
+				ValidateToken(auth, superuser: true);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+				throw;
+			}
+			TokenInfo token = ValidateToken(auth);
+			
+			return Ok(new { Bans = _banMongoService.List() });
+		}
 		#endregion players
 	}
-}
+} // TODO: Postman Sticky / Unsticky / Delete

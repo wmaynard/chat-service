@@ -15,38 +15,31 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route(template: PATH_BASE), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/rooms"), Produces(contentType: "application/json")]
 	public class RoomController : ChatControllerBase
 	{
-		public const string PATH_BASE = "room";
-		public const string PATH_JOIN = "join";
-		public const string PATH_JOIN_GLOBAL = "global/join";
-		public const string PATH_LEAVE = "leave";
-
+		// TODO: Update player info
+		// TODO: PreviousMembers | delete when messages are dropped
 		public const string POST_KEY_ROOM_ID = "roomId";
 		public const string POST_KEY_PLAYER_INFO = "playerInfo";
 		public const string POST_KEY_LANGUAGE = "language";
 		
 		// TODO: Destroy empty global rooms
-		// TODO: Squelch bad player (blacklist, delete all posts)
-		// protected override string TokenAuthEndpoint => _config["player-service-verify"];
-		
-		// private readonly RoomService _roomService;
-		// private readonly IConfiguration _config;
 		public RoomController(RoomService service, IConfiguration config) : base(service, config){}
+		// Returns a list of available global rooms for the player, as dictated by their language setting.
+		[HttpPost, Route(template: "available")]
+		public ActionResult Available([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			string language = ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
+			
+			object updates = GetAllUpdates(token, body);
 
-		/// <summary>
-		/// Intended for use when a user is logging out and needs to exit a room, or leaves a guild chat.
-		/// </summary>
-		/// <param name="auth">The token issued from player-service's /player/launch.</param>
-		/// <param name="body">The JSON body.  'playerInfo' and 'roomId' are required fields.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809,
-		///		"roomId": "deadbeefdeadbeefdeadbeef"
-		///	}
-		/// </param>
-		[HttpPost, Route(template: PATH_LEAVE)]
+			IEnumerable<Room> rooms = _roomService.GetGlobals(language);
+			return Ok(Merge(new { Rooms = rooms }, updates));	// TODO: ResponseObject
+		}
+		// Intended for use when a user is logging out and needs to exit a room, or leaves a guild chat.
+		[HttpPost, Route(template: "leave")]
 		public ActionResult Leave([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
@@ -63,35 +56,29 @@ namespace Rumble.Platform.ChatService.Controllers
 			});
 			return Ok(updates);
 		}
-
-		/// <summary>
-		/// Adds or assigns a user to a global room.  Also removes a user from any global rooms they were already in
-		/// if it's not the same room.
-		/// </summary>
-		/// <param name="auth">The token issued from player-service's /player/launch.</param>
-		/// <param name="body">The JSON body.  'playerInfo' and 'language' are required fields.  'roomId' is optional;
-		/// if unspecified, the player is assigned to the next available global room.
-		/// Expected body example:
-		///	{
-		///		"language": "en-US",
-		///		"lastRead": 1625704809,
-		///		"playerInfo": {
-		///			"avatar": "demon_axe_thrower",
-		///			"sn": "Corky Douglas"
-		///		},
-		///		"roomId": "deadbeefdeadbeefdeadbeef"
-		///	}
-		/// </param>
-		/// <returns>A JSON response containing the Room's data.</returns>
-		[HttpPost, Route(template: PATH_JOIN_GLOBAL)]
+		// Returns a user's rooms.
+		[HttpPost, Route(template: "list")]
+		public ActionResult List([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			object roomResponse = null;
+			object updates = GetAllUpdates(token, body,(IEnumerable<Room> rooms) =>
+			{
+				roomResponse = new { Rooms = rooms };
+			});
+			
+			return Ok(Merge(roomResponse, updates));	// TODO: ResponseObject
+		}
+		// Adds or assigns a user to a global room.  Also removes a user from any global rooms they were already in
+		// if it's not the same room.
+		[HttpPost, Route(template: "global/join")]
 		public ActionResult JoinGlobal([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			try
 			{
 				TokenInfo token = ValidateToken(auth);
 				string language = ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
-				PlayerInfo player =
-					PlayerInfo.FromJToken(ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), token.AccountId);
+				PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), token.AccountId);
 
 				// If this is specified, the user is switching global rooms.
 				string roomId = ExtractOptionalValue(POST_KEY_ROOM_ID, body)?.ToObject<string>();
@@ -146,8 +133,5 @@ namespace Rumble.Platform.ChatService.Controllers
 				return Problem(new {Error = error, Exception = me});
 			}
 		}
-		
-		[HttpGet, Route(template: "list")]
-		public ActionResult<List<Room>> Get() => _roomService.List();
 	}
 }

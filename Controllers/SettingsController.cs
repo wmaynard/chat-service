@@ -9,17 +9,15 @@ namespace Rumble.Platform.ChatService.Controllers
 {
 	// TODO: Documentation
 	// TODO: Magic Values
-	[ApiController, Route("settings")]
+	[ApiController, Route("chat/settings")]
 	public class SettingsController : RumbleController
 	{
-		private IConfiguration _config;
 		private SettingsService _settingsService;
 		
 		protected override string TokenAuthEndpoint => _config["player-service-verify"];
 
-		public SettingsController(SettingsService preferences, IConfiguration config)
+		public SettingsController(SettingsService preferences, IConfiguration config) : base(config)
 		{
-			_config = config;
 			_settingsService = preferences;
 		}
 
