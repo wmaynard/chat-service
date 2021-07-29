@@ -38,11 +38,14 @@ namespace Rumble.Platform.ChatService.Controllers
 			// TODO: Join global room
 			TokenInfo token = ValidateToken(auth);
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
+			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
+			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token.AccountId);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
 			ChatSettings settings = _settingsService.Get(token.AccountId);
 
+			Room global = _roomService.JoinGlobal(player, language);
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(token.AccountId);
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 
@@ -50,6 +53,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				Ban.GenerateResponseFrom(bans),
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
+				global.ToResponseObject(),
 				updates
 			);
 		}

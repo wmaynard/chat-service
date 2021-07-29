@@ -73,6 +73,34 @@ namespace Rumble.Platform.ChatService.Services
 
 			return output;
 		}
+
+		// TODO: If a user switches languages, they won't leave their old rooms.
+		public Room JoinGlobal(PlayerInfo player, string language, string roomId = null)
+		{
+			IEnumerable<Room> globals = GetGlobals(language);
+			Room joined = roomId != null
+				? globals.First(g => g.Id == roomId)
+				: globals.First(g => !g.IsFull || g.HasMember(player.AccountId));
+
+			foreach (Room r in globals.Where(g => g.HasMember(player.AccountId) && g.Id != roomId))
+			{
+				r.RemoveMember(player.AccountId);
+				Update(r);
+			}
+
+			try
+			{
+				joined.AddMember(player);
+				Update(joined);
+			}
+			catch (AlreadyInRoomException)
+			{
+				// Do nothing.
+				// The client didn't leave the room properly, but we don't want to send an error to it, either.
+			}
+
+			return joined;
+		}
 		public void Create(Room room) => _collection.InsertOne(document: room);
 		public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);
 		public void Remove(Room room) => _collection.DeleteOne(filter: r => r.Id == room.Id);
