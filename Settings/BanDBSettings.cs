@@ -1,3 +1,5 @@
+using Rumble.Platform.Common.Web;
+
 namespace Rumble.Platform.ChatService.Settings
 {
 	public class BanDBSettings : IMongoDBSettings

@@ -35,18 +35,22 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "launch")]
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			// TODO: Add RoomUpdates?  Join global room?
-			
+			// TODO: Join global room
 			TokenInfo token = ValidateToken(auth);
+			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
 			ChatSettings settings = _settingsService.Get(token.AccountId);
 
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(token.AccountId);
+			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
+
 			return Ok(
 				Ban.GenerateResponseFrom(bans),
 				settings.ResponseObject,
-				Message.GenerateStickyResponseFrom(stickies)
+				Message.GenerateStickyResponseFrom(stickies),
+				updates
 			);
 		}
 
