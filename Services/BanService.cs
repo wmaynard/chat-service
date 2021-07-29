@@ -16,13 +16,13 @@ namespace Rumble.Platform.ChatService.Services
 	// TODO: RumbleMongoModel
 	// TODO: Revoke token when banned to force client to update
 	
-	public class BanMongoService : RumbleMongoService
+	public class BanService : RumbleMongoService
 	{
-		private readonly IMongoCollection<Ban> _collection;
+		private new readonly IMongoCollection<Ban> _collection;
 
-		public override bool IsHealthy => IsConnected;
+		// public override bool IsHealthy => IsConnected || Open();
 
-		public BanMongoService(BanDBSettings settings) : base(settings)
+		public BanService(BanDBSettings settings) : base(settings)
 		{
 			_collection = _database.GetCollection<Ban>(settings.CollectionName);
 		}

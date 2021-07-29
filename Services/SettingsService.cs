@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
+using Rumble.Platform.ChatService.Utilities;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	public class SettingsService
+	public class SettingsService : RumbleMongoService
 	{
-		private readonly IMongoCollection<ChatSettings> _collection;
+		private new readonly IMongoCollection<ChatSettings> _collection;
 
-		public SettingsService(SettingsDBSettings settings)
+		public SettingsService(SettingsDBSettings settings) : base(settings)
 		{
-			MongoClient client = new MongoClient(settings.ConnectionString);
-			IMongoDatabase db = client.GetDatabase(settings.DatabaseName);
-			_collection = db.GetCollection<ChatSettings>(settings.CollectionName);
+			_collection = _database.GetCollection<ChatSettings>(settings.CollectionName);
 		}
 
 		public ChatSettings Get(string accountId)

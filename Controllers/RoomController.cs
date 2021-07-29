@@ -84,13 +84,13 @@ namespace Rumble.Platform.ChatService.Controllers
 				string roomId = ExtractOptionalValue(POST_KEY_ROOM_ID, body)?.ToObject<string>();
 
 				List<Room> globals = _roomService.GetGlobals(language);
-				Room joined;
+				Room joined = null;
 
 				try
 				{
 					joined = roomId != null
 						? globals.First(g => g.Id == roomId)
-						: globals.First(g => !g.IsFull);
+						: globals.First(g => !g.IsFull || g.HasMember(token.AccountId));
 
 					// Remove the player from every global room they're not in.  This is useful if they're switching rooms
 					// and to clean up rooms without proper calls to /rooms/leave.  TODO: Clean out orphaned users
@@ -98,7 +98,6 @@ namespace Rumble.Platform.ChatService.Controllers
 					{
 						r.RemoveMember(player.AccountId);
 						_roomService.Update(r);
-
 					}
 
 					joined.AddMember(player);
@@ -118,9 +117,14 @@ namespace Rumble.Platform.ChatService.Controllers
 					joined.AddMember(player);
 					_roomService.Create(joined);
 				}
+				catch (AlreadyInRoomException)
+				{
+					// Do nothing.
+					// The client didn't leave the room properly, but we don't want to send an error to it, either.
+				}
 				
 				object updates = GetAllUpdates(token, body);
-				return Ok(Merge(updates, joined.ToResponseObject()));
+				return Ok(updates, joined.ToResponseObject());
 			}
 			catch (Exception me)
 			{
@@ -132,6 +136,26 @@ namespace Rumble.Platform.ChatService.Controllers
 
 				return Problem(new {Error = error, Exception = me});
 			}
+		}
+
+		[HttpPost, Route("global/leave")]
+		public ActionResult LeaveGloval([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			object updates = GetAllUpdates(token, body, rooms =>
+			{
+				foreach (Room room in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
+				{
+					room.RemoveMember(token.AccountId);
+					_roomService.Update(room);
+				}
+			});
+			return Ok(updates);
+		}
+		[HttpGet, Route("health")]
+		public override ActionResult HealthCheck()
+		{
+			return Ok(_roomService.HealthCheckResponseObject);
 		}
 	}
 }

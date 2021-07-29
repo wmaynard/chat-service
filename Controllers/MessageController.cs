@@ -25,7 +25,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		// TODO: Mongo.updateMany
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
-		private ReportService _reportService;
+		private readonly ReportService _reportService;
 		
 		public MessageController(ReportService reports, RoomService rooms, IConfiguration config) : base(rooms, config)
 		{
@@ -153,6 +153,14 @@ namespace Rumble.Platform.ChatService.Controllers
 			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
 
 			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }); // TODO: Add stickies to GetAllUpdates
+		}
+		[HttpGet, Route("health")]
+		public override ActionResult HealthCheck()
+		{
+			return Ok(
+				_reportService.HealthCheckResponseObject,
+				_roomService.HealthCheckResponseObject
+			);
 		}
 	}
 }

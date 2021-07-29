@@ -16,11 +16,11 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{
-		private BanMongoService _banMongoService;
+		private readonly BanService _banService;
 
-		public AdminController(BanMongoService bansMongo, RoomService rooms, IConfiguration config) : base(rooms, config)
+		public AdminController(BanService bans, RoomService rooms, IConfiguration config) : base(rooms, config)
 		{
-			_banMongoService = bansMongo;
+			_banService = bans;
 		}
 
 		[HttpGet, Route(template: "rooms/list")]
@@ -34,7 +34,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/delete")]
 		public ActionResult DeleteMessage([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth, superuser: true);
+			TokenInfo token = ValidateAdminToken(auth);
 			string[] messageIds = ExtractRequiredValue("messageIds", body).ToObject<string[]>();
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 
@@ -48,7 +48,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth, superuser: true);
+			TokenInfo token = ValidateAdminToken(auth);
 			Message message = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId);
 			long expires = ExtractRequiredValue("expiration", body).ToObject<long>();
 			long visibleFrom = ExtractOptionalValue("visibleFrom", body)?.ToObject<long>() ?? 0;
@@ -82,7 +82,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/unsticky")]
 		public ActionResult Unsticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth, superuser: true);
+			TokenInfo token = ValidateAdminToken(auth);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
 
 			Room room = _roomService.GetStickyRoom();
@@ -97,13 +97,13 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "ban/player")]
 		public ActionResult Ban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth, superuser: true); // TODO: ValidateAdminToken
+			TokenInfo token = ValidateAdminToken(auth);
 			string accountId = ExtractRequiredValue("accountId", body).ToObject<string>();
 			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
 			long? expiration = ExtractOptionalValue("expiration", body)?.ToObject<long>();
 
 			Ban ban = new Ban(accountId, reason, expiration, _roomService.GetRoomsForUser(accountId));
-			_banMongoService.Create(ban);
+			_banService.Create(ban);
 
 			return Ok(ban.ResponseObject);
 		}
@@ -111,10 +111,10 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "ban/lift")]
 		public ActionResult Unban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth, superuser: true);
+			TokenInfo token = ValidateAdminToken(auth);
 			string banId = ExtractRequiredValue("banId", body).ToObject<string>();
 			
-			_banMongoService.Remove(banId);
+			_banService.Remove(banId);
 
 			return Ok();
 		}
@@ -122,19 +122,19 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "ban/list")]
 		public ActionResult ListBans([FromHeader(Name = AUTH)] string auth)
 		{
-			try
-			{
-				ValidateToken(auth, superuser: true);
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateAdminToken(auth);
 			
-			return Ok(new { Bans = _banMongoService.List() });
+			return Ok(new { Bans = _banService.List() }); // TODO: ResponseObject
 		}
 		#endregion players
+
+		[HttpGet, Route(template: "health")]
+		public override ActionResult HealthCheck()
+		{
+			return Ok(
+				_banService.HealthCheckResponseObject,
+				_roomService.HealthCheckResponseObject
+			);
+		}
 	}
-} // TODO: Postman Sticky / Unsticky / Delete
+}

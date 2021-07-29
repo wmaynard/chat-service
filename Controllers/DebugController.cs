@@ -77,5 +77,10 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(new { RoomsDestroyed = rooms.Count });
 		}
 		#endif
+		[HttpGet, Route("health")]
+		public override ActionResult HealthCheck()
+		{
+			return Ok(_roomService.HealthCheckResponseObject);
+		}
 	}
 }

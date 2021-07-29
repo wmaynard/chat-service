@@ -12,7 +12,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat/settings")]
 	public class SettingsController : RumbleController
 	{
-		private SettingsService _settingsService;
+		private readonly SettingsService _settingsService;
 		
 		protected override string TokenAuthEndpoint => _config["player-service-verify"];
 
@@ -63,6 +63,11 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			_settingsService.Nuke();
 			return Ok();
+		}
+		[HttpGet, Route("health")]
+		public override ActionResult HealthCheck()
+		{
+			return Ok(_settingsService.HealthCheckResponseObject);
 		}
 	}
 }

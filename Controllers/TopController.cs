@@ -17,15 +17,15 @@ namespace Rumble.Platform.ChatService.Controllers
 
 		// public TopController(IConfiguration config) => _config = config;
 
-		private readonly BanMongoService _banMongoService;
+		private readonly BanService _banService;
 		private readonly ReportService _reportService;
 		private readonly RoomService _roomService;
 		private readonly SettingsService _settingsService;
 
-		public TopController(BanMongoService bansMongo, ReportService reports, RoomService rooms, SettingsService settings, IConfiguration config)
+		public TopController(BanService bans, ReportService reports, RoomService rooms, SettingsService settings, IConfiguration config)
 			: base(config)
 		{
-			_banMongoService = bansMongo;
+			_banService = bans;
 			_reportService = reports;
 			_roomService = rooms;
 			_settingsService = settings;
@@ -40,25 +40,28 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
-			IEnumerable<Ban> bans = _banMongoService.GetBansForUser(token.AccountId);
+			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
 			ChatSettings settings = _settingsService.Get(token.AccountId);
 
-			return Ok(Merge(
+			return Ok(
 				Ban.GenerateResponseFrom(bans),
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies)
-			));
+			);
 		}
 
 		// Required for load balancers.  Verifies that all services are healthy.
 		[HttpGet, Route(template: "health")]
-		public ActionResult HealthCheck()
+		public override ActionResult HealthCheck()
 		{
 			Log.Write("/health");
-			string s = Environment.GetEnvironmentVariable("RUMBLE_GAME") ?? "$RUMBLE_GAME not found.";
-			Log.Write("$RUMBLE_GAME: " + s);
 			// TODO: Check status of services and controllers
-			return Ok(new {Healthy = true});
+			return Ok(
+				_banService.HealthCheckResponseObject,
+				_reportService.HealthCheckResponseObject,
+				_roomService.HealthCheckResponseObject,
+				_settingsService.HealthCheckResponseObject
+			);
 		}
 	}
 }

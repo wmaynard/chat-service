@@ -12,16 +12,14 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	public class RoomService
+	public class RoomService : RumbleMongoService
 	{
-		private readonly IMongoCollection<Room> _collection;
+		private new readonly IMongoCollection<Room> _collection;
 
-		public RoomService(ChatDBSettings settings)
+		public RoomService(ChatDBSettings settings) : base(settings)
 		{
 			Log.Write("Creating RoomService...");
-			MongoClient client = new MongoClient(settings.ConnectionString);
-			IMongoDatabase db = client.GetDatabase(settings.DatabaseName);
-			_collection = db.GetCollection<Room>(settings.CollectionName);
+			_collection = _database.GetCollection<Room>(settings.CollectionName);
 			Log.Write("Done.");
 		}
 

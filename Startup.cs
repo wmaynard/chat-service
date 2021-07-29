@@ -90,7 +90,7 @@ namespace Rumble.Platform.ChatService
 			services.AddSingleton<RoomService>();
 			services.AddSingleton<ReportService>();
 			services.AddSingleton<SettingsService>();
-			services.AddSingleton<BanMongoService>();
+			services.AddSingleton<BanService>();
 			
 			Log.Write("Adding Controllers");
 			services.AddControllers(config =>

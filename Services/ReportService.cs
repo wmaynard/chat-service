@@ -2,18 +2,17 @@ using System.Collections.Generic;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
+using Rumble.Platform.ChatService.Utilities;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	public class ReportService
+	public class ReportService : RumbleMongoService
 	{
-		private readonly IMongoCollection<Report> _collection;
+		private new readonly IMongoCollection<Report> _collection;
 
-		public ReportService(ReportDBSettings settings)
+		public ReportService(ReportDBSettings settings) : base(settings)
 		{
-			MongoClient client = new MongoClient(settings.ConnectionString);
-			IMongoDatabase db = client.GetDatabase(settings.DatabaseName);
-			_collection = db.GetCollection<Report>(settings.CollectionName);
+			_collection = _database.GetCollection<Report>(settings.CollectionName);
 		}
 
 		public List<Report> List() => _collection.Find(filter: r => true).ToList();
