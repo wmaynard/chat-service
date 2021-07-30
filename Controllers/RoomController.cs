@@ -49,7 +49,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			{
 				Room ciao;
 				try { ciao = rooms.First(r => r.Id == roomId); }
-				catch (InvalidOperationException) { throw new NotInRoomException(); }
+				catch (InvalidOperationException) { throw new RoomNotFoundException(roomId); }
 				
 				ciao.RemoveMember(token.AccountId);
 				_roomService.Update(ciao);

@@ -19,6 +19,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string KEY_LANGUAGE = "language";
 		public const string KEY_MESSAGES = "messages";
 		public const string KEY_MEMBERS = "members";
+		public const string KEY_PREVIOUS_MEMBERS = "previousMembers";
 		public const string KEY_TYPE = "type";
 	
 		public const string TYPE_GLOBAL = "global";
@@ -44,12 +45,15 @@ namespace Rumble.Platform.ChatService.Models
 		public List<Message> Messages { get; set; }
 		[BsonElement(KEY_MEMBERS)]
 		public HashSet<PlayerInfo> Members { get; set; }
+		[BsonElement(KEY_PREVIOUS_MEMBERS)]
+		public HashSet<PlayerInfo> PreviousMembers { get; set; }
 
 		public Room ()
 		{
 			CreatedTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 			Messages = new List<Message>();
 			Members = new HashSet<PlayerInfo>();
+			PreviousMembers = new HashSet<PlayerInfo>();
 		}
 
 		[BsonElement(KEY_TYPE)]
@@ -66,6 +70,7 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
 				throw new AlreadyInRoomException();
+			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
 			if (Members.Count >= Capacity)
 				throw new RoomFullException();
 			Members.Add(playerInfo);
@@ -82,8 +87,10 @@ namespace Rumble.Platform.ChatService.Models
 			Messages.Add(msg);
 			
 			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
-			if (Messages.Count > MESSAGE_CAPACITY)
-				Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
+			if (Messages.Count <= MESSAGE_CAPACITY)
+				return;
+			Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
+			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
 		}
 		/// <summary>
 		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
@@ -105,7 +112,11 @@ namespace Rumble.Platform.ChatService.Models
 		public void RemoveMember(string accountId)
 		{
 			RequireMember(accountId);
-			Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
+			PlayerInfo ciao = Members.First(m => m.AccountId == accountId);
+			Members.Remove(ciao);
+			if (Messages.Any(m => m.AccountId == ciao.AccountId))
+				PreviousMembers.Add(ciao);
+			// Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
 		}
 
 		/// <summary>
@@ -145,7 +156,7 @@ namespace Rumble.Platform.ChatService.Models
 
 		public object ToResponseObject()
 		{
-			return new {Room = this};
+			return new { Room = this };
 		}
 
 		public IEnumerable<Message> Snapshot(string messageId, int before, int after)
