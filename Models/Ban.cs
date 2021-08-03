@@ -57,6 +57,6 @@ namespace Rumble.Platform.ChatService.Models
 		public static object GenerateResponseFrom(IEnumerable<Ban> bans)
 		{
 			return new { Bans = bans };
-		}
+		} // TODO: update playerinfo
 	}
 }

@@ -61,7 +61,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "health")]
 		public override ActionResult HealthCheck()
 		{
-			// TODO: Check status of services and controllers
 			return Ok(
 				_banService.HealthCheckResponseObject,
 				_reportService.HealthCheckResponseObject,

@@ -19,7 +19,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	public class RoomController : ChatControllerBase
 	{
 		// TODO: Update player info
-		// TODO: PreviousMembers | delete when messages are dropped
 		public const string POST_KEY_ROOM_ID = "roomId";
 		public const string POST_KEY_PLAYER_INFO = "playerInfo";
 		public const string POST_KEY_LANGUAGE = "language";

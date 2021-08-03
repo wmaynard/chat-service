@@ -12,7 +12,6 @@ namespace Rumble.Platform.ChatService.Controllers
 {
 	// TODO: Magic Values
 	// TODO: Documentation
-	// TODO: Check bans on chat login
 	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{

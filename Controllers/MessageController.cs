@@ -92,26 +92,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 			
 			_reportService.Create(report);
-			return Ok(report.ResponseObject);	// TODO: udpates
+			return Ok(report.ResponseObject);	// TODO: updates
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
-		/// <param name="auth">The Authorization header from a request.  Tokens are provided by player-service.</param>
-		/// <param name="body">The JSON body.  'roomId', 'lastRead', and 'message' are all required fields.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809,
-		///		"message": {
-		///			"isSticky": false, TODO: Remove IsSticky, convert to SitckyMessage (Text, Languages, Expiration)
-		///			"text": "Hello, World!"
-		///		},
-		///		"roomId": "badfoodbadfoodbadfoodbad",
-		///	}
-		/// </param>
-		/// <returns>Unread JSON messages from the room, as specified by "lastRead".</returns>
-		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
-		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "send")]
 		public ActionResult Send([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{

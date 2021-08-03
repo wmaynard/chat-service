@@ -47,7 +47,7 @@ namespace Rumble.Platform.ChatService
 			// run the service from Terminal with the command "dotnet {path}/chat-service.dll".  This will circumnavigate
 			// Rider's restrictions as well.
 			string mongoConnection = Environment.GetEnvironmentVariable("MONGODB_URI");
-			string database = "player-service-107";
+			string database = Environment.GetEnvironmentVariable("MONGODB_NAME");
 			Log.Write($"mongoConnection: '{mongoConnection}'");
 			if (mongoConnection == null)
 				throw new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");

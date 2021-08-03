@@ -12,9 +12,6 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public class Message
 	{
-		// TODO: Expires tag for sticky?
-		// TODO: Don't remove sticky
-		// TODO: Type should probably be enforced client-side
 		public const string TYPE_ACTIVITY = "activity";
 		public const string TYPE_CHAT = "chat";
 		public const string TYPE_ANNOUNCEMENT = "announcement";

@@ -53,7 +53,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			room.AddMember(player);
 			_roomService.Update(room);
 
-			object updates = GetAllUpdates(token, body);	// TODO: This causes a second hit to mongo, which isn't ideal.
+			object updates = GetAllUpdates(token, body);
 			return Ok(Merge(updates, room.ToResponseObject()));
 		}
 		/// <summary>

@@ -68,6 +68,9 @@ namespace Rumble.Platform.ChatService.Models
 		/// <exception cref="RoomFullException">Indicates the Room is already full, or became full as the account was joining.</exception>
 		public void AddMember(PlayerInfo playerInfo)
 		{
+			playerInfo.Validate();
+			if (playerInfo.ScreenName == null)
+				throw new InvalidPlayerInfoException("Screenname cannot be null.");
 			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
 				throw new AlreadyInRoomException();
 			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
