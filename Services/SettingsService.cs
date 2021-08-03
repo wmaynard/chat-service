@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
@@ -14,6 +15,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public SettingsService(SettingsDBSettings settings) : base(settings)
 		{
+			Log.Write("Creating SettingsService");
 			_collection = _database.GetCollection<ChatSettings>(settings.CollectionName);
 		}
 
@@ -33,6 +35,6 @@ namespace Rumble.Platform.ChatService.Services
 		public void Create(ChatSettings chatSettings) => _collection.InsertOne(document: chatSettings);
 		public void Update(ChatSettings chatSettings) => _collection.ReplaceOne(filter: s => s.Id == chatSettings.Id, replacement: chatSettings);
 		public void Remove(ChatSettings chatSettings) => _collection.DeleteOne(filter: s => s.Id == chatSettings.Id);
-		public void Nuke() => _collection.DeleteMany(filter: s => true);	// TODO: Yikes!
+		public void Nuke() => _collection.DeleteMany(filter: s => true);
 	}
 }

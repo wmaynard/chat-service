@@ -8,6 +8,7 @@ using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
@@ -18,9 +19,8 @@ namespace Rumble.Platform.ChatService.Services
 
 		public RoomService(ChatDBSettings settings) : base(settings)
 		{
-			Log.Write("Creating RoomService...");
+			Log.Write("Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);
-			Log.Write("Done.");
 		}
 
 		// basic CRUD operations
@@ -100,6 +100,7 @@ namespace Rumble.Platform.ChatService.Services
 					throw new RoomNotFoundException(roomId, language);
 				
 				// Auto-scale global chat.  Create a new room and put the user in it.
+				Log.Write($"Creating new global ({language}) room");
 				joined = new Room()
 				{
 					Capacity = Room.GLOBAL_PLAYER_CAPACITY,

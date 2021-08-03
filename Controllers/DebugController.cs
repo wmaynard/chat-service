@@ -12,9 +12,13 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "chat/debug"), Produces(contentType: "application/json")]
 	public class DebugController : ChatControllerBase
 	{
-		public DebugController(RoomService rooms, IConfiguration config) : base(rooms, config){}
+		private readonly SettingsService _settingsService;
+		public DebugController(RoomService rooms, SettingsService settings, IConfiguration config) : base(rooms, config)
+		{
+			_settingsService = settings;
+		}
 		
-		#if DEBUG
+#if DEBUG
 		[HttpPost, Route(template: "rooms/clear")]
 		public ActionResult ClearRooms()
 		{
@@ -38,19 +42,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <summary>
 		/// Adds a user to a room.  Similar to /global/join, but 'roomId' must be specified.
 		/// </summary>
-		/// <param name="auth">The token issued from player-service's /player/launch.</param>
-		/// <param name="body">The JSON body.  'playerInfo', 'roomId', and 'language' are required fields.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809,
-		///		"playerInfo": {
-		///			"avatar": "demon_axe_thrower",
-		///			"sn": "Corky Douglas"
-		///		},
-		///		"roomId": "deadbeefdeadbeefdeadbeef"
-		///	}
-		/// </param>
-		/// <returns>A JSON response containing the Room's data.</returns>
 		[HttpPost, Route(template: "rooms/join")]
 		public ActionResult Join([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
@@ -76,7 +67,13 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Remove(r);
 			return Ok(new { RoomsDestroyed = rooms.Count });
 		}
-		#endif
+        [HttpPost, Route(template: "settings/nuke")]
+        public ActionResult NukeSettings()
+        {
+        	_settingsService.Nuke();
+        	return Ok();
+        }
+#endif
 		[HttpGet, Route("health")]
 		public override ActionResult HealthCheck()
 		{

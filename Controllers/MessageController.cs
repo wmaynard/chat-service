@@ -26,10 +26,12 @@ namespace Rumble.Platform.ChatService.Controllers
 		// TODO: Mongo.updateMany
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
 		private readonly ReportService _reportService;
+		private readonly BanService _banService;
 		
-		public MessageController(ReportService reports, RoomService rooms, IConfiguration config) : base(rooms, config)
+		public MessageController(ReportService reports, RoomService rooms, BanService bans, IConfiguration config) : base(rooms, config)
 		{
 			_reportService = reports;
+			_banService = bans;
 		}
 		
 		/// <summary>
@@ -116,6 +118,12 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
 			Message msg = Message.FromJToken(body["message"], token.AccountId).Validate();
+
+			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId)
+				.Where(b => !b.IsExpired)
+				.OrderByDescending(b => b.ExpirationDate);
+			if (bans.Any())
+				throw new UserBannedException(bans.First().TimeRemaining);
 
 			object updates = GetAllUpdates(token, body, delegate(IEnumerable<Room> rooms)
 			{

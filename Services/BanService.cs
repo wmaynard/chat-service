@@ -9,11 +9,11 @@ using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	// TODO: RumbleMongoService
 	// TODO: RumbleMongoModel
 	// TODO: Revoke token when banned to force client to update
 	
@@ -25,6 +25,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public BanService(BanDBSettings settings) : base(settings)
 		{
+			Log.Write("Creating BanService");
 			_collection = _database.GetCollection<Ban>(settings.CollectionName);
 		}
 

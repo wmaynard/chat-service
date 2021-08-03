@@ -35,7 +35,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "launch")]
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			// TODO: Join global room
 			TokenInfo token = ValidateToken(auth);
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
@@ -62,7 +61,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "health")]
 		public override ActionResult HealthCheck()
 		{
-			Log.Write("/health");
 			// TODO: Check status of services and controllers
 			return Ok(
 				_banService.HealthCheckResponseObject,

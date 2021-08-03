@@ -56,14 +56,6 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(prefs.ResponseObject);
 		}
-		
-		//TODO: Move to debug
-		[HttpPost, Route(template: "nuke")]
-		public ActionResult Nuke()
-		{
-			_settingsService.Nuke();
-			return Ok();
-		}
 		[HttpGet, Route("health")]
 		public override ActionResult HealthCheck()
 		{

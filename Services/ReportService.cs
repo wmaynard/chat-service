@@ -3,6 +3,7 @@ using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
@@ -13,6 +14,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public ReportService(ReportDBSettings settings) : base(settings)
 		{
+			Log.Write("Creating ReportService");
 			_collection = _database.GetCollection<Report>(settings.CollectionName);
 		}
 
