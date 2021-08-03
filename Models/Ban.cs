@@ -18,6 +18,7 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement("expiration")]
 		private long? Expiration { get; set; }
 
+		[JsonIgnore]
 		public DateTime ExpirationDate => Expiration == null ? DateTime.MaxValue : DateTime.UnixEpoch.AddSeconds((double)Expiration);
 		[BsonElement("issued")]
 		private long IssuedOn { get; set; }
@@ -39,6 +40,7 @@ namespace Rumble.Platform.ChatService.Models
 			}
 		}
 
+		[JsonIgnore]
 		public bool IsExpired => ExpirationDate.Subtract(DateTime.UtcNow).TotalMilliseconds <= 0;
 		
 		[JsonIgnore]

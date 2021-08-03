@@ -37,6 +37,7 @@ namespace Rumble.Platform.ChatService
 #if DEBUG
 			string mongoConnection = "mongodb://localhost:27017";
 			string database = "ChatDB";
+			// TODO: Player service verify endpoint
 #endif
 #if RELEASE
 			// Important note: at the time of this comment, it seems that the only possible way to get Rider to use
