@@ -37,33 +37,28 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <summary>
 		/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
-		/// <param name="auth">The Authorization header from a request.  Tokens are provided by player-service.</param>
-		/// <param name="body">The JSON body.  'lastRead', and 'message' are required fields.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809,
-		///		"message": {
-		///			"text": "Hello, World!"
-		///		}
-		///	}
-		/// </param>
-		/// <returns>Unread JSON messages from the room, as specified by "lastRead".</returns>
-		/// <exception cref="InvalidTokenException">Thrown when a request comes in trying to post under another account.</exception>
-		/// <exception cref="BadHttpRequestException">Default exception</exception>
 		[HttpPost, Route(template: "broadcast")]
 		public ActionResult Broadcast([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
+			// Unlike other endpoints, broadcast is called from the game server.
+			// As such, this is the only endpoint that needs to grab "aid", as it does not have access
+			// to the player's token.  This should be alright since the rooms already have the player info
+			// (e.g. screenname / avatar / discriminator).
+			// If there are other endpoints that get modified, however, this and others should be split off
+			// into their own controllers to keep client-facing endpoints consistent in their behavior.
 			TokenInfo token = ValidateToken(auth);
-			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId).Validate();
+			string aid = ExtractRequiredValue("aid", body).ToObject<string>();
+			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
+			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), aid).Validate();
 
-			object updates = GetAllUpdates(token, body,(IEnumerable<Room> rooms) =>
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(aid);
+			foreach (Room r in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
 			{
-				foreach (Room r in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
-				{
-					r.AddMessage(msg);
-					_roomService.Update(r); // TODO: Push the message rather than update the room.
-				}
-			});
+				r.AddMessage(msg);
+				_roomService.Update(r); // TODO: Push the message rather than update the room.
+			}
+
+			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 
 			return Ok(updates);
 		}
