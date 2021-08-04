@@ -50,6 +50,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			string aid = ExtractRequiredValue("aid", body).ToObject<string>();
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), aid).Validate();
+			msg.Type = Message.TYPE_BROADCAST;
 
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(aid);
 			foreach (Room r in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))

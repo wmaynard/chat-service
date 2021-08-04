@@ -16,6 +16,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_CHAT = "chat";
 		public const string TYPE_ANNOUNCEMENT = "announcement";
 		public const string TYPE_UNKNOWN = "unknown";
+		public const string TYPE_BROADCAST = "broadcast";
 
 		public const string KEY_ID = "id";
 		public const string KEY_IS_STICKY = "isSticky";
@@ -26,7 +27,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string KEY_REPORTED = "flagged";
 		public const string KEY_VISIBLE = "visibleFrom";
 		public const string KEY_EXPIRATION = "expiration";
-		
+
 		[BsonElement(KEY_ID)]
 		public string Id { get; set; }
 		[BsonElement(KEY_IS_STICKY), BsonIgnoreIfNull]
