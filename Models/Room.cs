@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Serializers;
 using RestSharp.Validation;
 using Rumble.Platform.ChatService.Utilities;
 
@@ -169,6 +170,15 @@ namespace Rumble.Platform.ChatService.Models
 			int start = position > before ? position - before : 0;
 
 			return ordered.Skip(start).Take(after + before);
+		}
+
+		public bool UpdateMember(PlayerInfo info)
+		{
+			int removed = Members.RemoveWhere(m => m.AccountId == info.AccountId);
+			if (removed > 0)
+				return Members.Add(info);
+			PreviousMembers.RemoveWhere(m => m.AccountId == info.AccountId);
+			return PreviousMembers.Add(info);
 		}
 	}
 }

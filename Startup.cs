@@ -37,7 +37,6 @@ namespace Rumble.Platform.ChatService
 #if DEBUG
 			string mongoConnection = "mongodb://localhost:27017";
 			string database = "ChatDB";
-			// TODO: Player service verify endpoint
 #endif
 #if RELEASE
 			// Important note: at the time of this comment, it seems that the only possible way to get Rider to use
@@ -107,14 +106,6 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
-			Log.Write("Starting file server");
-			app.UseFileServer(new FileServerOptions()
-			{
-				FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "StaticFiles")),
-				RequestPath = "/StaticFiles",
-				EnableDefaultFiles = true
-			});
-			app.UseHttpsRedirection();
 			app.UseRouting();
 			app.UseAuthorization();
 			app.UseEndpoints(endpoints => { endpoints.MapControllers(); });

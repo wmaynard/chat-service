@@ -166,5 +166,21 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			return Ok(_roomService.HealthCheckResponseObject);
 		}
+
+		[HttpPost, Route("update")]
+		public ActionResult UpdatePlayerInfo([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token.AccountId);
+
+			IEnumerable<Room> rooms = _roomService.GetPastAndPresentRoomsForUser(token.AccountId);
+			foreach (Room room in rooms)
+			{
+				room.UpdateMember(info);
+				_roomService.Update(room);
+			}
+
+			return Ok(GetAllUpdates(token, body));
+		}
 	}
 }

@@ -74,6 +74,13 @@ namespace Rumble.Platform.ChatService.Services
 			return output;
 		}
 
+		public List<Room> GetPastAndPresentRoomsForUser(string aid)
+		{
+			FilterDefinitionBuilder<Room> builder = Builders<Room>.Filter;
+			FilterDefinition<Room> filter = builder.Eq("members.aid", aid) | builder.Eq("previousMembers.aid", aid);
+			return _collection.Find(filter).ToList();
+		}
+
 		// TODO: If a user switches languages, they won't leave their old rooms.
 		public Room JoinGlobal(PlayerInfo player, string language, string roomId = null)
 		{
