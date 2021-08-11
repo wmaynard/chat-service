@@ -18,6 +18,8 @@ namespace Rumble.Platform.ChatService.Models
 		private Message[] UnreadMessages { get; set; }
 		[JsonProperty, BsonElement(Room.KEY_MEMBERS)]
 		private IEnumerable<PlayerInfo> Members { get; set; }
+		[JsonProperty, BsonElement(Room.KEY_PREVIOUS_MEMBERS)]
+		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
 
 		/// <summary>
 		/// Creates a RoomUpdate from a given room and timestamp.
@@ -31,7 +33,8 @@ namespace Rumble.Platform.ChatService.Models
 			{
 				Id = room.Id,
 				UnreadMessages = room.MessagesSince(lastRead).ToArray(),
-				Members = room.Members
+				Members = room.Members,
+				PreviousMembers = room.PreviousMembers
 			};
 		}
 		/// <summary>
