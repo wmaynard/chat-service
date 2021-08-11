@@ -32,6 +32,11 @@ namespace Rumble.Platform.ChatService.Services
 				return output;
 			}
 		}
+
+		public IEnumerable<ChatSettings> List()
+		{
+			return _collection.Find(filter: s => true).ToList();
+		}
 		public void Create(ChatSettings chatSettings) => _collection.InsertOne(document: chatSettings);
 		public void Update(ChatSettings chatSettings) => _collection.ReplaceOne(filter: s => s.Id == chatSettings.Id, replacement: chatSettings);
 		public void Remove(ChatSettings chatSettings) => _collection.DeleteOne(filter: s => s.Id == chatSettings.Id);

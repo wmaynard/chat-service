@@ -41,6 +41,11 @@ namespace Rumble.Platform.ChatService.Models
 			MutedPlayers.Add(muted);
 		}
 
+		public void UnmuteAll()
+		{
+			MutedPlayers = new List<PlayerInfo>();
+		}
+
 		public void RemoveMutedPlayer(PlayerInfo muted)
 		{
 			try

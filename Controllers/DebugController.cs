@@ -17,6 +17,18 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			_settingsService = settings;
 		}
+
+		[HttpPost, Route(template: "settings/globalUnmute")]
+		public ActionResult UmuteAllThePlayers([FromBody] JObject body)
+		{
+			foreach (ChatSettings setting in _settingsService.List())
+			{
+				setting.UnmuteAll();
+				_settingsService.Update(setting);
+			}
+
+			return Ok();
+		}
 		
 #if DEBUG
 		[HttpPost, Route(template: "rooms/clear")]
