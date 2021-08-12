@@ -30,7 +30,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_STICKY = "sticky";
 
 		public const int MESSAGE_CAPACITY = 200;
-		public const int GLOBAL_PLAYER_CAPACITY = 50;
+		public const int GLOBAL_PLAYER_CAPACITY = 1000;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
