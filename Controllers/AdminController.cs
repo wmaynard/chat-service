@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,7 @@ namespace Rumble.Platform.ChatService.Controllers
 {
 	// TODO: Magic Values
 	// TODO: Documentation
+	[EnableCors(Startup.CORS_SETTINGS_NAME)]
 	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{
