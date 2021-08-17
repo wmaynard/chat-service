@@ -110,8 +110,7 @@ namespace Rumble.Platform.ChatService
 						builder
 							.AllowAnyMethod()
 							.AllowAnyHeader()
-							.AllowAnyOrigin()
-							.AllowCredentials();
+							.AllowAnyOrigin();
 					}
 				);
 			});
