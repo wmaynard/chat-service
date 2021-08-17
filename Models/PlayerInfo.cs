@@ -13,6 +13,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string KEY_MEMBER_SINCE = "memberSince";
 		public const string KEY_LEVEL = "level";
 		public const string KEY_POWER = "power";
+		public const string KEY_DISCRIMINATOR = "discriminator";
 
 		[BsonElement(KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
@@ -28,6 +29,9 @@ namespace Rumble.Platform.ChatService.Models
 		public int Level { get; set; }
 		[BsonElement(KEY_POWER)]
 		public int Power { get; set; }
+		[BsonElement(KEY_DISCRIMINATOR)]
+		public int Discriminator { get; set; }
+		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 
 		public static PlayerInfo FromJToken(JToken input, string accountId = null)
 		{
@@ -38,7 +42,8 @@ namespace Rumble.Platform.ChatService.Models
 				ScreenName = input[KEY_SCREENNAME]?.ToObject<string>(),
 				InRoomSince = DateTimeOffset.Now.ToUnixTimeSeconds(),	// TODO: We're using this in places other than Rooms now; only assign when joining a room
 				Level = input[KEY_LEVEL]?.ToObject<int>() ?? 0,
-				Power = input[KEY_POWER]?.ToObject<int>() ?? 0
+				Power = input[KEY_POWER]?.ToObject<int>() ?? 0,
+				Discriminator = input[KEY_DISCRIMINATOR]?.ToObject<int>() ?? 0
 			};
 		}
 

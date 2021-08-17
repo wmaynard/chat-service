@@ -116,7 +116,12 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
-			app.UseCors();
+			app.UseCors( builder => builder
+				.AllowAnyMethod()
+				.AllowAnyHeader()
+				.SetIsOriginAllowed(origin => true)
+				.AllowCredentials()
+			);
 			app.UseRouting();
 			app.UseAuthorization();
 			app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
