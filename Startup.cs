@@ -24,6 +24,7 @@ namespace Rumble.Platform.ChatService
 {
 	public class Startup
 	{
+		public const string CORS_SETTINGS_NAME = "_CORS_SETTINGS";
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
@@ -101,11 +102,21 @@ namespace Rumble.Platform.ChatService
 			{
 				options.JsonSerializerOptions.IgnoreNullValues = true;
 			}).AddNewtonsoftJson();
+
+			services.AddCors(options =>
+			{
+				options.AddPolicy(name: CORS_SETTINGS_NAME, builder =>
+					{
+						builder.AllowAnyOrigin();
+					}
+				);
+			});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
+			app.UseCors();
 			app.UseRouting();
 			app.UseAuthorization();
 			app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
