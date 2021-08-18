@@ -1,18 +1,8 @@
-using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
@@ -23,7 +13,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "chat/messages"), Produces(contentType: "application/json")]
 	public class MessageController : ChatControllerBase
 	{
-		// TODO: Mongo.updateMany
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
 		private readonly ReportService _reportService;
 		private readonly BanService _banService;
@@ -88,7 +77,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 			
 			_reportService.Create(report);
-			return Ok(report.ResponseObject);	// TODO: updates
+			return Ok(report.ResponseObject, GetAllUpdates(token, body));
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
@@ -141,7 +130,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
 
-			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }); // TODO: Add stickies to GetAllUpdates
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) });
 		}
 		[HttpGet, Route("health")]
 		public override ActionResult HealthCheck()

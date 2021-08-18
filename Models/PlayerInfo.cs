@@ -1,4 +1,3 @@
-using System;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -7,7 +6,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class PlayerInfo
+	public class PlayerInfo : RumbleModel
 	{
 		private const string DB_KEY_ACCOUNT_ID = "aid";
 		private const string DB_KEY_AVATAR = "pic";
@@ -60,7 +59,7 @@ namespace Rumble.Platform.ChatService.Models
 				AccountId = token.AccountId,
 				Avatar = input[FRIENDLY_KEY_AVATAR]?.ToObject<string>(),
 				ScreenName = token.ScreenName,
-				InRoomSince = DateTimeOffset.Now.ToUnixTimeSeconds(),	// TODO: We're using this in places other than Rooms now; only assign when joining a room
+				InRoomSince = UnixTime,
 				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
 				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
 				Discriminator = token.Discriminator

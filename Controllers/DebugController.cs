@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using RestSharp.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Web;
@@ -42,14 +41,14 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Update(r);
 			}
 
-			return Ok(new { Rooms = rooms });
+			return Ok(CollectionResponseObject(rooms));
 		}
 		[HttpPost, Route(template: "rooms/create")]
 		public ActionResult Create([FromBody] JObject body)
 		{
 			Room r = body.ToObject<Room>();
 			_roomService.Create(r);
-			return Ok(new { Room = r});
+			return Ok(r.ResponseObject);
 		}
 		/// <summary>
 		/// Adds a user to a room.  Similar to /global/join, but 'roomId' must be specified.
@@ -66,7 +65,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			_roomService.Update(room);
 
 			object updates = GetAllUpdates(token, body);
-			return Ok(Merge(updates, room.ResponseObject));
+			return Ok(updates, room.ResponseObject);
 		}
 		/// <summary>
 		/// Here be dragons.  Wipe out ALL rooms.  Only intended for debugging.  Must be removed before Chat goes live.

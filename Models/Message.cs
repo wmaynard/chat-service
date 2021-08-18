@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Message
+	public class Message : RumbleModel
 	{
 		public const string TYPE_ACTIVITY = "activity";
 		public const string TYPE_CHAT = "chat";
@@ -63,7 +60,7 @@ namespace Rumble.Platform.ChatService.Models
 		public Message()
 		{
 			Type = TYPE_CHAT;
-			Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			Timestamp = UnixTime;
 		}
 
 		/// <summary>
@@ -78,7 +75,7 @@ namespace Rumble.Platform.ChatService.Models
 			{
 				Id = Guid.NewGuid().ToString(),
 				Text = input[FRIENDLY_KEY_TEXT]?.ToObject<string>(),
-				Timestamp = input[FRIENDLY_KEY_TIMESTAMP]?.ToObject<long>() ?? DateTimeOffset.Now.ToUnixTimeSeconds(),
+				Timestamp = input[FRIENDLY_KEY_TIMESTAMP]?.ToObject<long>() ?? UnixTime,
 				Type = input[FRIENDLY_KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
 				VisibleFrom = input[FRIENDLY_KEY_VISIBLE_FROM]?.ToObject<long?>(),
 				Expiration = input[FRIENDLY_KEY_EXPIRATION]?.ToObject<long?>(),

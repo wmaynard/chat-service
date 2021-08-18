@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
@@ -50,7 +47,7 @@ namespace Rumble.Platform.ChatService.Services
 			try
 			{
 				Room sticky = GetStickyRoom();
-				long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+				long timestamp = Room.UnixTime;
 				return all
 					? sticky.Messages
 					: sticky.Messages.Where(m => m.VisibleFrom < timestamp && m.Expiration > timestamp);

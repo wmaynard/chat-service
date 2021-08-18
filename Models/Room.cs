@@ -1,12 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson.Serialization.Serializers;
 using Newtonsoft.Json;
-using RestSharp.Validation;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -16,7 +12,7 @@ namespace Rumble.Platform.ChatService.Models
 	public class Room : RumbleModel
 	{
 		private const string DB_KEY_CAPACITY = "cap";
-		private const string DB_KEY_CREATED_TIMESTAMP = "tts";
+		private const string DB_KEY_CREATED_TIMESTAMP = "ts";
 		private const string DB_KEY_GUILD_ID = "gid";
 		private const string DB_KEY_LANGUAGE = "lang";
 		private const string DB_KEY_MESSAGES = "msg";
@@ -54,6 +50,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
 		public string GuildId { get; set; }
+		[BsonIgnore]
+		[JsonIgnore]
+		public bool IsFull => Members.Count >= Capacity;
 		[BsonElement(DB_KEY_LANGUAGE)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE)]
 		public string Language { get; set; }
@@ -71,7 +70,7 @@ namespace Rumble.Platform.ChatService.Models
 		public string Type { get; set; }
 		public Room ()
 		{
-			CreatedTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			CreatedTimestamp = UnixTime;
 			Messages = new List<Message>();
 			Members = new HashSet<PlayerInfo>();
 			PreviousMembers = new HashSet<PlayerInfo>();
@@ -171,9 +170,6 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			return Messages.Where(m => m.Timestamp > timestamp);
 		}
-
-		[BsonIgnore]
-		public bool IsFull => Members.Count >= Capacity;
 
 		public IEnumerable<Message> Snapshot(string messageId, int before, int after)
 		{

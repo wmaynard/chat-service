@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
@@ -49,7 +47,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 
 			return Ok(
-				Ban.GenerateResponseFrom(bans),
+				CollectionResponseObject(bans),
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
 				global.ResponseObject,

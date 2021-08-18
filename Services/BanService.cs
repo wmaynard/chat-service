@@ -1,22 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
-using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	// TODO: RumbleMongoModel
-	// TODO: Revoke token when banned to force client to update
-	
 	public class BanService : RumbleMongoService
 	{
 		private new readonly IMongoCollection<Ban> _collection;

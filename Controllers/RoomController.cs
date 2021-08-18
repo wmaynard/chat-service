@@ -1,12 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
-using MongoDB.Driver;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -18,7 +14,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "chat/rooms"), Produces(contentType: "application/json")]
 	public class RoomController : ChatControllerBase
 	{
-		// TODO: Update player info
 		public const string POST_KEY_ROOM_ID = "roomId";
 		public const string POST_KEY_PLAYER_INFO = "playerInfo";
 		public const string POST_KEY_LANGUAGE = "language";
@@ -35,7 +30,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			object updates = GetAllUpdates(token, body);
 
 			IEnumerable<Room> rooms = _roomService.GetGlobals(language);
-			return Ok(Merge(new { Rooms = rooms }, updates));	// TODO: ResponseObject
+			return Ok(updates, CollectionResponseObject(rooms));
 		}
 		// Intended for use when a user is logging out and needs to exit a room, or leaves a guild chat.
 		[HttpPost, Route(template: "leave")]
@@ -63,10 +58,10 @@ namespace Rumble.Platform.ChatService.Controllers
 			object roomResponse = null;
 			object updates = GetAllUpdates(token, body,(IEnumerable<Room> rooms) =>
 			{
-				roomResponse = new { Rooms = rooms };
+				roomResponse = CollectionResponseObject(rooms);
 			});
 			
-			return Ok(Merge(roomResponse, updates));	// TODO: ResponseObject
+			return Ok(roomResponse, updates);
 		}
 		// Adds or assigns a user to a global room.  Also removes a user from any global rooms they were already in
 		// if it's not the same room.
@@ -114,7 +109,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			foreach (Room room in rooms)
 			{
 				room.UpdateMember(info);
-				_roomService.Update(room);
+				_roomService.Update(room); // TODO: Only update user details, not whole room
 			}
 
 			return Ok(GetAllUpdates(token, body));

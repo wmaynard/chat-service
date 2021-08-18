@@ -1,7 +1,4 @@
-using System;
-using System.Runtime.Serialization;
 using Rumble.Platform.Common.Exceptions;
-using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Utilities
 {

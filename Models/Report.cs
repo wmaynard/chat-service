@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Report
+	public class Report : RumbleModel
 	{
 		public const int COUNT_MESSAGES_BEFORE_REPORTED = 25;
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;
@@ -50,13 +49,10 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_STATUS)]
 		[JsonProperty(FRIENDLY_KEY_STATUS)]
 		public string Status { get; set; }
-		[BsonIgnore]
-		[Newtonsoft.Json.JsonIgnore]
-		public object ResponseObject => new { Report = this };
 
 		public Report()
 		{
-			Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			Timestamp = UnixTime;
 			Status = STATUS_UNADDRESSED;
 		}
 	}

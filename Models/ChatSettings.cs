@@ -4,10 +4,12 @@ using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
-{ // TODO: Update all models with JsonProperty(Name = ... )
-	public class ChatSettings	// "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
+{
+	// The class name "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
+	public class ChatSettings : RumbleModel
 	{
 		private const string DB_KEY_ACCOUNT_ID = "aid";
 		private const string DB_KEY_MUTED_PLAYERS = "mp";
@@ -25,8 +27,8 @@ namespace Rumble.Platform.ChatService.Models
 		private List<PlayerInfo> MutedPlayers { get; set; }
 
 		[BsonIgnore]
-		[JsonIgnore]	// Required to avoid calling circular reference when serializing
-		public object ResponseObject => new { Settings = this };
+		[JsonIgnore]
+		public override object ResponseObject => new { Settings = this };
 
 		public ChatSettings(string accountId)
 		{

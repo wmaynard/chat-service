@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Ban
+	public class Ban : RumbleModel
 	{
 		private const string DB_KEY_ACCOUNT_ID = "aid";
 		private const string DB_KEY_REASON = "why";
@@ -37,7 +37,7 @@ namespace Rumble.Platform.ChatService.Models
 		private long? Expiration { get; set; }
 
 		[BsonIgnore]
-		[Newtonsoft.Json.JsonIgnore]
+		[JsonIgnore]
 		public DateTime ExpirationDate => Expiration == null ? DateTime.MaxValue : DateTime.UnixEpoch.AddSeconds((double)Expiration);
 		[BsonElement(DB_KEY_ISSUED)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ISSUED)]
@@ -64,26 +64,16 @@ namespace Rumble.Platform.ChatService.Models
 		}
 		
 		[BsonIgnore]
-		[Newtonsoft.Json.JsonIgnore]
+		[JsonIgnore]
 		public bool IsExpired => ExpirationDate.Subtract(DateTime.UtcNow).TotalMilliseconds <= 0;
-		
-		[BsonIgnore]
-		[Newtonsoft.Json.JsonIgnore]
-		public object ResponseObject => new { Ban = this };
-		
 
 		public Ban(string accountId, string reason, long? expiration, IEnumerable<Room> rooms)
 		{
 			AccountId = accountId;
 			Reason = reason;
-			IssuedOn = DateTimeOffset.Now.ToUnixTimeSeconds();
+			IssuedOn = UnixTime;
 			Expiration = expiration;
 			Snapshot = rooms.ToArray();
 		}
-
-		public static object GenerateResponseFrom(IEnumerable<Ban> bans)
-		{
-			return new { Bans = bans };
-		} // TODO: update playerinfo
 	}
 }

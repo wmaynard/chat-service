@@ -28,7 +28,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult ListAllRooms([FromHeader(Name = AUTH)] string auth)
 		{
 			TokenInfo token = ValidateToken(auth);
-			return Ok(new {Rooms = _roomService.List()});
+			return Ok(CollectionResponseObject(_roomService.List()));
 		}
 
 		#region messages
@@ -101,7 +101,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateAdminToken(auth);
 			string accountId = ExtractRequiredValue("accountId", body).ToObject<string>();
 			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
-			string reportId = ExtractOptionalValue("reportId", body)?.ToObject<string>(); // TODO
+			string reportId = ExtractOptionalValue("reportId", body)?.ToObject<string>();
 			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long>();
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
@@ -126,8 +126,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult ListBans([FromHeader(Name = AUTH)] string auth)
 		{
 			TokenInfo token = ValidateAdminToken(auth);
-			
-			return Ok(new { Bans = _banService.List() }); // TODO: ResponseObject
+
+			return Ok(CollectionResponseObject(_banService.List()));
 		}
 		#endregion players
 

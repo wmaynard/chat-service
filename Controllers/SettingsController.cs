@@ -8,7 +8,6 @@ using Rumble.Platform.Common.Web;
 namespace Rumble.Platform.ChatService.Controllers
 {
 	// TODO: Documentation
-	// TODO: Magic Values
 	[ApiController, Route("chat/settings")]
 	public class SettingsController : RumbleController
 	{
