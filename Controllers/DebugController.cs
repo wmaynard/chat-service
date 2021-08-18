@@ -59,14 +59,14 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			TokenInfo token = ValidateToken(auth);
 			string roomId = ExtractRequiredValue("roomId", body).ToString();
-			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token.AccountId);
+			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token);
 
 			Room room = _roomService.Get(roomId);
 			room.AddMember(player);
 			_roomService.Update(room);
 
 			object updates = GetAllUpdates(token, body);
-			return Ok(Merge(updates, room.ToResponseObject()));
+			return Ok(Merge(updates, room.ResponseObject));
 		}
 		/// <summary>
 		/// Here be dragons.  Wipe out ALL rooms.  Only intended for debugging.  Must be removed before Chat goes live.

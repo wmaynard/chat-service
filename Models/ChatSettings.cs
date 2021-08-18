@@ -9,22 +9,22 @@ namespace Rumble.Platform.ChatService.Models
 { // TODO: Update all models with JsonProperty(Name = ... )
 	public class ChatSettings	// "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
 	{
-		public const string KEY_ID = "id";
-		private const string KEY_ACCOUNT_ID = "aid";
-		private const string KEY_MUTED_PLAYERS = "mp";
+		private const string DB_KEY_ACCOUNT_ID = "aid";
+		private const string DB_KEY_MUTED_PLAYERS = "mp";
 
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "accountId";
 		public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
-		[BsonElement(KEY_ACCOUNT_ID)]
+		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
-		[BsonElement(KEY_MUTED_PLAYERS)]
+		[BsonElement(DB_KEY_MUTED_PLAYERS)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_MUTED_PLAYERS)]
 		private List<PlayerInfo> MutedPlayers { get; set; }
 
+		[BsonIgnore]
 		[JsonIgnore]	// Required to avoid calling circular reference when serializing
 		public object ResponseObject => new { Settings = this };
 

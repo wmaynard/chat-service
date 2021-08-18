@@ -1,49 +1,69 @@
 using System;
 using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
 	public class PlayerInfo
 	{
-		public const string KEY_ACCOUNT_ID = "aid";
-		public const string KEY_AVATAR = "avatar";
-		public const string KEY_SCREENNAME = "sn";
-		public const string KEY_MEMBER_SINCE = "memberSince";
-		public const string KEY_LEVEL = "level";
-		public const string KEY_POWER = "power";
-		public const string KEY_DISCRIMINATOR = "discriminator";
+		private const string DB_KEY_ACCOUNT_ID = "aid";
+		private const string DB_KEY_AVATAR = "pic";
+		private const string DB_KEY_SCREENNAME = "sn";
+		private const string DB_KEY_MEMBER_SINCE = "ms";
+		private const string DB_KEY_LEVEL = "lv";
+		private const string DB_KEY_POWER = "pwr";
+		private const string DB_KEY_DISCRIMINATOR = "disc";
+		
+		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
+		public const string FRIENDLY_KEY_AVATAR = "avatar";
+		public const string FRIENDLY_KEY_SCREENNAME = "sn";
+		public const string FRIENDLY_KEY_MEMBER_SINCE = "memberSince";
+		public const string FRIENDLY_KEY_LEVEL = "level";
+		public const string FRIENDLY_KEY_POWER = "power";
+		public const string FRIENDLY_KEY_DISCRIMINATOR = "discriminator";
+		public const string FRIENDLY_KEY_UNIQUE_SCREENNAME = "screenname";
 
-		[BsonElement(KEY_ACCOUNT_ID)]
+		[BsonElement(DB_KEY_ACCOUNT_ID)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
 		
-		[BsonElement(KEY_AVATAR)]
+		[BsonElement(DB_KEY_AVATAR)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_AVATAR)]
 		public string Avatar { get; set; }
-		[BsonElement(KEY_MEMBER_SINCE)]
+		[BsonElement(DB_KEY_MEMBER_SINCE), BsonIgnoreIfNull]
+		[JsonProperty(FRIENDLY_KEY_MEMBER_SINCE, NullValueHandling = NullValueHandling.Ignore)]
 		public long InRoomSince { get; set; }
 		
-		[BsonElement(KEY_SCREENNAME)]
+		[BsonElement(DB_KEY_SCREENNAME)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_SCREENNAME)]
 		public string ScreenName { get; set; }
-		[BsonElement(KEY_LEVEL)]
+		[BsonElement(DB_KEY_LEVEL)]
+		[JsonProperty(FRIENDLY_KEY_LEVEL)]
 		public int Level { get; set; }
-		[BsonElement(KEY_POWER)]
+		[BsonElement(DB_KEY_POWER)]
+		[JsonProperty(FRIENDLY_KEY_POWER, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public int Power { get; set; }
-		[BsonElement(KEY_DISCRIMINATOR)]
+		[BsonElement(DB_KEY_DISCRIMINATOR)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_DISCRIMINATOR, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public int Discriminator { get; set; }
+		[BsonIgnore]
+		[JsonIgnore]
 		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 
-		public static PlayerInfo FromJToken(JToken input, string accountId = null)
+		public static PlayerInfo FromJToken(JToken input, TokenInfo token)
 		{
 			return new PlayerInfo()
 			{
-				AccountId = accountId ?? input[KEY_ACCOUNT_ID].ToObject<string>(),
-				Avatar = input[KEY_AVATAR]?.ToObject<string>(),
-				ScreenName = input[KEY_SCREENNAME]?.ToObject<string>(),
+				AccountId = token.AccountId,
+				Avatar = input[FRIENDLY_KEY_AVATAR]?.ToObject<string>(),
+				ScreenName = token.ScreenName,
 				InRoomSince = DateTimeOffset.Now.ToUnixTimeSeconds(),	// TODO: We're using this in places other than Rooms now; only assign when joining a room
-				Level = input[KEY_LEVEL]?.ToObject<int>() ?? 0,
-				Power = input[KEY_POWER]?.ToObject<int>() ?? 0,
-				Discriminator = input[KEY_DISCRIMINATOR]?.ToObject<int>() ?? 0
+				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
+				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
+				Discriminator = token.Discriminator
 			};
 		}
 

@@ -25,7 +25,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Mute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
+			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token);
 
 			ChatSettings prefs = _settingsService.Get(token.AccountId);
 			prefs.AddMutedPlayer(info);
@@ -38,7 +38,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Unmute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
+			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token);
 
 			ChatSettings prefs = _settingsService.Get(token.AccountId);
 			prefs.RemoveMutedPlayer(info);

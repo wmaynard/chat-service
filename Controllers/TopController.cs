@@ -38,7 +38,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
-			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token.AccountId);
+			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
@@ -52,7 +52,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				Ban.GenerateResponseFrom(bans),
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
-				global.ToResponseObject(),
+				global.ResponseObject,
 				updates
 			);
 		}

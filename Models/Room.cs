@@ -5,23 +5,34 @@ using System.Runtime.CompilerServices;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.Serializers;
+using Newtonsoft.Json;
 using RestSharp.Validation;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
 	[BsonIgnoreExtraElements]
-	public class Room
+	public class Room : RumbleModel
 	{
-		public const string KEY_ID = "id";
-		public const string KEY_CAPACITY = "capacity";
-		public const string KEY_CREATED_TIMESTAMP = "created";
-		public const string KEY_GUILD_ID = "guildId";
-		public const string KEY_LANGUAGE = "language";
-		public const string KEY_MESSAGES = "messages";
-		public const string KEY_MEMBERS = "members";
-		public const string KEY_PREVIOUS_MEMBERS = "previousMembers";
-		public const string KEY_TYPE = "type";
+		private const string DB_KEY_CAPACITY = "cap";
+		private const string DB_KEY_CREATED_TIMESTAMP = "tts";
+		private const string DB_KEY_GUILD_ID = "gid";
+		private const string DB_KEY_LANGUAGE = "lang";
+		private const string DB_KEY_MESSAGES = "msg";
+		private const string DB_KEY_MEMBERS = "who";
+		private const string DB_KEY_PREVIOUS_MEMBERS = "pwho";
+		private const string DB_KEY_TYPE = "t";
+
+		public const string FRIENDLY_KEY_ID = "id";
+		public const string FRIENDLY_KEY_CAPACITY = "capacity";
+		public const string FRIENDLY_KEY_CREATED_TIMESTAMP = "created";
+		public const string FRIENDLY_KEY_GUILD_ID = "guildId";
+		public const string FRIENDLY_KEY_LANGUAGE = "language";
+		public const string FRIENDLY_KEY_MESSAGES = "messages";
+		public const string FRIENDLY_KEY_MEMBERS = "members";
+		public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
+		public const string FRIENDLY_KEY_TYPE = "type";
 	
 		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
@@ -34,21 +45,30 @@ namespace Rumble.Platform.ChatService.Models
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
-		[BsonElement(KEY_CAPACITY)]
+		[BsonElement(DB_KEY_CAPACITY)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_CAPACITY)]
 		public int Capacity { get; set; }
-		[BsonElement(KEY_CREATED_TIMESTAMP)]
+		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
-		[BsonElement(KEY_GUILD_ID), BsonIgnoreIfNull]
+		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
 		public string GuildId { get; set; }
-		[BsonElement(KEY_LANGUAGE)]
+		[BsonElement(DB_KEY_LANGUAGE)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE)]
 		public string Language { get; set; }
-		[BsonElement(KEY_MESSAGES)]
+		[BsonElement(DB_KEY_MESSAGES)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGES)]
 		public List<Message> Messages { get; set; }
-		[BsonElement(KEY_MEMBERS)]
+		[BsonElement(DB_KEY_MEMBERS)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_MEMBERS)]
 		public HashSet<PlayerInfo> Members { get; set; }
-		[BsonElement(KEY_PREVIOUS_MEMBERS)]
+		[BsonElement(DB_KEY_PREVIOUS_MEMBERS)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_PREVIOUS_MEMBERS, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public HashSet<PlayerInfo> PreviousMembers { get; set; }
-
+		[BsonElement(DB_KEY_TYPE)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
+		public string Type { get; set; }
 		public Room ()
 		{
 			CreatedTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -56,9 +76,6 @@ namespace Rumble.Platform.ChatService.Models
 			Members = new HashSet<PlayerInfo>();
 			PreviousMembers = new HashSet<PlayerInfo>();
 		}
-
-		[BsonElement(KEY_TYPE)]
-		public string Type { get; set; }
 
 		/// <summary>
 		/// Adds an account ID to the Room.  If the player already exists in the room, an AlreadyInRoomException is
@@ -157,11 +174,6 @@ namespace Rumble.Platform.ChatService.Models
 
 		[BsonIgnore]
 		public bool IsFull => Members.Count >= Capacity;
-
-		public object ToResponseObject()
-		{
-			return new { Room = this };
-		}
 
 		public IEnumerable<Message> Snapshot(string messageId, int before, int after)
 		{

@@ -43,7 +43,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
 			_roomService.Update(room);
 
-			return Ok(room.ToResponseObject());
+			return Ok(room.ResponseObject);
 		}
 
 		[HttpPost, Route(template: "messages/sticky")]
@@ -77,7 +77,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Create(room);
 			}
 
-			return Ok(room.ToResponseObject());
+			return Ok(room.ResponseObject);
 		}
 		
 		[HttpPost, Route(template: "messages/unsticky")]
@@ -90,7 +90,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
 			_roomService.Update(room);
 			
-			return Ok(room.ToResponseObject());
+			return Ok(room.ResponseObject);
 		}
 		#endregion messages
 

@@ -10,15 +10,15 @@ namespace Rumble.Platform.ChatService.Models
 	/// </summary>
 	public class RoomUpdate
 	{
-		private const string KEY_UNREAD_MESSAGES = "unreadMessages";
+		private const string FRIENDLY_KEY_UNREAD_MESSAGES = "unreadMessages";
 		
-		[JsonProperty, BsonElement(Room.KEY_ID)]
+		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_ID)]
 		private string Id { get; set; }
-		[JsonProperty, BsonElement(KEY_UNREAD_MESSAGES)]
+		[JsonProperty, BsonElement(FRIENDLY_KEY_UNREAD_MESSAGES)]
 		private Message[] UnreadMessages { get; set; }
-		[JsonProperty, BsonElement(Room.KEY_MEMBERS)]
+		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_MEMBERS)]
 		private IEnumerable<PlayerInfo> Members { get; set; }
-		[JsonProperty, BsonElement(Room.KEY_PREVIOUS_MEMBERS)]
+		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
 		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
 
 		/// <summary>

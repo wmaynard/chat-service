@@ -18,39 +18,52 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_UNKNOWN = "unknown";
 		public const string TYPE_BROADCAST = "broadcast";
 
-		public const string KEY_ID = "id";
-		public const string KEY_IS_STICKY = "isSticky";
-		public const string KEY_TEXT = "text";
-		public const string KEY_TIMESTAMP = "timestamp";
-		public const string KEY_TYPE = "type";
-		public const string KEY_AID = "aid";
-		public const string KEY_REPORTED = "flagged";
-		public const string KEY_VISIBLE = "visibleFrom";
-		public const string KEY_EXPIRATION = "expiration";
+		private const string DB_KEY_ID = "id";
+		private const string DB_KEY_TEXT = "txt";
+		private const string DB_KEY_TIMESTAMP = "ts";
+		private const string DB_KEY_TYPE = "mt";
+		private const string DB_KEY_ACCOUNT_ID = "aid";
+		private const string DB_KEY_REPORTED = "bad";
+		private const string DB_KEY_VISIBLE_FROM = "vf";
+		private const string DB_KEY_EXPIRATION = "exp";
 
-		[BsonElement(KEY_ID)]
+		public const string FRIENDLY_KEY_ID = "id";
+		public const string FRIENDLY_KEY_TEXT = "text";
+		public const string FRIENDLY_KEY_TIMESTAMP = "timestamp";
+		public const string FRIENDLY_KEY_TYPE = "type";
+		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
+		public const string FRIENDLY_KEY_REPORTED = "flagged";
+		public const string FRIENDLY_KEY_VISIBLE_FROM = "visibleFrom";
+		public const string FRIENDLY_KEY_EXPIRATION = "expiration";
+
+		[BsonElement(DB_KEY_ID)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_ID)]
 		public string Id { get; set; }
-		[BsonElement(KEY_IS_STICKY), BsonIgnoreIfNull]
-		public bool IsSticky { get; set; }
-		[BsonElement(KEY_TEXT)]
+		[BsonElement(DB_KEY_TEXT)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT)]
 		public string Text { get; set; }
-		[BsonElement(KEY_TIMESTAMP)]
+		[BsonElement(DB_KEY_TIMESTAMP)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }
-		[BsonElement(KEY_TYPE)]
+		[BsonElement(DB_KEY_TYPE)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
 		public string Type { get; set; }
-		[BsonElement(KEY_AID)]
+		[BsonElement(DB_KEY_ACCOUNT_ID)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
-		[BsonElement(KEY_REPORTED), BsonIgnoreIfNull, JsonPropertyName("HopefullyRenameMe")]
+		[BsonElement(DB_KEY_REPORTED), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED, NullValueHandling = NullValueHandling.Ignore)]
 		public bool? Reported { get; set; }
-		[BsonElement(KEY_VISIBLE)]
+		[BsonElement(DB_KEY_VISIBLE_FROM), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_VISIBLE_FROM, NullValueHandling = NullValueHandling.Ignore)]
 		public long? VisibleFrom { get; set; }
-		[BsonElement(KEY_EXPIRATION)]
+		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
 		public long? Expiration { get; set; }
 		public Message()
 		{
 			Type = TYPE_CHAT;
 			Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-			IsSticky = false;
 		}
 
 		/// <summary>
@@ -64,12 +77,11 @@ namespace Rumble.Platform.ChatService.Models
 			return new Message()
 			{
 				Id = Guid.NewGuid().ToString(),
-				IsSticky = input[KEY_IS_STICKY]?.ToObject<bool>() ?? false,
-				Text = input[KEY_TEXT]?.ToObject<string>(),
-				Timestamp = input[KEY_TIMESTAMP]?.ToObject<long>() ?? DateTimeOffset.Now.ToUnixTimeSeconds(),
-				Type = input[KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
-				VisibleFrom = input[KEY_VISIBLE]?.ToObject<long?>(),
-				Expiration = input[KEY_EXPIRATION]?.ToObject<long?>(),
+				Text = input[FRIENDLY_KEY_TEXT]?.ToObject<string>(),
+				Timestamp = input[FRIENDLY_KEY_TIMESTAMP]?.ToObject<long>() ?? DateTimeOffset.Now.ToUnixTimeSeconds(),
+				Type = input[FRIENDLY_KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
+				VisibleFrom = input[FRIENDLY_KEY_VISIBLE_FROM]?.ToObject<long?>(),
+				Expiration = input[FRIENDLY_KEY_EXPIRATION]?.ToObject<long?>(),
 				AccountId = accountId
 			};
 		}
@@ -77,11 +89,9 @@ namespace Rumble.Platform.ChatService.Models
 		internal Message Validate()
 		{
 			if (Text == null)
-				throw new ArgumentNullException("Text", $"'{KEY_TEXT}' cannot be null.");
+				throw new ArgumentNullException("Text", $"'{FRIENDLY_KEY_TEXT}' cannot be null.");
 			if (AccountId == null)
-				throw new ArgumentNullException("UserInfo", $"'{KEY_AID}' cannot be null");
-			if (AccountId == null)
-				throw new ArgumentNullException("UserInfo.AccountId", $"'{KEY_AID}.{PlayerInfo.KEY_ACCOUNT_ID}' cannot be null.");
+				throw new ArgumentNullException("UserInfo", $"'{FRIENDLY_KEY_ACCOUNT_ID}' cannot be null");
 			return this;
 		}
 
