@@ -1,0 +1,137 @@
+image: alpine:latest
+
+variables:
+  # KUBE_INGRESS_BASE_DOMAIN is the application deployment domain and should be set as a variable at the group or project level.
+  # KUBE_INGRESS_BASE_DOMAIN: domain.example.com
+  POSTGRES_ENABLED: "false"
+  HELM_SCALE_EXTRA_ARGS: --set postgresql.enabled="false" 
+  K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
+  K8S_SECRET_REDIS_PASSWORD: "$REDIS_PASSWORD"
+  DOCKER_DRIVER: overlay2
+
+  ROLLOUT_RESOURCE_TYPE: deployment
+
+  DOCKER_TLS_CERTDIR: ""  # https://gitlab.com/gitlab-org/gitlab-runner/issues/4501
+
+stages:
+  - app_build
+  - build
+  - deploy  # dummy stage to follow the template guidelines
+  - dev
+  - staging
+  - production
+  - performance
+  - cleanup
+
+workflow:
+  rules:
+    - if: '$BUILDPACK_URL || $AUTO_DEVOPS_EXPLICITLY_ENABLED == "1" || $DOCKERFILE_PATH'
+    - exists:
+        - Dockerfile
+    # https://github.com/heroku/heroku-buildpack-gradle
+    - exists:
+        - gradlew
+        - build.gradle
+        - settings.gradle
+    # https://github.com/heroku/heroku-buildpack-multi
+    - exists:
+        - .buildpacks
+    # https://github.com/heroku/heroku-buildpack-python
+    # TODO: detect script checks that all of these exist, not any
+    - exists:
+        - requirements.txt
+        - setup.py
+        - Pipfile
+
+build_app:
+  stage: app_build
+  image: mcr.microsoft.com/dotnet/sdk:5.0
+  tags:
+    - kubernetes
+   script:
+    - dotnet restore
+    - dotnet build --no-restore --configuration Release
+  artifacts:
+    paths:
+      - bin/Release/net5.0/*
+
+
+# build_image:
+#   stage: build
+#   image: 'registry.gitlab.com/gitlab-org/cluster-integration/auto-build-image:v1.0.0'
+#   tags:
+#     - kubernetes
+#   variables:
+#     DOCKER_TLS_CERTDIR: ''
+#   services:
+#     - name: 'docker:20.10.6-dind'
+#       command: ['--tls=false', '--host=tcp://0.0.0.0:2375']
+#   script:
+#     - |
+#       if [[ -z "$CI_COMMIT_TAG" ]]; then
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+#       else
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+#       fi
+#     - /build/build.sh
+#   rules:
+#     - if: '$BUILD_DISABLED'
+#       when: never
+#     - if: '$AUTO_DEVOPS_PLATFORM_TARGET == "EC2"'
+#       when: never
+#     - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+#   needs:
+#     - job: build_app
+#       artifacts: true
+
+
+dev:
+  stage: dev
+  image: ubuntu:latest
+  script:
+    - apt-get update -yq
+    - apt-get install -y ruby-dev zip git
+    - zip -r $CI_PROJECT_NAME.zip bin/Release/net5.0/
+    - gem install dpl --pre
+    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=900
+  environment:
+    name: dev
+  needs:
+    - job: build_app
+      artifacts: true
+
+stage-a: 
+  image: ubuntu:latest
+  stage: staging
+  allow_failure: false
+  when: manual
+  script:
+    - apt-get update -yq
+    - apt-get install -y ruby-dev zip git
+    - zip -r $CI_PROJECT_NAME.zip .ebextensions/ build/
+    - gem install dpl --pre
+    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-A --wait_until_deployed --wait_until_deployed_timeout=900
+  environment:
+    name: stage-a
+  needs:
+    - job: build_app
+      artifacts: true
+
+stage-b: 
+  image: ubuntu:latest
+  stage: staging
+  allow_failure: false
+  when: manual
+  script:
+    - apt-get update -yq
+    - apt-get install -y ruby-dev zip git
+    - zip -r $CI_PROJECT_NAME.zip .ebextensions/ build/
+    - gem install dpl --pre
+    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=Chat-Service-Stage-B --wait_until_deployed --wait_until_deployed_timeout=900
+  environment:
+    name: stage-b
+  needs:
+    - job: build_app
+      artifacts: true
