@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
@@ -16,7 +17,13 @@ namespace Rumble.Platform.ChatService.Services
 			Log.Write("Creating ReportService");
 			_collection = _database.GetCollection<Report>(settings.CollectionName);
 		}
-
+		public Report Get(string id)
+		{
+			Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+			if (output == null)
+				throw new Exception("Report not found!"); // TODO: ReportNotFoundException
+			return output;
+		}
 		public List<Report> List() => _collection.Find(filter: r => true).ToList();
 		public void Create(Report report) => _collection.InsertOne(document: report);
 

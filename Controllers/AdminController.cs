@@ -18,10 +18,12 @@ namespace Rumble.Platform.ChatService.Controllers
 	public class AdminController : ChatControllerBase
 	{
 		private readonly BanService _banService;
+		private readonly ReportService _reportService;
 
-		public AdminController(BanService bans, RoomService rooms, IConfiguration config) : base(rooms, config)
+		public AdminController(BanService bans, ReportService reports, RoomService rooms, IConfiguration config) : base(rooms, config)
 		{
 			_banService = bans;
+			_reportService = reports;
 		}
 
 		[HttpGet, Route(template: "rooms/list")]
@@ -78,6 +80,29 @@ namespace Rumble.Platform.ChatService.Controllers
 			}
 
 			return Ok(room.ResponseObject);
+		}
+
+		[HttpPost, Route("reports/ignore")]
+		public ActionResult IgnoreReport([FromHeader(Name = AUTH] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
+			
+			Report report = _reportService.Get(reportId);
+			report.Status = Report.STATUS_BENIGN;
+			_reportService.Update(report);
+			return Ok(report.ResponseObject);
+		}
+
+		[HttpPost, Route("reports/delete")]
+		public ActionResult DeleteReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateToken(auth);
+			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
+
+			Report report = _reportService.Get(reportId);
+			_reportService.Remove(report);
+			return Ok(report.ResponseObject);
 		}
 		
 		[HttpPost, Route(template: "messages/unsticky")]
