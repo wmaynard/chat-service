@@ -83,7 +83,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route("reports/ignore")]
-		public ActionResult IgnoreReport([FromHeader(Name = AUTH] string auth, [FromBody] JObject body)
+		public ActionResult IgnoreReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
 			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
