@@ -96,7 +96,8 @@ dev:
     - apt-get install -y ruby-dev zip git
     - cd bin/Release/net5.0/
     - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip ../../../
+    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
+    - cd $CI_PROJECT_DIR
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=900
   environment:
@@ -115,7 +116,8 @@ stage-a:
     - apt-get install -y ruby-dev zip git
     - cd bin/Release/net5.0/
     - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip ../../../
+    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
+    - cd $CI_PROJECT_DIR
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-A --wait_until_deployed --wait_until_deployed_timeout=900
   environment:
@@ -134,7 +136,8 @@ stage-b:
     - apt-get install -y ruby-dev zip git
     - cd bin/Release/net5.0/
     - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip ../../../
+    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
+    - cd $CI_PROJECT_DIR/
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=Chat-Service-Stage-B --wait_until_deployed --wait_until_deployed_timeout=900
   environment:
