@@ -49,6 +49,7 @@ build_app:
   tags:
     - kubernetes
   script:
+    - dotnet nuget add source --username ericsheris-rumble --password $NUGET_PAT --store-password-in-clear-text --name github "https://nuget.pkg.github.com/cdre/index.json"
     - dotnet restore
     - dotnet build --no-restore --configuration Release
   artifacts:
