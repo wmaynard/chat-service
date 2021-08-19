@@ -48,7 +48,7 @@ build_app:
   image: mcr.microsoft.com/dotnet/sdk:5.0
   tags:
     - kubernetes
-   script:
+  script:
     - dotnet restore
     - dotnet build --no-restore --configuration Release
   artifacts:
