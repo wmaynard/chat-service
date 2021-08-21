@@ -198,8 +198,8 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 
 | Method  | Endpoint  | Description | Required Parameters | Optional Parameters |
 | ---:    | :---      | :---        | :---                | :---                |
+| GET | `/settings` | Returns all the settings for the current player. | | |
 | GET | `/settings/health` | Health check; returns the status of the `SettingsService`. | | |
-| GET | `/settings` | Returns all the settings for the current player. | |
 | POST | `/settings/mute` | **Mutes** another player. | `playerInfo` | |
 | POST | `/settings/unmute` | **Unmutes** a previously **muted** player. | `playerInfo` | | |
 
