@@ -141,11 +141,11 @@ All `Admin` endpoints other than `/admin/health` require a valid **admin token**
 | GET | `/admin/rooms/list` | Lists all **rooms** and all data associated with the **rooms**.  Once live, this will probably need to be trimmed to just room IDs and basic metrics. | | |
 | POST | `/admin/ban/lift` | Removes a specific **ban**, provided its ID. | `banId` | |
 | POST | `/admin/ban/player` | Issues a **ban** against a player.  Can be temporary (timed) or indefinite. | `aid`<br />`reason` | `durationInSeconds`<br />`reportId` |
+| POST | `/admin/messages/delete` | Deletes a **message**.  It would be ideal to never use this. | `messageIds`<br />`roomId` | |
 | POST | `/admin/messages/sticky` | Creates a **sticky message**. | `message` | `language` |
 | POST | `/admin/messages/unsticky` | Deletes a **sticky message**. | `messageId` | |
 | POST | `/admin/reports/ignore` | Marks a **report** as *benign*.  This does not delete the **report**, but is an indicator that it should be kept for archival purposes. | `reportId` | |
 | POST | `/admin/reports/delete` | Deletes a **report**.  For clearly harmless **reports** that serve no useful purpose. | `reportId` | |
-| POST | `/admin/messages/delete` | Deletes a **message**.  It would be ideal to never use this. | `messageIds`<br />`roomId` | |
 
 ## Debug
 
@@ -182,10 +182,10 @@ All `Debug` endpoints other than `/debug/health` are encapsulated by conditional
 | ---:    | :---      | :---        | :---                | :---                |
 | GET | `/rooms/health` | Health check; returns the status of the `RoomService`. | | |
 | POST | `/rooms/available` | Returns a list of available **room** for the player, as dictated by the `language` parameter. | `lastRead` | |
-| POST | `/rooms/leave` | Leaves a **room**, as specified by its ID. | `lastRead`<br />`roomId` | |
-| POST | `/rooms/list` | Lists all the **rooms** and all their data the user is currently in. | `lastRead` | |
 | POST | `/rooms/global/join` | Joins the next available **global room**, as dictated by the `language` parameter. | `language`<br />`lastRead`<br />`playerInfo`| `roomId` |
 | POST | `/rooms/global/leave` | Leaves all **global rooms** the player is currently in. This *should* only be one room, but if the client closed unexpectedly it may be more than one. | `lastRead` | |
+| POST | `/rooms/leave` | Leaves a **room**, as specified by its ID. | `lastRead`<br />`roomId` | |
+| POST | `/rooms/list` | Lists all the **rooms** and all their data the user is currently in. | `lastRead` | |
 | POST | `/rooms/update` | Updates a player's information across all of their **rooms**. | `lastRead`<br />`playerInfo` | |
 
 #### Notes
