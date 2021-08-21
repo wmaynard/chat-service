@@ -203,6 +203,13 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 | POST | `/settings/mute` | **Mutes** another player. | `playerInfo` | |
 | POST | `/settings/unmute` | **Unmutes** a previously **muted** player. | `playerInfo` | | |
 
+## Project Requirements
+
+* The following **environment variables** must exist on the server where the service is running:
+  * `MONGODB_URI`: A connection string to the environment's respective MongoDB.
+  * `MONGODB_NAME`: The specific Mongo database to connect to.  While Mongo connection strings can contain this information in them, it must be explicitly specified in this variable for the service.
+* Mongo collections **do not need to exist** before the service runs.  The service will create any collection it needs.  The database, however, must exist.
+
 ## Project Maintenance
 
 * Every set of related endpoints should be contained in its own **controller** class that inherits from `RumbleController` unless there's a good reason to fragment it (such as the `AdminController`, which contains all endpoints that require elevated permissions).
