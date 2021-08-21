@@ -215,7 +215,7 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 * Every set of related endpoints should be contained in its own **controller** class that inherits from `RumbleController` unless there's a good reason to fragment it (such as the `AdminController`, which contains all endpoints that require elevated permissions).
 * Every `MongoDB collection` used in the project should have its own **service** class and should inherit from `RumbleMongoService`.  Examples include `BanService` and `RoomService`.
 * Every data **model** should inherit from `RumbleModel`.
-* Every **model** should contain two sets of constant keys for each property.  Any space savings in MongoDB will be significant with a global launch, whether that's a 5KB savings in network traffic for the client or 500MB on the storage side.
+* Every **model** should contain two sets of constant keys for each property.  Any space savings in MongoDB will be significant with a global launch on the storage side.
   * A `DB_KEY`: an abbreviated or other shorthand string for storage in MongoDB.
   * A `FRIENDLY_KEY`: a more verbose key, used for parameter parsing (incoming traffic)  and response serialization (outgoing traffic).
   * These can be set for each property separately, with the `DB_KEY` specified in `[BsonElement]` attributes and the `FRIENDLY_KEY` specified in `[JsonProperty]` attributes.
