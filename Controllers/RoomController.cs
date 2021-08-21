@@ -29,7 +29,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			
 			object updates = GetAllUpdates(token, body);
 
-			IEnumerable<Room> rooms = _roomService.GetGlobals(language);
+			IEnumerable<Room> rooms = _roomService.GetGlobals(language); // TODO: Only return IDs with this instead of the entire room objects.
 			return Ok(updates, CollectionResponseObject(rooms));
 		}
 		// Intended for use when a user is logging out and needs to exit a room, or leaves a guild chat.
@@ -56,6 +56,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			TokenInfo token = ValidateToken(auth);
 			object roomResponse = null;
+			// Since the RoomUpdates needs to get all of the rooms anyway, grab the room response object from them.
 			object updates = GetAllUpdates(token, body,(IEnumerable<Room> rooms) =>
 			{
 				roomResponse = CollectionResponseObject(rooms);

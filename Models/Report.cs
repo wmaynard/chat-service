@@ -11,12 +11,12 @@ namespace Rumble.Platform.ChatService.Models
 		public const int COUNT_MESSAGES_BEFORE_REPORTED = 25;
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;
 
-		private const string DB_KEY_TIMESTAMP = "ts";
-		private const string DB_KEY_REPORTER = "rptr";
-		private const string DB_KEY_REASON = "why";
-		private const string DB_KEY_MESSAGE_LOG = "log";
-		private const string DB_KEY_PLAYERS = "who";
-		private const string DB_KEY_STATUS = "st";
+		internal const string DB_KEY_TIMESTAMP = "ts";
+		internal const string DB_KEY_REPORTER = "rptr";
+		internal const string DB_KEY_REASON = "why";
+		internal const string DB_KEY_MESSAGE_LOG = "log";
+		internal const string DB_KEY_PLAYERS = "who";
+		internal const string DB_KEY_STATUS = "st";
 		
 		public const string FRIENDLY_KEY_TIMESTAMP = "time";
 		public const string FRIENDLY_KEY_REPORTER = "reporter";

@@ -15,14 +15,14 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_UNKNOWN = "unknown";
 		public const string TYPE_BROADCAST = "broadcast";
 
-		private const string DB_KEY_ID = "id";
-		private const string DB_KEY_TEXT = "txt";
-		private const string DB_KEY_TIMESTAMP = "ts";
-		private const string DB_KEY_TYPE = "mt";
-		private const string DB_KEY_ACCOUNT_ID = "aid";
-		private const string DB_KEY_REPORTED = "bad";
-		private const string DB_KEY_VISIBLE_FROM = "vf";
-		private const string DB_KEY_EXPIRATION = "exp";
+		internal const string DB_KEY_ID = "id";
+		internal const string DB_KEY_TEXT = "txt";
+		internal const string DB_KEY_TIMESTAMP = "ts";
+		internal const string DB_KEY_TYPE = "mt";
+		internal const string DB_KEY_ACCOUNT_ID = "aid";
+		internal const string DB_KEY_REPORTED = "bad";
+		internal const string DB_KEY_VISIBLE_FROM = "vf";
+		internal const string DB_KEY_EXPIRATION = "exp";
 
 		public const string FRIENDLY_KEY_ID = "id";
 		public const string FRIENDLY_KEY_TEXT = "text";
@@ -75,8 +75,8 @@ namespace Rumble.Platform.ChatService.Models
 			{
 				Id = Guid.NewGuid().ToString(),
 				Text = input[FRIENDLY_KEY_TEXT]?.ToObject<string>(),
-				Timestamp = input[FRIENDLY_KEY_TIMESTAMP]?.ToObject<long>() ?? UnixTime,
-				Type = input[FRIENDLY_KEY_TYPE]?.ToObject<string>() ?? TYPE_CHAT,
+				Timestamp = UnixTime,
+				Type = TYPE_CHAT,
 				VisibleFrom = input[FRIENDLY_KEY_VISIBLE_FROM]?.ToObject<long?>(),
 				Expiration = input[FRIENDLY_KEY_EXPIRATION]?.ToObject<long?>(),
 				AccountId = accountId

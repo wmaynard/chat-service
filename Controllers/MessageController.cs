@@ -130,7 +130,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
 
-			return Ok(new { Stickies = _roomService.GetStickyMessages(all) });
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates(token, body));
 		}
 		[HttpGet, Route("health")]
 		public override ActionResult HealthCheck()

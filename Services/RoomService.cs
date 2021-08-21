@@ -12,6 +12,9 @@ namespace Rumble.Platform.ChatService.Services
 {
 	public class RoomService : RumbleMongoService
 	{
+		internal static readonly string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
+		internal static readonly string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
+		
 		private new readonly IMongoCollection<Room> _collection;
 
 		public RoomService(ChatDBSettings settings) : base(settings)
@@ -65,7 +68,7 @@ namespace Rumble.Platform.ChatService.Services
 			// CLI equivalents:
 			// db.rooms.find({members: {$elemMatch: {aid: "deadbeefdeadbeefdeadbeef"} } })
 			// db.rooms.find({"members.aid": "deadbeefdeadbeefdeadbeef"})
-			FilterDefinition<Room> filter = Builders<Room>.Filter.Eq("members.aid", aid);
+			FilterDefinition<Room> filter = Builders<Room>.Filter.Eq(QUERY_ROOM_MEMBER, aid);
 			List<Room> output = _collection.Find(filter).ToList();
 
 			return output;
@@ -74,7 +77,7 @@ namespace Rumble.Platform.ChatService.Services
 		public List<Room> GetPastAndPresentRoomsForUser(string aid)
 		{
 			FilterDefinitionBuilder<Room> builder = Builders<Room>.Filter;
-			FilterDefinition<Room> filter = builder.Eq("members.aid", aid) | builder.Eq("previousMembers.aid", aid);
+			FilterDefinition<Room> filter = builder.Eq(QUERY_ROOM_MEMBER, aid) | builder.Eq(QUERY_ROOM_PREVIOUS_MEMBER, aid);
 			return _collection.Find(filter).ToList();
 		}
 

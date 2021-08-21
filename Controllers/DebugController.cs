@@ -17,17 +17,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			_settingsService = settings;
 		}
 
-		[HttpPost, Route(template: "settings/globalUnmute")]
-		public ActionResult UmuteAllThePlayers([FromBody] JObject body)
-		{
-			foreach (ChatSettings setting in _settingsService.List())
-			{
-				setting.UnmuteAll();
-				_settingsService.Update(setting);
-			}
-
-			return Ok();
-		}
+		
 		
 #if DEBUG
 		[HttpPost, Route(template: "rooms/clear")]
@@ -37,18 +27,12 @@ namespace Rumble.Platform.ChatService.Controllers
 			foreach (Room r in rooms)
 			{
 				r.Members.Clear();
+				r.PreviousMembers.Clear();
 				r.Messages.Clear();
 				_roomService.Update(r);
 			}
 
 			return Ok(CollectionResponseObject(rooms));
-		}
-		[HttpPost, Route(template: "rooms/create")]
-		public ActionResult Create([FromBody] JObject body)
-		{
-			Room r = body.ToObject<Room>();
-			_roomService.Create(r);
-			return Ok(r.ResponseObject);
 		}
 		/// <summary>
 		/// Adds a user to a room.  Similar to /global/join, but 'roomId' must be specified.
@@ -66,6 +50,17 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			object updates = GetAllUpdates(token, body);
 			return Ok(updates, room.ResponseObject);
+		}
+		[HttpPost, Route(template: "settings/globalUnmute")]
+		public ActionResult UmuteAllThePlayers([FromBody] JObject body)
+		{
+			foreach (ChatSettings setting in _settingsService.List())
+			{
+				setting.UnmuteAll();
+				_settingsService.Update(setting);
+			}
+
+			return Ok();
 		}
 		/// <summary>
 		/// Here be dragons.  Wipe out ALL rooms.  Only intended for debugging.  Must be removed before Chat goes live.
@@ -88,7 +83,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route("health")]
 		public override ActionResult HealthCheck()
 		{
-			return Ok(_roomService.HealthCheckResponseObject);
+			return Ok(_settingsService.HealthCheckResponseObject, _roomService.HealthCheckResponseObject);
 		}
 	}
 }

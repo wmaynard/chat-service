@@ -29,7 +29,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "rooms/list")]
 		public ActionResult ListAllRooms([FromHeader(Name = AUTH)] string auth)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateAdminToken(auth);
 			return Ok(CollectionResponseObject(_roomService.List()));
 		}
 
@@ -53,11 +53,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			TokenInfo token = ValidateAdminToken(auth);
 			Message message = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId);
-			long expires = ExtractRequiredValue("expiration", body).ToObject<long>();
-			long visibleFrom = ExtractOptionalValue("visibleFrom", body)?.ToObject<long>() ?? 0;
-
-			message.Expiration = expires;
-			message.VisibleFrom = visibleFrom;
 			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
 
 			Room room;
@@ -85,7 +80,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("reports/ignore")]
 		public ActionResult IgnoreReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateAdminToken(auth);
 			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
 			
 			Report report = _reportService.Get(reportId);
@@ -97,7 +92,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("reports/delete")]
 		public ActionResult DeleteReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = ValidateAdminToken(auth);
 			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
 
 			Report report = _reportService.Get(reportId);
@@ -124,7 +119,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Ban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateAdminToken(auth);
-			string accountId = ExtractRequiredValue("accountId", body).ToObject<string>();
+			string accountId = ExtractRequiredValue("aid", body).ToObject<string>();
 			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
 			string reportId = ExtractOptionalValue("reportId", body)?.ToObject<string>();
 			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long>();

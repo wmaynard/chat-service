@@ -10,11 +10,11 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public class Ban : RumbleModel
 	{
-		private const string DB_KEY_ACCOUNT_ID = "aid";
-		private const string DB_KEY_REASON = "why";
-		private const string DB_KEY_EXPIRATION = "exp";
-		private const string DB_KEY_ISSUED = "iss";
-		private const string DB_KEY_SNAPSHOT = "snap";
+		internal const string DB_KEY_ACCOUNT_ID = "aid";
+		internal const string DB_KEY_REASON = "why";
+		internal const string DB_KEY_EXPIRATION = "exp";
+		internal const string DB_KEY_ISSUED = "iss";
+		internal const string DB_KEY_SNAPSHOT = "snap";
 
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "accountId";
 		public const string FRIENDLY_KEY_REASON = "reason";

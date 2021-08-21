@@ -8,13 +8,13 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public class PlayerInfo : RumbleModel
 	{
-		private const string DB_KEY_ACCOUNT_ID = "aid";
-		private const string DB_KEY_AVATAR = "pic";
-		private const string DB_KEY_SCREENNAME = "sn";
-		private const string DB_KEY_MEMBER_SINCE = "ms";
-		private const string DB_KEY_LEVEL = "lv";
-		private const string DB_KEY_POWER = "pwr";
-		private const string DB_KEY_DISCRIMINATOR = "disc";
+		internal const string DB_KEY_ACCOUNT_ID = "aid";
+		internal const string DB_KEY_AVATAR = "pic";
+		internal const string DB_KEY_SCREENNAME = "sn";
+		internal const string DB_KEY_MEMBER_SINCE = "ms";
+		internal const string DB_KEY_LEVEL = "lv";
+		internal const string DB_KEY_POWER = "pwr";
+		internal const string DB_KEY_DISCRIMINATOR = "disc";
 		
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
 		public const string FRIENDLY_KEY_AVATAR = "avatar";

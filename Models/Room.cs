@@ -11,14 +11,14 @@ namespace Rumble.Platform.ChatService.Models
 	[BsonIgnoreExtraElements]
 	public class Room : RumbleModel
 	{
-		private const string DB_KEY_CAPACITY = "cap";
-		private const string DB_KEY_CREATED_TIMESTAMP = "ts";
-		private const string DB_KEY_GUILD_ID = "gid";
-		private const string DB_KEY_LANGUAGE = "lang";
-		private const string DB_KEY_MESSAGES = "msg";
-		private const string DB_KEY_MEMBERS = "who";
-		private const string DB_KEY_PREVIOUS_MEMBERS = "pwho";
-		private const string DB_KEY_TYPE = "t";
+		internal const string DB_KEY_CAPACITY = "cap";
+		internal const string DB_KEY_CREATED_TIMESTAMP = "ts";
+		internal const string DB_KEY_GUILD_ID = "gid";
+		internal const string DB_KEY_LANGUAGE = "lang";
+		internal const string DB_KEY_MESSAGES = "msg";
+		internal const string DB_KEY_MEMBERS = "who";
+		internal const string DB_KEY_PREVIOUS_MEMBERS = "pwho";
+		internal const string DB_KEY_TYPE = "t";
 
 		public const string FRIENDLY_KEY_ID = "id";
 		public const string FRIENDLY_KEY_CAPACITY = "capacity";

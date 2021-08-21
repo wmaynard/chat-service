@@ -11,8 +11,8 @@ namespace Rumble.Platform.ChatService.Models
 	// The class name "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
 	public class ChatSettings : RumbleModel
 	{
-		private const string DB_KEY_ACCOUNT_ID = "aid";
-		private const string DB_KEY_MUTED_PLAYERS = "mp";
+		internal const string DB_KEY_ACCOUNT_ID = "aid";
+		internal const string DB_KEY_MUTED_PLAYERS = "mp";
 
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "accountId";
 		public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
