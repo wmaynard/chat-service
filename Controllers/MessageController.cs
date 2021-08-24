@@ -80,8 +80,18 @@ namespace Rumble.Platform.ChatService.Controllers
 			
 			_reportService.Create(report);
 
-			SlackHelper.SendReport(reporter, logs, players);
-			return Ok(report.ResponseObject, GetAllUpdates(token, body));
+			object slack = null;
+			try
+			{
+				SlackHelper.SendReport(reporter, logs, players);
+				slack = new {SlackSuccess = true};
+			}
+			catch (Exception e)
+			{
+				slack = new { ErrorMessage = e.Message };
+			}
+			
+			return Ok(report.ResponseObject, GetAllUpdates(token, body), slack);
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
