@@ -95,7 +95,7 @@ namespace Rumble.Platform.ChatService.Models
 
 		private static Dictionary<string, object> Send(string endpoint, string body)
 		{
-			Uri baseUrl = new Uri("https://slack.com/api/" + endpoint);
+			Uri baseUrl = new Uri(endpoint);
 			IRestClient client = new RestClient(baseUrl);
 			IRestRequest request = new RestRequest(Method.POST);
 			request.AddHeader("Authorization", TOKEN);
