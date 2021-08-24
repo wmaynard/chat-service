@@ -9,6 +9,8 @@ using Newtonsoft.Json.Serialization;
 using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Exceptions;
+using Rumble.Platform.Common.Utilities;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -107,7 +109,11 @@ namespace Rumble.Platform.ChatService.Models
 			IRestResponse<Dictionary<string, object>> response = client.Execute<Dictionary<string, object>>(request);
 			if (!response.IsSuccessful)
 				throw new Exception(response.ErrorMessage + $" JSON string: ({body})");
-			
+			var ok = response.Data["ok"];
+			if (ok.ToString().ToLower() != "true")
+			{
+				throw new Exception("Response came back as " + ok.ToString() + ". Error: " + response.Data["error"].ToString());
+			}
 			return response.Data;
 		}
 
