@@ -106,7 +106,7 @@ namespace Rumble.Platform.ChatService.Models
 
 			IRestResponse<Dictionary<string, object>> response = client.Execute<Dictionary<string, object>>(request);
 			if (!response.IsSuccessful)
-				throw new Exception(response.ErrorMessage);
+				throw new Exception(response.ErrorMessage + $" JSON string: ({body})");
 			
 			return response.Data;
 		}
