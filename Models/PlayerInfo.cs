@@ -52,6 +52,20 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonIgnore]
 		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 
+		public static PlayerInfo FromJToken(JToken input)
+		{
+			return new PlayerInfo()
+			{
+				AccountId = input[FRIENDLY_KEY_ACCOUNT_ID]?.ToObject<string>(),
+				Avatar = input[FRIENDLY_KEY_AVATAR]?.ToObject<string>(),
+				ScreenName = input[FRIENDLY_KEY_SCREENNAME]?.ToObject<string>(),
+				InRoomSince = UnixTime,
+				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
+				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
+				Discriminator = input[FRIENDLY_KEY_SCREENNAME]?.ToObject<int>() ?? 0,
+			};
+		}
+
 		public static PlayerInfo FromJToken(JToken input, TokenInfo token)
 		{
 			return new PlayerInfo()

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
@@ -24,7 +25,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Mute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token);
+			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
+			if (info.AccountId == token.AccountId)
+				throw new InvalidPlayerInfoException("You can't mute yourself!");
 
 			ChatSettings prefs = _settingsService.Get(token.AccountId);
 			prefs.AddMutedPlayer(info);

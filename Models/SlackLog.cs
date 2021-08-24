@@ -15,6 +15,7 @@ using Rumble.Platform.Common.Utilities;
 
 namespace Rumble.Platform.ChatService.Models
 {
+	// TODO: It's probably more efficient memory-wise to turn this into a service that checks the messages against the lastRead timestamp
 	/// <summary>
 	/// This class stores a buffer of Messages before dumping them to a Slack channel used by CS to monitor
 	/// chat activity.  When either a room reaches a predetermined number of new messages or enough time has passed,

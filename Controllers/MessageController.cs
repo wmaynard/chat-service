@@ -118,6 +118,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				msg.Author = PlayerInfo.FromJToken(body, token);
 				try
 				{
+					// TODO: Limit this to just global rooms?  Or do we want to monitor guild chat / DMs / etc?
 					SlackLog.Add($"{room.Language} | {roomId}", msg);
 				}
 				catch (Exception e)
