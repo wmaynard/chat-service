@@ -168,6 +168,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateAdminToken(auth);
 
 			IDictionary vars = Environment.GetEnvironmentVariables();
+			
 			List<object> output = new List<object>();
 			foreach (string key in vars.Keys)
 			{

@@ -65,7 +65,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Room room = _roomService.Get(roomId);
 			
 			IEnumerable<Message> logs = room.Snapshot(messageId, Models.Report.COUNT_MESSAGES_BEFORE_REPORTED, Models.Report.COUNT_MESSAGES_AFTER_REPORTED);
-			IEnumerable<PlayerInfo> players = room.Members
+			IEnumerable<PlayerInfo> players = room.AllMembers
 				.Where(p => logs.Select(m => m.AccountId)
 					.Contains(p.AccountId));
 			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);

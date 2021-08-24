@@ -35,24 +35,12 @@ namespace Rumble.Platform.ChatService
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
-#if DEBUG
-			string mongoConnection = "mongodb://localhost:27017";
-			string database = "ChatDB";
-#endif
-#if RELEASE
-			// Important note: at the time of this comment, it seems that the only possible way to get Rider to use
-			// environment variables is to add those into launchSettings.json as opposed to regular env vars.  These
-			// vars show up under the configurations, but are only read-only.
-			// Rather than risk accidentally committing sensitive information into the repo, we'll use conditional
-			// compilation as a workaround.  If you need to test the configuration against your local environment variables,
-			// run the service from Terminal with the command "dotnet {path}/chat-service.dll".  This will circumnavigate
-			// Rider's restrictions as well.
-			string mongoConnection = Environment.GetEnvironmentVariable("MONGODB_URI");
-			string database = Environment.GetEnvironmentVariable("MONGODB_NAME");
+			string mongoConnection = RumbleEnvironment.Variable("MONGODB_URI");
+			string database = RumbleEnvironment.Variable("MONGODB_NAME");
 			Log.Write($"mongoConnection: '{mongoConnection}'");
 			if (mongoConnection == null)
 				throw new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");
-#endif
+			
 			Log.Write("Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{

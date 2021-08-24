@@ -68,6 +68,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_TYPE)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
 		public string Type { get; set; }
+		[BsonIgnore]
+		[JsonIgnore]
+		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).ToHashSet();
 		public Room ()
 		{
 			CreatedTimestamp = UnixTime;

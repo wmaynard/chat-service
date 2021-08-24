@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using RestSharp;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Utilities;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -61,9 +62,9 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonProperty]
 		public List<SlackBlock> Blocks { get; set; }
 
-		public SlackReport(string channel, List<SlackBlock> blocks, List<SlackBlock> attachments)
+		public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)
 		{
-			DestinationChannel = channel;
+			DestinationChannel = RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL");
 			Blocks = blocks;
 			Attachments = new object[]{ new
 			{
@@ -75,8 +76,9 @@ namespace Rumble.Platform.ChatService.Models
 
 	public class SlackHelper
 	{
-		public static readonly string POST_MESSAGE = "/chat.postMessage";
-		public static readonly string TOKEN = "Bearer " + Environment.GetEnvironmentVariable("CHAT_SLACK_TOKEN");
+		public static readonly string POST_MESSAGE = RumbleEnvironment.Variable("SLACK_ENDPOINT_POST_MESSAGE");
+		// public static readonly string TOKEN = "Bearer " + Environment.GetEnvironmentVariable("CHAT_SLACK_TOKEN");
+		public static readonly string TOKEN = "Bearer " + RumbleEnvironment.Variable("SLACK_CHAT_TOKEN");
 		
 		public string JsonifyMessage(DateTime date, PlayerInfo author, string messages)
 		{
@@ -111,9 +113,7 @@ namespace Rumble.Platform.ChatService.Models
 
 		public static void SendReport(PlayerInfo reporter, IEnumerable<Message> messages, IEnumerable<PlayerInfo> players)
 		{
-			Dictionary<string, object> data = Send(POST_MESSAGE, GenerateReport(reporter, messages, players));
-
-			data = null;
+			Send(POST_MESSAGE, GenerateReport(reporter, messages, players));
 		}
 
 		private static string GenerateReport(PlayerInfo reporter, IEnumerable<Message> messages, IEnumerable<PlayerInfo> players)
@@ -125,6 +125,7 @@ namespace Rumble.Platform.ChatService.Models
 			{
 				new(SlackBlock.BlockType.HEADER, $"New Report | {now:yyyy.MM.dd HH:mm}"),
 				new(SlackBlock.BlockType.MARKDOWN, $"Reported Player: {User(defendant)}\nReporter: {User(reporter)}"),
+				new(SlackBlock.BlockType.MARKDOWN, "_The message flagged by the user is indicated by a *!* and special formatting._"),
 				new(SlackBlock.BlockType.DIVIDER)
 			};
 			List<SlackBlock> blox = new List<SlackBlock>();
@@ -155,7 +156,7 @@ namespace Rumble.Platform.ChatService.Models
 			author = players.First(p => p.AccountId == aid);
 			blox.Add(new (SlackBlock.BlockType.MARKDOWN, $"`{lastDate:HH:mm}` *{User(author)}*\n{entries}"));
 			return JsonConvert.SerializeObject(
-				new SlackReport("C02CS2G9M4Y", headers, blox), 
+				new SlackReport(headers, blox), 
 				new JsonSerializerSettings(){ContractResolver = new CamelCasePropertyNamesContractResolver()}
 			);
 		}

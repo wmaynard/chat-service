@@ -226,3 +226,22 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 
 * Requests to Chat could include `Room` accountIds so that Chat can return only new members / members that have left the room, reducing data load.  Returning partial information could yield substantial data savings on every request.  The best method may be to have the client send known accountIds, then the service could return who has left the room and any new members.
 * (Frontend) Thresholds could be set so that when chat is fairly inactive - perhaps defined by a metric like `messages / minute` - the **update timer** takes longer to fire requests off.  Conversely, if chat is *very* active, it could instead be increased.
+
+## Troubleshooting
+
+#### *I seem to be missing environment variables when working locally / mongoConnection is null*
+
+.NET is a little finnicky with environment variables.  It doesn't read user variables when running directly from Rider, instead only seeing system-wide vars and those that are specified in `appsettings.json`.  Since this file is tracked in git, it's not suitable for secrets like connection strings.  Instead, add a `environment.json` file and add any missing environment variables there.  It should mirror what's on AWS, and look like the following:
+
+    {
+      "MONGODB_URI": "mongodb+srv://{...}",
+      "MONGODB_NAME": "{db name}",
+      "SLACK_MONITOR_CHANNEL": "{slack channel id}",
+      "SLACK_REPORTS_CHANNEL": "{slack channel id}",
+      "SLACK_CHAT_TOKEN": "{slack app token}",
+      "SLACK_ENDPOINT_POST_MESSAGE": "/chat.postMessage",
+      "LOGGLY_URL": "https://logs-01.loggly.com/bulk/{...}/tag/chat-service/",
+      "RUMBLE_ENDPOINT_TOKEN_VERIFICATION": "https://dev.services.tower.cdrentertainment.com/player/verify"
+    }
+
+Any time you need to ask for an environment variable, use `RumbleEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only.**
