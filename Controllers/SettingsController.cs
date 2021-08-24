@@ -40,7 +40,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Unmute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth); // TODO: Switch to aid to unmute
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body), token);
+			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
 
 			ChatSettings prefs = _settingsService.Get(token.AccountId);
 			prefs.RemoveMutedPlayer(info);
