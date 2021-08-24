@@ -62,7 +62,7 @@ namespace Rumble.Platform.ChatService.Models
 				InRoomSince = UnixTime,
 				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
 				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
-				Discriminator = input[FRIENDLY_KEY_SCREENNAME]?.ToObject<int>() ?? 0,
+				Discriminator = input[FRIENDLY_KEY_DISCRIMINATOR]?.ToObject<int>() ?? 0,
 			};
 		}
 
