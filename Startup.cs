@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
@@ -28,6 +29,7 @@ namespace Rumble.Platform.ChatService
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
+			SlackLog.Initialize();
 		}
 
 		public IConfiguration Configuration { get; }

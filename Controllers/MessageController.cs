@@ -8,6 +8,7 @@ using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
@@ -114,22 +115,20 @@ namespace Rumble.Platform.ChatService.Controllers
 				Room room = rooms.First(r => r.Id == roomId);
 				room.AddMessage(msg);
 				_roomService.Update(room);
+				msg.Author = PlayerInfo.FromJToken(body, token);
+				try
+				{
+					SlackLog.Add($"{room.Language} | {roomId}", msg);
+				}
+				catch (Exception e)
+				{
+					Log.Write("Could not add message to the Slack buffer, or could not send the message. (" + e.Message + ")");
+				}
 			});
 
 			return Ok(updates);
 		}
-		/// <summary>
-		/// Retrieves all unread messages for a user based on a timestamp.  This timestamp should be the most recent
-		/// timestamp from any message in the user's chat rooms.
-		/// </summary>
-		/// <param name="auth">The Authorization header from a request.  Tokens are provided by player-service.</param>
-		/// <param name="body">The JSON body.  'lastRead' is a required field.
-		/// Expected body example:
-		///	{
-		///		"lastRead": 1625704809
-		///	}
-		/// </param>
-		/// <returns></returns>
+		
 		[HttpPost, Route(template: "unread")]
 		public ActionResult Unread([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
