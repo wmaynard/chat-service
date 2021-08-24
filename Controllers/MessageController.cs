@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using RestSharp;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
@@ -77,6 +79,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 			
 			_reportService.Create(report);
+
+			SlackHelper.SendReport(reporter, logs, players);
 			return Ok(report.ResponseObject, GetAllUpdates(token, body));
 		}
 		/// <summary>

@@ -57,6 +57,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
 		public long? Expiration { get; set; }
+		[BsonIgnore]
+		[JsonIgnore]
+		public DateTime Date => DateTime.UnixEpoch.AddSeconds(Timestamp);
 		public Message()
 		{
 			Type = TYPE_CHAT;

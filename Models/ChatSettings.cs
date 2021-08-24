@@ -14,7 +14,7 @@ namespace Rumble.Platform.ChatService.Models
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_MUTED_PLAYERS = "mp";
 
-		public const string FRIENDLY_KEY_ACCOUNT_ID = "accountId";
+		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
 		public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
