@@ -88,7 +88,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			}
 			catch (Exception e)
 			{
-				slack = new { ErrorMessage = e.Message };
+				slack = new { ErrorMessage = e.Message, StackTrace = e.StackTrace };
 			}
 			
 			return Ok(report.ResponseObject, GetAllUpdates(token, body), slack);
