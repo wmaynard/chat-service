@@ -129,8 +129,21 @@ namespace Rumble.Platform.ChatService.Controllers
 			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long?>();
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
-			Ban ban = new Ban(accountId, reason, expiration, _roomService.GetRoomsForUser(accountId));
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
+			Ban ban = new Ban(accountId, reason, expiration, rooms);
 			_banService.Create(ban);
+
+			
+			foreach (Room r in rooms)
+			{
+				r.AddMessage(new Message()
+				{
+					AccountId = accountId,
+					Text = $"Player {accountId} was banned by an administrator.",
+					Type = Message.TYPE_BAN_ANNOUNCEMENT
+				});
+				_roomService.Update(r);
+			}
 
 			return Ok(ban.ResponseObject);
 		}

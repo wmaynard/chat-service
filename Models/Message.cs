@@ -11,7 +11,9 @@ namespace Rumble.Platform.ChatService.Models
 	{
 		public const string TYPE_ACTIVITY = "activity";
 		public const string TYPE_CHAT = "chat";
+		public const string TYPE_NOTIFICATION = "notification";
 		public const string TYPE_ANNOUNCEMENT = "announcement";
+		public const string TYPE_BAN_ANNOUNCEMENT = "banAccouncement";
 		public const string TYPE_UNKNOWN = "unknown";
 		public const string TYPE_BROADCAST = "broadcast";
 
@@ -65,6 +67,7 @@ namespace Rumble.Platform.ChatService.Models
 		public PlayerInfo Author { get; set; }
 		public Message()
 		{
+			Id = Guid.NewGuid().ToString();
 			Type = TYPE_CHAT;
 			Timestamp = UnixTime;
 		}
