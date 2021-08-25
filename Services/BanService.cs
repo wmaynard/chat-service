@@ -22,6 +22,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public IEnumerable<Ban> List() => _collection.Find((b => true)).ToList();
 		public IEnumerable<Ban> GetBansForUser(string accountId) => _collection.Find(b => b.AccountId == accountId).ToList().Where(b => !b.IsExpired);
+		public Ban Get(string id) => _collection.Find(b => b.Id == id).FirstOrDefault();
 		public void Create(Ban ban) => _collection.InsertOne(document: ban);
 		public void Update(Ban ban) => _collection.ReplaceOne(filter: b => b.Id == ban.Id, replacement: ban);
 		public void Remove(string id) => _collection.DeleteOne(filter: b => b.Id == id);

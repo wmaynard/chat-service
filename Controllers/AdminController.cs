@@ -153,6 +153,19 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			TokenInfo token = ValidateAdminToken(auth);
 			string banId = ExtractRequiredValue("banId", body).ToObject<string>();
+
+			Ban ban = _banService.Get(banId);
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
+			foreach (Room r in rooms)
+			{
+				r.AddMessage(new Message()
+				{
+					AccountId = ban.AccountId,
+					Text = $"Ban {ban.Id} was lifted by an administrator.",
+					Type = Message.TYPE_UNBAN_ANNOUNCEMENT
+				});
+				_roomService.Update(r);
+			}
 			
 			_banService.Remove(banId);
 
