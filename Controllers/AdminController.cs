@@ -5,7 +5,9 @@ using System.Linq;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
@@ -181,5 +183,37 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(new {EnvironmentVariables = output});
 		}
+
+		[HttpPost, Route("slack")]
+		public ActionResult SlackHandler([FromHeader(Name = AUTH)] string auth)
+		{
+			List<string> data = new List<string>();
+			data.Add("Authorization? " + (auth ?? "null"));
+			foreach (string key in Request.Form.Keys)
+				data.Add($"{key} | {Request.Form[key]}");
+
+			object output = new
+			{
+				Channel = "C02C18NDJKY",
+				Blocks = data.Select(d => new SlackBlock(SlackBlock.BlockType.MARKDOWN, d)).Append(new SlackBlock(SlackBlock.BlockType.DIVIDER))
+			};
+			
+			string returnToSender = JsonConvert.SerializeObject(
+				output, 
+				new JsonSerializerSettings(){ContractResolver = new CamelCasePropertyNamesContractResolver()}
+			);
+			SlackHelper.Send(RumbleEnvironment.Variable("SLACK_ENDPOINT_POST_MESSAGE"), returnToSender);
+			
+			return Ok(new { ReceivedData = data });
+		}
+	}
+
+	[BindProperties(SupportsGet = false)]
+	public class Fugal
+	{
+		[BindProperty]
+		public string Param1 { get; set; }
+		[BindProperty]
+		public string Param2 { get; set; }
 	}
 }

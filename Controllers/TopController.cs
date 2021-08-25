@@ -47,7 +47,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 
 			return Ok(
-				CollectionResponseObject(bans),
+				CollectionResponseObject(bans), // TODO: Clear reports from response
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
 				global.ResponseObject,
