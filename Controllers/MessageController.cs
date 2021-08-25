@@ -69,10 +69,13 @@ namespace Rumble.Platform.ChatService.Controllers
 			IEnumerable<PlayerInfo> players = room.AllMembers
 				.Where(p => logs.Select(m => m.AccountId)
 					.Contains(p.AccountId));
+			Message reportedMessage = room.Messages.First(m => m.Id == messageId);
+			PlayerInfo reported = room.AllMembers.First(p => p.AccountId == reportedMessage.AccountId);
 			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);
 			
 			Report report = new Report()
 			{
+				Reported = reported,
 				Reporter = reporter,
 				Log = logs,
 				Players = players

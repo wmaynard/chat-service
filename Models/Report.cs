@@ -12,6 +12,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;
 
 		internal const string DB_KEY_TIMESTAMP = "ts";
+		internal const string DB_KEY_REPORTED = "rptd";
 		internal const string DB_KEY_REPORTER = "rptr";
 		internal const string DB_KEY_REASON = "why";
 		internal const string DB_KEY_MESSAGE_LOG = "log";
@@ -19,6 +20,7 @@ namespace Rumble.Platform.ChatService.Models
 		internal const string DB_KEY_STATUS = "st";
 		
 		public const string FRIENDLY_KEY_TIMESTAMP = "time";
+		public const string FRIENDLY_KEY_REPORTED = "reported";
 		public const string FRIENDLY_KEY_REPORTER = "reporter";
 		public const string FRIENDLY_KEY_REASON = "reason";
 		public const string FRIENDLY_KEY_MESSAGE_LOG = "log";
@@ -34,6 +36,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }
+		[BsonElement(DB_KEY_REPORTED)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED)]
+		public PlayerInfo Reported { get; set; }
 		[BsonElement(DB_KEY_REPORTER)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTER)]
 		public PlayerInfo Reporter { get; set; }
