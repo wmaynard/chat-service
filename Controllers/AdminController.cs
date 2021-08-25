@@ -126,7 +126,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			string accountId = ExtractRequiredValue("aid", body).ToObject<string>();
 			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
 			string reportId = ExtractOptionalValue("reportId", body)?.ToObject<string>();
-			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long>();
+			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long?>();
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
 			Ban ban = new Ban(accountId, reason, expiration, _roomService.GetRoomsForUser(accountId));
