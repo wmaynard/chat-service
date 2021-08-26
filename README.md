@@ -9,6 +9,10 @@ Joining a room and sending a message alike should then be used to update client-
 
 Rooms do not hold messages indefinitely.  The capacity is configurable in the constant `Room.MESSAGE_CAPACITY`.  When at capacity, any new messages will push old ones out.  For customer service purposes, `Reports` and `Snapshots` both create complete copies of data that are stored independently from this limit.
 
+Chat can be used as a method to nearly instantaneously notify users.  By sending messages with different message **types**, we can silently pass data to clients.  To prevent this from becoming a monolithic service, this functionality should remain exclusive to *communication with or between the players*.  Customer service interactions and emergency game notifications are acceptable, but anything else should spark a discussion into new services.  For more information see the **Messages Notes** section.
+
+Chat is integrated with Slack so that Rumble Admins can keep an eye on the service and more easily manage it.  A **chat monitor** keeps a buffer of messages and all **reports** are sent to Slack as well, with easy-to-access links to the Publishing App.  This functionality is detailed later on in the **Slack Integration** section.
+
 # Glossary
 
 | Term | Definition |
@@ -165,7 +169,7 @@ All `Debug` endpoints other than `/debug/health` are encapsulated by conditional
 | Method  | Endpoint  | Description | Required Parameters | Optional Parameters |
 | ---:    | :---      | :---        | :---                | :---                |
 | GET | `/messages/health` | Health check; returns the status of the `ReportService` and the `RoomService`. | | |
-| POST | `/messages/broadcast` | Sends a **broadcast**. | `aid`<br />`lastRead`<br />`message` | |
+| POST | `/messages/broadcast` | Sends a **broadcast**.  **Broadcasts** originate from the game server and are sent to all of a player's rooms. | `aid`<br />`lastRead`<br />`message` | |
 | POST | `/messages/report` | Reports a **message** for abuse.  | `lastRead`<br />`messageId`<br />`roomId` | |
 | POST | `/messages/send` | Sends a **message** to a **room**.  | `lastRead`<br />`message`<br />`roomId`| |
 | POST | `/messages/unread` | Retrieves all unread **messages**. | `lastRead` | |
@@ -174,7 +178,11 @@ All `Debug` endpoints other than `/debug/health` are encapsulated by conditional
 #### Notes
 
 * The `message` parameter is an object containing a string, `text`.  There are other fields that can be included in a `message` object, but none are useful in the context of the `MessageController`.
-
+* Messages have a few different types that can be used:
+    * `Message.TYPE_CHAT`: This is a user-generated message.
+    * `Message.TYPE_BROADCAST`: This is a server-generated message sent to all of a player's **global rooms**.
+    * `Message.TYPE_BAN_ANNOUNCEMENT`: When a user is **banned**, a message is sent out to all of that user's rooms with their `aid` attached to it (as if they were the author)s, announcing they were banned.  This should not be displayed by any client.  Its purpose is to signal that particular user's client that they've been banned - rather than require extra frequent service requests or Mongo queries - since their client is already checking chat.
+    * `Message.TYPE_UNBAN_ANNOUNCEMENT`: Similar to above, only in reverse.  However, each announcement only reflects a single **ban**; if the user has multiple **bans** issued against them, they may still be unable to access chat.
 
 ## Rooms
 
@@ -208,7 +216,29 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 * The following **environment variables** must exist on the server where the service is running:
   * `MONGODB_URI`: A connection string to the environment's respective MongoDB.
   * `MONGODB_NAME`: The specific Mongo database to connect to.  While Mongo connection strings can contain this information in them, it must be explicitly specified in this variable for the service.
+  * `SLACK_CHAT_TOKEN`: A token provided by Slack to connect with the Slack Chat App.  It looks like `xoxb-....`
+  * `SLACK_ENDPOINT_POST_MESSAGE`: The Slack API endpoint for posting messages.
+  * `SLACK_MONITOR_CHANNEL`: The Slack channel ID to post chat message logs to.  Click on the channel name while viewing it and scroll to the bottom of the popup to find this value.
+  * `SLACK_REPORTS_CHANNEL`: The Slack channel ID to post **reports** to.  Click on the channel name while viewing it and scroll to the bottom of the popup to find this value.
+  * `RUMBLE_PUBLISHING_PLAYER_URL`: The link to the publishing app to show player details.  This is used in building Slack messages that link directly to publishing app.
 * Mongo collections **do not need to exist** before the service runs.  The service will create any collection it needs.  The database, however, must exist.
+
+## Slack Integration
+
+Functionality with Slack is an important aspect of Chat.  This is broken down into a couple of components:
+
+1. Chat Monitor
+   
+    * Chat stores messages in a buffer.  After either a specified amount of time has passed or one room has hit a certain number of new messages, the buffer is flushed and the messages are sent to Slack.  These values are configurable via the constants `SlackLog.FREQUENCY_IN_MS` and `SlackLog.MAX_QUEUE_SIZE`.
+    * Each **room** in the log has a color associated with it to help differentiate it in Slack.  This is simply the last six digits of the `roomId`, a hex string from MongoDB.
+2. Reporting
+    * Every time a message is reported, a small subset of messages is stored.  This **report** is stored in its own MongoDB collection, but it also gets processed into a Slack message and dumped into a channel.
+  
+Planned future Slack integration: buttons for customer service to act on reports directly.  It could be interesting to allow CS to send messages to the game directly from Slack, too - perhaps to warn players, but the mechanics of a feature like that would need to be fleshed out. 
+
+Helpful resources for working with Slack:
+* [Slack Apps Page](https://api.slack.com/apps)
+* [Block Kit Builder](https://slack.com/workspace-signin?redir=%2Fapi%2F%2Ftools%2Fblock-kit-builder)
 
 ## Project Maintenance
 
@@ -224,12 +254,12 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 
 ## Future Updates, Optimizations, and Nice-to-Haves
 
-* Requests to Chat could include `Room` accountIds so that Chat can return only new members / members that have left the room, reducing data load.  Returning partial information could yield substantial data savings on every request.  The best method may be to have the client send known accountIds, then the service could return who has left the room and any new members.
+* Requests to Chat could include `Room` `aids` so that Chat can return only new members / members that have left the room, reducing data load.  Returning partial information could yield substantial data savings on every request.  The best method may be to have the client send known accountIds, then the service could return who has left the room and any new members.
 * (Frontend) Thresholds could be set so that when chat is fairly inactive - perhaps defined by a metric like `messages / minute` - the **update timer** takes longer to fire requests off.  Conversely, if chat is *very* active, it could instead be increased.
 
 ## Troubleshooting
 
-#### *I seem to be missing environment variables when working locally / mongoConnection is null*
+#### *I seem to be missing environment variables when working locally / mongoConnection is null.*
 
 .NET is a little finnicky with environment variables.  It doesn't read user variables when running directly from Rider, instead only seeing system-wide vars and those that are specified in `appsettings.json`.  Since this file is tracked in git, it's not suitable for secrets like connection strings.  Instead, add a `environment.json` file and add any missing environment variables there.  It should mirror what's on AWS, and look like the following:
 
@@ -244,4 +274,4 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
       "RUMBLE_ENDPOINT_TOKEN_VERIFICATION": "https://dev.services.tower.cdrentertainment.com/player/verify"
     }
 
-Any time you need to ask for an environment variable, use `RumbleEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only.**
+Any time you need to ask for an environment variable, use `RumbleEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only; environments.json will not exist on deployed environments.**
