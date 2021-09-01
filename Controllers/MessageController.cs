@@ -88,7 +88,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			if (!added) 
 				return Ok(report.ResponseObject, GetAllUpdates(token, body));
 			
-			// _reportService.UpdateOrCreate(report);
+			_reportService.UpdateOrCreate(report);
 			object slack = _reportService.SendToSlack(report);
 			return Ok(report.ResponseObject, GetAllUpdates(token, body), slack);
 		}
