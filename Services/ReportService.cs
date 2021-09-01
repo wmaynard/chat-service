@@ -10,6 +10,7 @@ using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 using Foo = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services
@@ -20,8 +21,10 @@ namespace Rumble.Platform.ChatService.Services
 		private const int SUMMARY_INTERVAL_MS = 1000;
 		private Timer SummaryTimer { get; set; }
 		private new readonly IMongoCollection<Report> _collection;
-		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"));
-		// private readonly SlackMessageClient SlackMonitorChannel = new SlackMessageClient(RumbleEnvironment.Variable("SLACK_MONITOR_CHANNEL"), RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"));
+		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
+			channel: RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
+			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"
+		));
 
 		public ReportService(ReportDBSettings settings) : base(settings)
 		{

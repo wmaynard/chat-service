@@ -6,6 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -78,7 +79,6 @@ namespace Rumble.Platform.ChatService.Models
 				DateTime lastDate = DateTime.UnixEpoch;
 				foreach (Message m in Log)
 				{
-					string text = "";
 					if (m.AccountId != aid)
 					{
 						if (aid != null)
@@ -91,10 +91,10 @@ namespace Rumble.Platform.ChatService.Models
 						entries = "";
 					}
 
-					string txt = m.Text.Replace('\n', ' ').Replace('`', '\'');
+					string text = m.Text.Replace('\n', ' ').Replace('`', '\'');
 					entries += m.Reported == true
-						? $":exclamation:`{txt}`\n"
-						: $"{txt}\n";
+						? $":exclamation:`{text}`\n"
+						: $"{text}\n";
 				}
 
 				author = Players.First(p => p.AccountId == aid);

@@ -63,9 +63,6 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public DateTime Date => DateTime.UnixEpoch.AddSeconds(Timestamp);
-		[BsonIgnore]
-		[JsonIgnore]
-		public PlayerInfo Author { get; set; }
 		public Message()
 		{
 			Id = Guid.NewGuid().ToString();

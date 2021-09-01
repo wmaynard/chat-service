@@ -113,16 +113,6 @@ namespace Rumble.Platform.ChatService.Controllers
 				Room room = rooms.First(r => r.Id == roomId);
 				room.AddMessage(msg);
 				_roomService.Update(room);
-				msg.Author = PlayerInfo.FromJToken(body, token);
-				try
-				{
-					// TODO: Limit this to just global rooms?  Or do we want to monitor guild chat / DMs / etc?
-					SlackLog.Add($"{room.Language} | {roomId}", msg);
-				}
-				catch (Exception e)
-				{
-					Log.Write("Could not add message to the Slack buffer, or could not send the message. (" + e.Message + ")");
-				}
 			});
 
 			return Ok(updates);

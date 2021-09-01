@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -208,7 +209,6 @@ namespace Rumble.Platform.ChatService.Models
 				new (SlackBlock.BlockType.HEADER, $"{Language} | {Id}")
 			};
 
-			PlayerInfo author = messages.First().Author;
 			string aid = messages.First().AccountId;
 			DateTime lastDate = messages.First().Date;
 			string entries = "";

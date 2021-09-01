@@ -13,12 +13,12 @@ namespace Rumble.Platform.ChatService.Utilities
 		private const int THRESHOLD = Room.MESSAGE_CAPACITY / 2;
 		private long LastRead { get; set; }
 		private Dictionary<string, int> MessageCount { get; set; }
-		private const int FREQUENCY_IN_MS = 15_000;
+		private const int FREQUENCY_IN_MS = 300_000;
 		private readonly Timer Timer;
 		public event EventHandler<MonitorEventArgs> OnFlush;
 		public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
 		{
-			LastRead = int.Parse(RumbleEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0");
+			LastRead = int.Parse(RumbleEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp?
 			MessageCount = new Dictionary<string, int>();
 			Timer = new Timer(FREQUENCY_IN_MS) { AutoReset = true};
 			Timer.Elapsed += Flush;
@@ -44,13 +44,21 @@ namespace Rumble.Platform.ChatService.Utilities
 		private void Flush(object sender = null, EventArgs args = null)
 		{
 			Timer.Stop();
-			OnFlush?.Invoke(this, new MonitorEventArgs(
-				roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
-				lastRead: LastRead,
-				restarted: args is MonitorEventArgs eventArgs && eventArgs.Restarted
-			));
-			LastRead = DateTimeOffset.Now.ToUnixTimeSeconds();
-			MessageCount = new Dictionary<string, int>();
+			try
+			{
+				OnFlush?.Invoke(this, new MonitorEventArgs(
+					roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
+					lastRead: LastRead,
+					restarted: args is MonitorEventArgs eventArgs && eventArgs.Restarted
+				));
+				LastRead = DateTimeOffset.Now.ToUnixTimeSeconds();
+				MessageCount = new Dictionary<string, int>();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e); // TODO: This occasionally failed with a null reference when compressing attachments
+				throw;
+			}
 			Timer.Start();
 		}
 

@@ -8,6 +8,7 @@ using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services
@@ -17,8 +18,8 @@ namespace Rumble.Platform.ChatService.Services
 		internal const string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 		internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 		private readonly RoomMonitor _monitor;
-		private readonly SlackMessageClient Monitor = new SlackMessageClient(
-			channel: RumbleEnvironment.Variable("SLACK_SANDBOX_CHANNEL"), 
+		private readonly SlackMessageClient SlackMonitorChannel = new SlackMessageClient(
+			channel: RumbleEnvironment.Variable("SLACK_MONITOR_CHANNEL"), 
 			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN")
 		);
 		
@@ -39,12 +40,20 @@ namespace Rumble.Platform.ChatService.Services
 			if (!rooms.Any())
 				return;
 
+			List<SlackBlock> blocks = args.Restarted
+				? new List<SlackBlock>()
+				{
+					new SlackBlock(SlackBlock.BlockType.HEADER, "Service Restarted"),
+					new SlackBlock("Flushing all rooms in their entirety")
+				}
+				: null;
+
 			SlackMessage m = new SlackMessage(
-				blocks: null,
+				blocks: blocks,
 				attachments: rooms.Select(r => r.ToSlackAttachment(args.LastRead)).ToArray()
 			);
 			
-			Monitor.Send(m);
+			SlackMonitorChannel.Send(m);
 		}
 
 		// basic CRUD operations

@@ -29,7 +29,6 @@ namespace Rumble.Platform.ChatService
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
-			SlackLog.Initialize();
 		}
 
 		public IConfiguration Configuration { get; }
