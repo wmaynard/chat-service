@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -38,6 +40,8 @@ namespace Rumble.Platform.ChatService.Models
 
 		public const int MESSAGE_CAPACITY = 200;
 		public const int GLOBAL_PLAYER_CAPACITY = 1000;
+
+		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
@@ -114,6 +118,7 @@ namespace Rumble.Platform.ChatService.Models
 				return;
 			Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
 			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
+			OnMessageAdded?.Invoke(this, new RoomEventArgs(msg));
 		}
 		/// <summary>
 		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
@@ -190,6 +195,64 @@ namespace Rumble.Platform.ChatService.Models
 				return Members.Add(info);
 			PreviousMembers.RemoveWhere(m => m.AccountId == info.AccountId);
 			return PreviousMembers.Add(info);
+		}
+
+		public SlackAttachment ToSlackAttachment(long timestamp)
+		{
+			Message[] messages = Messages.Where(m => m.Timestamp > timestamp).ToArray();
+			if (messages.Length == 0)
+				return null;
+
+			List<SlackBlock> blocks = new List<SlackBlock>()
+			{
+				new (SlackBlock.BlockType.HEADER, $"{Language} | {Id}")
+			};
+
+			PlayerInfo author = messages.First().Author;
+			string aid = messages.First().AccountId;
+			DateTime lastDate = messages.First().Date;
+			string entries = "";
+			
+			foreach (Message m in messages)
+			{
+				if (m.AccountId != aid)
+				{
+					blocks.Add(new (
+						type: SlackBlock.BlockType.MARKDOWN, 
+						text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+					));
+					aid = m.AccountId;
+					lastDate = m.Date;
+					entries = "";
+				}
+
+				string clean = m.Text.Replace('\n', ' ').Replace('`', '\'');
+				entries += m.Type switch
+				{
+					Message.TYPE_CHAT => clean,
+					Message.TYPE_BAN_ANNOUNCEMENT => $"> :anger: `{clean}`",
+					Message.TYPE_BROADCAST => $"```Broadcast: {clean}```",
+					Message.TYPE_UNBAN_ANNOUNCEMENT => $"> :tada: `{clean}`",
+					_ => $":question: {clean}"
+				};
+				entries += '\n';
+			}
+			blocks.Add(new (
+				type: SlackBlock.BlockType.MARKDOWN, 
+				text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+			));
+
+			return new SlackAttachment(Id[^6..], blocks);
+		}
+		
+		public class RoomEventArgs : EventArgs
+		{
+			public Message Message { get; private set; }
+
+			public RoomEventArgs(Message msg)
+			{
+				Message = msg;
+			}
 		}
 	}
 }

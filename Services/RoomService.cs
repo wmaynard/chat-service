@@ -1,19 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services
 {
 	public class RoomService : RumbleMongoService
 	{
-		internal static readonly string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
-		internal static readonly string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
+		internal const string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
+		internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
+		private readonly RoomMonitor _monitor;
+		private readonly SlackMessageClient Monitor = new SlackMessageClient(
+			channel: RumbleEnvironment.Variable("SLACK_SANDBOX_CHANNEL"), 
+			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN")
+		);
 		
 		private new readonly IMongoCollection<Room> _collection;
 
@@ -21,6 +28,23 @@ namespace Rumble.Platform.ChatService.Services
 		{
 			Log.Write("Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);
+			_monitor = new RoomMonitor(SendToSlack);
+		}
+
+		private void SendToSlack(object sender, RoomMonitor.MonitorEventArgs args)
+		{
+			List<Room> rooms = args.Restarted
+				? _collection.Find(room => room.Messages.Any(m => m.Timestamp > args.LastRead)).ToList()
+				: _collection.Find(room => args.RoomIds.Contains(room.Id)).ToList();
+			if (!rooms.Any())
+				return;
+
+			SlackMessage m = new SlackMessage(
+				blocks: null,
+				attachments: rooms.Select(r => r.ToSlackAttachment(args.LastRead)).ToArray()
+			);
+			
+			Monitor.Send(m);
 		}
 
 		// basic CRUD operations

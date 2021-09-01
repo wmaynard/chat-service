@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public struct SlackBlock
+	public struct SlackBlockz
 	{
 		public enum BlockType { HEADER, DIVIDER, MARKDOWN }
 
@@ -13,7 +13,7 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public object Text { get; set; }
 		
-		public SlackBlock(BlockType type, string text = null)
+		public SlackBlockz(BlockType type, string text = null)
 		{
 			Type = null;
 			Text = null;

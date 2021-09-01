@@ -2,6 +2,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -87,5 +88,12 @@ namespace Rumble.Platform.ChatService.Models
 			if (ScreenName == null)
 				throw new InvalidPlayerInfoException("ScreenName cannot be null.");
 		}
+
+		[BsonIgnore]
+		[JsonIgnore]
+		public string SlackLink => SlackFormatter.Link(
+			url: $"{RumbleEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
+			text: UniqueScreenname
+		);
 	}
 }

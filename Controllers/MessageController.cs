@@ -73,28 +73,23 @@ namespace Rumble.Platform.ChatService.Controllers
 			PlayerInfo reported = room.AllMembers.First(p => p.AccountId == reportedMessage.AccountId);
 			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);
 			
-			Report report = new Report()
-			{
-				Reported = reported,
-				Reporter = reporter,
-				Log = logs,
-				Players = players
-			};
+			Report report = _reportService.FindByPlayerAndMessage(reported.AccountId, reportedMessage.Id)
+				?? new Report()
+				{
+					Reported = reported,
+					Log = logs,
+					MessageId = reportedMessage.Id,
+					Players = players
+				};
+			
+			bool added = report.AddReporter(reporter);
 			report.Log.First(m => m.Id == messageId).Reported = true;
-			
-			_reportService.Create(report);
 
-			object slack = null;
-			try
-			{
-				SlackHelper.SendReport(reporter, logs, players);
-				slack = new {SlackSuccess = true};
-			}
-			catch (Exception e)
-			{
-				slack = new { ErrorMessage = e.Message, StackTrace = e.StackTrace };
-			}
+			if (!added) 
+				return Ok(report.ResponseObject, GetAllUpdates(token, body));
 			
+			// _reportService.UpdateOrCreate(report);
+			object slack = _reportService.SendToSlack(report);
 			return Ok(report.ResponseObject, GetAllUpdates(token, body), slack);
 		}
 		/// <summary>

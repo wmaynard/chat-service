@@ -11,6 +11,7 @@ using Newtonsoft.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
@@ -210,27 +211,13 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(new {EnvironmentVariables = output});
 		}
 
-		[HttpPost, Route("slack")]
-		public ActionResult SlackHandler([FromHeader(Name = AUTH)] string auth)
+		[HttpPost, Route("slackHandler")]
+		public ActionResult SlackHandler()
 		{
-			List<string> data = new List<string>();
-			data.Add("Authorization? " + (auth ?? "null"));
-			foreach (string key in Request.Form.Keys)
-				data.Add($"{key} | {Request.Form[key]}");
-
-			object output = new
-			{
-				Channel = "C02C18NDJKY",
-				Blocks = data.Select(d => new SlackBlock(SlackBlock.BlockType.MARKDOWN, d)).Append(new SlackBlock(SlackBlock.BlockType.DIVIDER))
-			};
-			
-			string returnToSender = JsonConvert.SerializeObject(
-				output, 
-				new JsonSerializerSettings(){ContractResolver = new CamelCasePropertyNamesContractResolver()}
-			);
-			SlackHelper.Send(RumbleEnvironment.Variable("SLACK_ENDPOINT_POST_MESSAGE"), returnToSender);
-			
-			return Ok(new { ReceivedData = data });
+			// TODO: Send slack interactions here (e.g. button presses)
+			// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
+			// And deserialize it to accomplish admin things in a secure way
+			return Ok();
 		}
 	}
 
