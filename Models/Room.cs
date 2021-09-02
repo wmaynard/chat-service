@@ -81,6 +81,12 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_HAS_STICKY, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public bool HasSticky => Messages.Any(message => message.IsSticky);
+		[BsonIgnore]
+		[JsonIgnore]
+		public string SlackColor => Id[^6..];
+		[BsonIgnore]
+		[JsonIgnore]
+		public bool IsStickyRoom => Type == TYPE_STICKY;
 		public Room ()
 		{
 			CreatedTimestamp = UnixTime;
@@ -214,55 +220,61 @@ namespace Rumble.Platform.ChatService.Models
 
 		public SlackAttachment ToSlackAttachment(long timestamp)
 		{
-			Message[] messages = Messages.Where(m => m.Timestamp > timestamp).ToArray();
-			if (messages.Length == 0)
+			List<Message> news = Messages.Where(message => message.Timestamp >= timestamp).ToList();
+			if (!news.Any())
 				return null;
-
 			string title = Type == Room.TYPE_STICKY ? "Stickies" : Language;
 			List<SlackBlock> blocks = new List<SlackBlock>()
 			{
-				new (SlackBlock.BlockType.HEADER, $"{title} | {Id}")
+				new(SlackBlock.BlockType.HEADER, $"{title} | {Id}")
 			};
-
-			string aid = messages.First().AccountId;
-			DateTime lastDate = messages.First().Date;
-			string entries = "";
 			
-			foreach (Message m in messages.Where(m => !m.IsSticky))
+			// Process normal (non-sticky) messages.
+			Message[] nonStickies = news.Where(message => !message.IsSticky).ToArray();
+			if (nonStickies.Any())
 			{
-				if (m.AccountId != aid)
-				{
-					blocks.Add(new (
-						text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
-					));
-					aid = m.AccountId;
-					lastDate = m.Date;
-					entries = "";
-				}
+				string aid = nonStickies.First().AccountId;
+				DateTime date = nonStickies.First().Date;
+				string entries = "";
 
-				string clean = m.Text.Replace('\n', ' ').Replace('`', '\'');
-				entries += m.Type switch
+				foreach (Message msg in nonStickies)
 				{
-					Message.TYPE_CHAT => clean,
-					Message.TYPE_BAN_ANNOUNCEMENT => $"> :anger: `{clean}`",
-					Message.TYPE_BROADCAST => $"```Broadcast: {clean}```",
-					Message.TYPE_UNBAN_ANNOUNCEMENT => $"> :tada: `{clean}`",
-					_ => $":question: {clean}"
-				};
-				entries += '\n';
-			}
-			if (!string.IsNullOrEmpty(entries))
+					if (msg.AccountId != aid)
+					{
+						// Add the built block, then reset the values to the next message author / date.
+						blocks.Add(new (
+							$"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+						));
+						aid = msg.AccountId;
+						date = msg.Date;
+						entries = "";
+					}
+					// Clean the text for Slack and add it to the entries.
+					string clean = msg.Text.Replace('\n', ' ').Replace('`', '\'');
+					entries += msg.Type switch
+					{
+						Message.TYPE_CHAT => clean,
+						Message.TYPE_BAN_ANNOUNCEMENT => $"> :anger: `{clean}`",
+						Message.TYPE_BROADCAST => $"```Broadcast: {clean}```",
+						Message.TYPE_UNBAN_ANNOUNCEMENT => $"> :tada: `{clean}`",
+						_ => $":question: {clean}"
+					};
+					entries += '\n';
+				}
 				blocks.Add(new (
-					text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+					text: $"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
 				));
-			blocks.AddRange(messages
+			}
+			
+			// Process the sticky messages
+			blocks.AddRange((IsStickyRoom ? Messages : news)
 				.Where(m => m.IsSticky)
 				.Select(m => new SlackBlock(
 					type: SlackBlock.BlockType.HEADER, 
-					text: $"{lastDate:HH:mm} > {m.Text}"
+					text: $"{m.Date:HH:mm} > {m.Text}"
 			)));
 
-			return new SlackAttachment(Id[^6..], blocks);
+			return new SlackAttachment(SlackColor, blocks);
 		}
 		
 		public class RoomEventArgs : EventArgs

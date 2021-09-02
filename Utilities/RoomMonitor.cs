@@ -13,7 +13,7 @@ namespace Rumble.Platform.ChatService.Utilities
 		private const int THRESHOLD = Room.MESSAGE_CAPACITY / 2;
 		private long LastRead { get; set; }
 		private Dictionary<string, int> MessageCount { get; set; }
-		private const int FREQUENCY_IN_MS = 300_000;
+		private readonly int FREQUENCY_IN_MS = int.Parse(RumbleEnvironment.Variable("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
 		private readonly Timer Timer;
 		public event EventHandler<MonitorEventArgs> OnFlush;
 		public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
@@ -57,7 +57,6 @@ namespace Rumble.Platform.ChatService.Utilities
 			catch (Exception e)
 			{
 				Console.WriteLine(e); // TODO: This occasionally failed with a null reference when compressing attachments
-				throw;
 			}
 			Timer.Start();
 		}
