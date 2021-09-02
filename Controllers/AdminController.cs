@@ -58,26 +58,31 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			TokenInfo token = ValidateAdminToken(auth);
 			Message message = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId);
+			message.Type = Message.TYPE_STICKY;
 			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
 
 			Room room;
 			try
 			{
 				room = _roomService.GetStickyRoom();
-				room.Messages.Add(message);
-				_roomService.Update(room);
 			}
 			catch (RoomNotFoundException)
 			{
 				room = new Room()
 				{
-					Capacity = Int32.MaxValue,
+					Capacity = Room.MESSAGE_CAPACITY,
 					Type = Room.TYPE_STICKY,
 					Language = language
 				};
-				room.Messages.Add(message);
 				_roomService.Create(room);
 			}
+			room.AddMessage(message);
+			foreach (Room r in _roomService.GetGlobals())
+			{
+				r.AddMessage(message);
+				_roomService.Update(r);
+			}
+			_roomService.Update(room);
 
 			return Ok(room.ResponseObject);
 		}

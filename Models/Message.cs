@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -17,6 +18,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_UNBAN_ANNOUNCEMENT = "unbanAnnouncement";
 		public const string TYPE_UNKNOWN = "unknown";
 		public const string TYPE_BROADCAST = "broadcast";
+		public const string TYPE_STICKY = "sticky";
 
 		internal const string DB_KEY_ID = "id";
 		internal const string DB_KEY_TEXT = "txt";
@@ -63,6 +65,10 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public DateTime Date => DateTime.UnixEpoch.AddSeconds(Timestamp);
+
+		[BsonIgnore]
+		[JsonIgnore]
+		public bool IsSticky => Type == Message.TYPE_STICKY;
 		public Message()
 		{
 			Id = Guid.NewGuid().ToString();

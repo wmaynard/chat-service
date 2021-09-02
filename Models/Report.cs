@@ -72,7 +72,6 @@ namespace Rumble.Platform.ChatService.Models
 				};
 				List<SlackBlock> blocks = new List<SlackBlock>();
 
-				
 				PlayerInfo author = null;
 				string aid = null;
 				string entries = "";

@@ -94,7 +94,13 @@ namespace Rumble.Platform.ChatService.Services
 			}
 			throw new Exception("Couldn't retrieve sticky messages.");
 		}
-		public List<Room> GetGlobals(string language) => _collection.Find(filter: r => r.Language == language).ToList();
+
+		public List<Room> GetGlobals(string language = null)
+		{
+			return language == null
+				? _collection.Find(filter: room => room.Type == Room.TYPE_GLOBAL).ToList()
+				: _collection.Find(filter: room => room.Type == Room.TYPE_GLOBAL && room.Language == language).ToList();
+		}
 
 		public List<Room> GetRoomsForUser(string aid)
 		{
@@ -147,6 +153,8 @@ namespace Rumble.Platform.ChatService.Services
 					Language = language,
 					Type = Room.TYPE_GLOBAL
 				};
+				foreach (Message sticky in GetStickyMessages(true))
+					joined.AddMessage(sticky);
 				joined.AddMember(player);
 				Create(joined);
 			}

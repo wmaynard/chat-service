@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson;
@@ -27,6 +28,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_CAPACITY = "capacity";
 		public const string FRIENDLY_KEY_CREATED_TIMESTAMP = "created";
 		public const string FRIENDLY_KEY_GUILD_ID = "guildId";
+		public const string FRIENDLY_KEY_HAS_STICKY = "hasSticky";
 		public const string FRIENDLY_KEY_LANGUAGE = "language";
 		public const string FRIENDLY_KEY_MESSAGES = "messages";
 		public const string FRIENDLY_KEY_MEMBERS = "members";
@@ -76,6 +78,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).ToHashSet();
+		[BsonIgnore]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_HAS_STICKY, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		public bool HasSticky => Messages.Any(message => message.IsSticky);
 		public Room ()
 		{
 			CreatedTimestamp = UnixTime;
@@ -111,15 +116,24 @@ namespace Rumble.Platform.ChatService.Models
 		/// <param name="msg">The Message to add.</param>
 		public void AddMessage(Message msg)
 		{
-			RequireMember(msg.AccountId);
-			Messages.Add(msg);
-			
-			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
-			if (Messages.Count <= MESSAGE_CAPACITY)
+			if (!msg.IsSticky)
+				RequireMember(msg.AccountId);
+			else if (string.IsNullOrEmpty(msg.Text))
+			{
+				Messages = Messages.Where(m => !m.IsSticky).ToList();
 				return;
-			Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
-			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
+			}
+			Messages.Add(msg);
 			OnMessageAdded?.Invoke(this, new RoomEventArgs(msg));
+			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
+			if (Messages.Count(m => !m.IsSticky) <= Capacity)
+				return;
+
+			IEnumerable<Message> stickies = Messages.Where(m => m.IsSticky);
+			Messages.RemoveRange(0, Messages.Count - Capacity);
+			if (stickies.Any())	// Add the stickies back in
+				Messages = Messages.Union(stickies).OrderBy(m => m.Timestamp).ToList();
+			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
 		}
 		/// <summary>
 		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
@@ -204,21 +218,21 @@ namespace Rumble.Platform.ChatService.Models
 			if (messages.Length == 0)
 				return null;
 
+			string title = Type == Room.TYPE_STICKY ? "Stickies" : Language;
 			List<SlackBlock> blocks = new List<SlackBlock>()
 			{
-				new (SlackBlock.BlockType.HEADER, $"{Language} | {Id}")
+				new (SlackBlock.BlockType.HEADER, $"{title} | {Id}")
 			};
 
 			string aid = messages.First().AccountId;
 			DateTime lastDate = messages.First().Date;
 			string entries = "";
 			
-			foreach (Message m in messages)
+			foreach (Message m in messages.Where(m => !m.IsSticky))
 			{
 				if (m.AccountId != aid)
 				{
 					blocks.Add(new (
-						type: SlackBlock.BlockType.MARKDOWN, 
 						text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
 					));
 					aid = m.AccountId;
@@ -237,10 +251,16 @@ namespace Rumble.Platform.ChatService.Models
 				};
 				entries += '\n';
 			}
-			blocks.Add(new (
-				type: SlackBlock.BlockType.MARKDOWN, 
-				text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
-			));
+			if (!string.IsNullOrEmpty(entries))
+				blocks.Add(new (
+					text: $"`{lastDate:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+				));
+			blocks.AddRange(messages
+				.Where(m => m.IsSticky)
+				.Select(m => new SlackBlock(
+					type: SlackBlock.BlockType.HEADER, 
+					text: $"{lastDate:HH:mm} > {m.Text}"
+			)));
 
 			return new SlackAttachment(Id[^6..], blocks);
 		}

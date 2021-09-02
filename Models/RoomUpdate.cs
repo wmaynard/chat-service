@@ -12,13 +12,15 @@ namespace Rumble.Platform.ChatService.Models
 	{
 		private const string FRIENDLY_KEY_UNREAD_MESSAGES = "unreadMessages";
 		
-		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_ID)]
+		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_ID)]
 		private string Id { get; set; }
-		[JsonProperty, BsonElement(FRIENDLY_KEY_UNREAD_MESSAGES)]
+		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_HAS_STICKY)]
+		private bool HasSticky { get; set; }
+		[JsonProperty(PropertyName = FRIENDLY_KEY_UNREAD_MESSAGES, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		private Message[] UnreadMessages { get; set; }
-		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_MEMBERS)]
+		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_MEMBERS)]
 		private IEnumerable<PlayerInfo> Members { get; set; }
-		[JsonProperty, BsonElement(Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
+		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
 		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
 
 		/// <summary>
@@ -31,6 +33,7 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			return new RoomUpdate()
 			{
+				HasSticky = room.HasSticky,
 				Id = room.Id,
 				UnreadMessages = room.MessagesSince(lastRead).ToArray(),
 				Members = room.Members,
