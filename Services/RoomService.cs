@@ -27,7 +27,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public RoomService(ChatDBSettings settings) : base(settings)
 		{
-			Log.Write("Creating RoomService");
+			Log.Local(Owner.Will, "Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);
 			_monitor = new RoomMonitor(SendToSlack);
 		}
@@ -146,7 +146,7 @@ namespace Rumble.Platform.ChatService.Services
 					throw new RoomNotFoundException(roomId, language);
 				
 				// Auto-scale global chat.  Create a new room and put the user in it.
-				Log.Write($"Creating new global ({language}) room");
+				Log.Info(Owner.Will, $"Creating new global ({language}) room");
 				joined = new Room()
 				{
 					Capacity = Room.GLOBAL_PLAYER_CAPACITY,

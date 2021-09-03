@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
 
@@ -35,7 +36,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
-			LogData.Info(LogData.LogOwner.WILL, "Testing new LogglyClient", token);
+			Log.Info(Owner.Will, "Testing new LogglyClient", token, new {Foo = "bar", Jouney = new int[] {1, 2, 3, 4, 5}, Nested = new {World = "hello"}});
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
 			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);
@@ -61,6 +62,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "health")]
 		public override ActionResult HealthCheck()
 		{
+			
+			Log.Info(Owner.Will, "Service Startup");
 			return Ok(
 				_banService.HealthCheckResponseObject,
 				_reportService.HealthCheckResponseObject,

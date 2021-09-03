@@ -5,6 +5,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Services
 {
@@ -14,7 +15,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public SettingsService(SettingsDBSettings settings) : base(settings)
 		{
-			Log.Write("Creating SettingsService");
+			Log.Local(Owner.Will, "Creating SettingsService");
 			_collection = _database.GetCollection<ChatSettings>(settings.CollectionName);
 		}
 

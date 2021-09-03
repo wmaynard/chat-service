@@ -5,6 +5,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Services
 {
@@ -16,7 +17,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public BanService(BanDBSettings settings) : base(settings)
 		{
-			Log.Write("Creating BanService");
+			Log.Local(Owner.Will, "Creating BanService");
 			_collection = _database.GetCollection<Ban>(settings.CollectionName);
 		}
 

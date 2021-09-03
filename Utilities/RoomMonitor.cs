@@ -4,6 +4,7 @@ using System.Linq;
 using System.Timers;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
@@ -30,6 +31,8 @@ namespace Rumble.Platform.ChatService.Utilities
 		private void Increment(object sender, Room.RoomEventArgs args)
 		{
 			Room room = (Room) sender;
+			if (room.Id == null)
+				return;
 			try
 			{
 				if (++MessageCount[room.Id] > THRESHOLD)
@@ -43,6 +46,7 @@ namespace Rumble.Platform.ChatService.Utilities
 
 		private void Flush(object sender = null, EventArgs args = null)
 		{
+			Log.Local(Owner.Will, "Flushing the room monitor");
 			Timer.Stop();
 			try
 			{
