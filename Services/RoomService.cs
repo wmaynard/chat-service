@@ -48,13 +48,16 @@ namespace Rumble.Platform.ChatService.Services
 			{
 				rooms.Add(GetStickyRoom());
 			}
-			catch (RoomNotFoundException){}
+			catch (RoomNotFoundException){} // Should only happen in the case where we've never had any stickies.
 
+			int deleted = 0;
 			foreach (Room room in rooms)
 			{
-				room.RemoveStickies(expiredOnly);
+				deleted += room.RemoveStickies(expiredOnly);
 				Update(room);
 			}
+			if (deleted > 0)
+				Log.Info(Owner.Will, $"Deleted {deleted} stickies from {rooms.Count} rooms.", data: new { Rooms = rooms.Select(r => r.Id) });
 		}
 
 		private void CheckExpiredStickies(object sender, ElapsedEventArgs args)
