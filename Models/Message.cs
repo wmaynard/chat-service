@@ -69,6 +69,9 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public bool IsSticky => Type == Message.TYPE_STICKY;
+		[BsonIgnore]
+		[JsonIgnore]
+		public bool IsExpired => Expiration != null && UnixTime > Expiration;
 		public Message()
 		{
 			Id = Guid.NewGuid().ToString();
