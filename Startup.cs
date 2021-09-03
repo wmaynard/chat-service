@@ -20,6 +20,7 @@ using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService
 {
@@ -29,6 +30,8 @@ namespace Rumble.Platform.ChatService
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
+			// LogData.Info(LogData.LogOwner.WILL, "Service Startup");
+			// LogglyClient.Send("{\"message\":\"hello world\", \"from\":\"hoover\"}");
 		}
 
 		public IConfiguration Configuration { get; }
@@ -45,7 +48,7 @@ namespace Rumble.Platform.ChatService
 			Log.Write("Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_rooms";
+				settings.CollectionName = "chat_rooms_wmaynard";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});

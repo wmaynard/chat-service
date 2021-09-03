@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
@@ -34,6 +35,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
+			LogData.Info(LogData.LogOwner.WILL, "Testing new LogglyClient", token);
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
 			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);

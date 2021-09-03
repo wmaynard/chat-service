@@ -8,6 +8,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Controllers
 {

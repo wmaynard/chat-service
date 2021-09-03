@@ -270,8 +270,7 @@ namespace Rumble.Platform.ChatService.Models
 			blocks.AddRange((IsStickyRoom ? Messages : news)
 				.Where(m => m.IsSticky)
 				.Select(m => new SlackBlock(
-					type: SlackBlock.BlockType.HEADER, 
-					text: $"{m.Date:HH:mm} > {m.Text}"
+					text: $"`Sticky Message on {m.Date:HH:mm}` > {m.Text}"
 			)));
 
 			return new SlackAttachment(SlackColor, blocks);
