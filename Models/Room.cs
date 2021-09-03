@@ -139,9 +139,13 @@ namespace Rumble.Platform.ChatService.Models
 
 		public void RemoveStickies(bool expiredOnly = false)
 		{
+			int before = Messages.Count;
 			Messages = expiredOnly
-				? Messages = Messages.Where(m => !m.IsSticky || m.IsSticky && m.IsExpired).ToList()
+				? Messages = Messages.Where(m => !m.IsSticky || !m.IsExpired).ToList()
 				: Messages = Messages.Where(m => !m.IsSticky).ToList();
+			int after = Messages.Count;
+			if (before > after)
+				Log.Local(Owner.Will, $"{before - after} stickies deleted from {Language ?? (Type == Room.TYPE_STICKY ? "Stickies" : "")} | {Id}");
 		}
 		/// <summary>
 		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException

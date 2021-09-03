@@ -46,10 +46,10 @@ namespace Rumble.Platform.ChatService.Utilities
 
 		private void Flush(object sender = null, EventArgs args = null)
 		{
-			Log.Local(Owner.Will, "Flushing the room monitor");
 			Timer.Stop();
 			try
 			{
+				Log.Local(Owner.Will, "Flushing the room monitor");
 				OnFlush?.Invoke(this, new MonitorEventArgs(
 					roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
 					lastRead: LastRead,

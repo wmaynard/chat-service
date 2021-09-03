@@ -65,7 +65,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Room stickies = null;
 			try
 			{
-				_roomService.GetStickyRoom();
+				stickies = _roomService.GetStickyRoom();
 			}
 			catch (RoomNotFoundException)
 			{
@@ -81,12 +81,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			
 			if (string.IsNullOrEmpty(message.Text))
 			{
-				foreach (Room room in _roomService.GetGlobals())
-				{
-					room.RemoveStickies();
-					_roomService.Update(room);
-				}
-				stickies?.RemoveStickies();
+				_roomService.DeleteStickies();
 				return Ok();
 			}
 			stickies.AddMessage(message);

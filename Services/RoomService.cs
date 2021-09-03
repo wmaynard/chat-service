@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Timers;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
@@ -22,6 +23,8 @@ namespace Rumble.Platform.ChatService.Services
 			channel: RumbleEnvironment.Variable("SLACK_MONITOR_CHANNEL"), 
 			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN")
 		);
+
+		private Timer _stickyTimer;
 		
 		private new readonly IMongoCollection<Room> _collection;
 
@@ -30,6 +33,43 @@ namespace Rumble.Platform.ChatService.Services
 			Log.Verbose(Owner.Will, "Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);
 			_monitor = new RoomMonitor(SendToSlack);
+			_stickyTimer = new Timer(int.Parse(RumbleEnvironment.Variable("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
+			{
+				AutoReset = true
+			};
+			_stickyTimer.Elapsed += CheckExpiredStickies;
+			_stickyTimer.Start();
+		}
+
+		public void DeleteStickies(bool expiredOnly = false)
+		{
+			List<Room> rooms = GetGlobals();
+			try
+			{
+				rooms.Add(GetStickyRoom());
+			}
+			catch (RoomNotFoundException){}
+
+			foreach (Room room in rooms)
+			{
+				room.RemoveStickies(expiredOnly);
+				Update(room);
+			}
+		}
+
+		private void CheckExpiredStickies(object sender, ElapsedEventArgs args)
+		{
+			_stickyTimer.Start();
+			try
+			{
+				Log.Local(Owner.Will, "Attempting to delete expired sticky messages");
+				DeleteStickies(true);
+			}
+			catch (Exception e)
+			{
+				Log.Error(Owner.Will, "Error encountered when checking for expired stickies.", exception: e);
+			}
+			_stickyTimer.Start();
 		}
 
 		private void SendToSlack(object sender, RoomMonitor.MonitorEventArgs args)
