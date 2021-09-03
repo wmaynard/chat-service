@@ -28,7 +28,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public ReportService(ReportDBSettings settings) : base(settings)
 		{
-			Log.Local(Owner.Will, "Creating ReportService");
+			Log.Verbose(Owner.Will, "Creating ReportService");
 			_collection = _database.GetCollection<Report>(settings.CollectionName);
 			SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
 			SummaryTimer.Elapsed += SendSummaryReport;

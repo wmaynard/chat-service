@@ -30,8 +30,7 @@ namespace Rumble.Platform.ChatService
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
-			// LogData.Info(LogData.LogOwner.WILL, "Service Startup");
-			// LogglyClient.Send("{\"message\":\"hello world\", \"from\":\"hoover\"}");
+			Log.Info(Owner.System, "Service started.", localIfNotDeployed: true);
 		}
 
 		public IConfiguration Configuration { get; }
@@ -41,7 +40,7 @@ namespace Rumble.Platform.ChatService
 		{
 			string mongoConnection = RumbleEnvironment.Variable("MONGODB_URI");
 			string database = RumbleEnvironment.Variable("MONGODB_NAME");
-			Log.Local(Owner.Will, $"mongoConnection: '{mongoConnection}'");
+			Log.Local(Owner.System, $"mongoConnection: '{mongoConnection}'");
 			if (mongoConnection == null)
 			{
 				Exception e = new Exception("mongoConnection is null, and the service cannot start.  This will happen if the system cannot read the environment variables.");
@@ -49,28 +48,28 @@ namespace Rumble.Platform.ChatService
 				throw e;
 			}
 
-			Log.Local(Owner.Will, "Initializing ChatDBSettings");
+			Log.Verbose(Owner.Will, "Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
 				settings.CollectionName = "chat_rooms";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
-			Log.Local(Owner.Will, "Initializing ReportDBSettings");
+			Log.Verbose(Owner.Will, "Initializing ReportDBSettings");
 			services.Configure<ReportDBSettings>(settings =>
 			{
 				settings.CollectionName = "chat_reports";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
-			Log.Local(Owner.Will, "Initializing SettingsDBSettings");
+			Log.Verbose(Owner.Will, "Initializing SettingsDBSettings");
 			services.Configure<SettingsDBSettings>(settings =>
 			{
 				settings.CollectionName = "chat_settings";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
-			Log.Local(Owner.Will, "Initializing BanDBSettings");
+			Log.Verbose(Owner.Will, "Initializing BanDBSettings");
 			services.Configure<BanDBSettings>(settings =>
 			{
 				settings.CollectionName = "chat_bans";
@@ -78,19 +77,19 @@ namespace Rumble.Platform.ChatService
 				settings.DatabaseName = database;
 			});
 
-			Log.Local(Owner.Will, "Creating Settings Providers");
+			Log.Verbose(Owner.Will, "Creating Settings Providers");
 			services.AddSingleton<ChatDBSettings>(provider => provider.GetRequiredService<IOptions<ChatDBSettings>>().Value);
 			services.AddSingleton<ReportDBSettings>(provider => provider.GetRequiredService<IOptions<ReportDBSettings>>().Value);
 			services.AddSingleton<SettingsDBSettings>(provider => provider.GetRequiredService<IOptions<SettingsDBSettings>>().Value);
 			services.AddSingleton<BanDBSettings>(provider => provider.GetRequiredService<IOptions<BanDBSettings>>().Value);
 
-			Log.Local(Owner.Will, "Creating Service Singletons");
+			Log.Verbose(Owner.Will, "Creating Service Singletons");
 			services.AddSingleton<RoomService>();
 			services.AddSingleton<ReportService>();
 			services.AddSingleton<SettingsService>();
 			services.AddSingleton<BanService>();
 			
-			Log.Local(Owner.Will, "Adding Controllers");
+			Log.Verbose(Owner.Will, "Adding Controllers");
 			services.AddControllers(config =>
 			{
 				config.Filters.Add(new RumbleFilter());

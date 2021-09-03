@@ -60,7 +60,7 @@ namespace Rumble.Platform.ChatService.Utilities
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine(e); // TODO: This occasionally failed with a null reference when compressing attachments
+				Log.Error(Owner.Will, message: "Couldn't flush the room monitor.", exception: e);
 			}
 			Timer.Start();
 		}

@@ -17,7 +17,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public BanService(BanDBSettings settings) : base(settings)
 		{
-			Log.Local(Owner.Will, "Creating BanService");
+			Log.Verbose(Owner.Will, "Creating BanService");
 			_collection = _database.GetCollection<Ban>(settings.CollectionName);
 		}
 

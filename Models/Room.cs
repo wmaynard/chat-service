@@ -124,11 +124,6 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			if (!msg.IsSticky)
 				RequireMember(msg.AccountId);
-			else if (string.IsNullOrEmpty(msg.Text))
-			{
-				Messages = Messages.Where(m => !m.IsSticky).ToList();
-				return;
-			}
 			Messages.Add(msg);
 			OnMessageAdded?.Invoke(this, new RoomEventArgs(msg));
 			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
@@ -140,6 +135,13 @@ namespace Rumble.Platform.ChatService.Models
 			if (stickies.Any())	// Add the stickies back in
 				Messages = Messages.Union(stickies).OrderBy(m => m.Timestamp).ToList();
 			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
+		}
+
+		public void RemoveStickies(bool expiredOnly = false)
+		{
+			Messages = expiredOnly
+				? Messages = Messages.Where(m => !m.IsSticky || m.IsSticky && m.IsExpired).ToList()
+				: Messages = Messages.Where(m => !m.IsSticky).ToList();
 		}
 		/// <summary>
 		/// Adds a Message to the room.  If the author of the message is not a Member of the Room, a NotInRoomException
@@ -237,29 +239,42 @@ namespace Rumble.Platform.ChatService.Models
 				DateTime date = nonStickies.First().Date;
 				string entries = "";
 
+				void CreateBlock(Message msg)
+				{
+					blocks.Add(new SlackBlock(text: $"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"));
+					aid = msg.AccountId;
+					date = msg.Date;
+					entries = "";
+				}
+
 				foreach (Message msg in nonStickies)
 				{
 					if (msg.AccountId != aid)
 					{
 						// Add the built block, then reset the values to the next message author / date.
-						blocks.Add(new (
-							$"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
-						));
-						aid = msg.AccountId;
-						date = msg.Date;
-						entries = "";
+						// blocks.Add(new (
+						// 	$"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
+						// ));
+						// aid = msg.AccountId;
+						// date = msg.Date;
+						// entries = "";
+						CreateBlock(msg);
 					}
 					// Clean the text for Slack and add it to the entries.
 					string clean = msg.Text.Replace('\n', ' ').Replace('`', '\'');
-					entries += msg.Type switch
+					string toAdd = msg.Type switch
 					{
 						Message.TYPE_CHAT => clean,
 						Message.TYPE_BAN_ANNOUNCEMENT => $"> :anger: `{clean}`",
 						Message.TYPE_BROADCAST => $"```Broadcast: {clean}```",
 						Message.TYPE_UNBAN_ANNOUNCEMENT => $"> :tada: `{clean}`",
 						_ => $":question: {clean}"
-					};
-					entries += '\n';
+					} + '\n';
+					if (SlackBlock.WouldOverflow(toAdd))
+						Log.Error(Owner.Will, "Impossible to create a SlackBlock.  Text is too long.", data: new { ToAdd = toAdd });
+					else if (SlackBlock.WouldOverflow(entries + toAdd))
+						CreateBlock(msg);
+					entries += toAdd;
 				}
 				blocks.Add(new (
 					text: $"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"

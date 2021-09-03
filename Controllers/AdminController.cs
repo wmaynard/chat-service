@@ -61,30 +61,42 @@ namespace Rumble.Platform.ChatService.Controllers
 			message.Type = Message.TYPE_STICKY;
 			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
 
-			Room room;
+			Log.Info(Owner.Will, "New sticky message issued.", token, data: message);
+			Room stickies = null;
 			try
 			{
-				room = _roomService.GetStickyRoom();
+				_roomService.GetStickyRoom();
 			}
 			catch (RoomNotFoundException)
 			{
-				room = new Room()
+				Log.Info(Owner.Will, "Sticky room not found; creating it now.");
+				stickies = new Room()
 				{
 					Capacity = Room.MESSAGE_CAPACITY,
 					Type = Room.TYPE_STICKY,
 					Language = language
 				};
-				_roomService.Create(room);
+				_roomService.Create(stickies);
 			}
-			room.AddMessage(message);
+			
+			if (string.IsNullOrEmpty(message.Text))
+			{
+				foreach (Room room in _roomService.GetGlobals())
+				{
+					room.RemoveStickies();
+					_roomService.Update(room);
+				}
+				stickies?.RemoveStickies();
+				return Ok();
+			}
+			stickies.AddMessage(message);
 			foreach (Room r in _roomService.GetGlobals())
 			{
 				r.AddMessage(message);
 				_roomService.Update(r);
 			}
-			_roomService.Update(room);
-
-			return Ok(room.ResponseObject);
+			_roomService.Update(stickies);
+			return Ok(stickies.ResponseObject);
 		}
 
 		[HttpPost, Route("reports/ignore")]

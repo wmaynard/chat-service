@@ -27,7 +27,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public RoomService(ChatDBSettings settings) : base(settings)
 		{
-			Log.Local(Owner.Will, "Creating RoomService");
+			Log.Verbose(Owner.Will, "Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);
 			_monitor = new RoomMonitor(SendToSlack);
 		}

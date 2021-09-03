@@ -36,7 +36,6 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateToken(auth);
-			Log.Info(Owner.Will, "Testing new LogglyClient", token, new {Foo = "bar", Jouney = new int[] {1, 2, 3, 4, 5}, Nested = new {World = "hello"}});
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
 			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);

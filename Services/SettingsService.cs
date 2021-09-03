@@ -15,7 +15,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public SettingsService(SettingsDBSettings settings) : base(settings)
 		{
-			Log.Local(Owner.Will, "Creating SettingsService");
+			Log.Verbose(Owner.Will, "Creating SettingsService");
 			_collection = _database.GetCollection<ChatSettings>(settings.CollectionName);
 		}
 
