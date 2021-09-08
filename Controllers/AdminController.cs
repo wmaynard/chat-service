@@ -53,6 +53,16 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(room.ResponseObject);
 		}
 
+		[HttpGet, Route(template: "messages/sticky")]
+		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth)
+		{
+			TokenInfo token = ValidateAdminToken(auth);
+
+			IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
+
+			return Ok(new { Stickies = stickies });
+		}
+
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
