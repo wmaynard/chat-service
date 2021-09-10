@@ -73,19 +73,19 @@ ingress:
 prometheus:
   metrics: true
 livenessProbe:
-  path: "/chat/health"
+  path: "/health"
   initialDelaySeconds: 15
   timeoutSeconds: 15
   scheme: "HTTP"
   probeType: "httpGet"
 readinessProbe:
-  path: "/chat/health"
+  path: "/health"
   initialDelaySeconds: 5
   timeoutSeconds: 3
   scheme: "HTTP"
   probeType: "httpGet"
 startupProbe:
-  path: "/chat/health"
+  path: "/health"
   failureThreshold: 30
   timeoutSeconds: 10
   scheme: "HTTP"
