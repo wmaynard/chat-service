@@ -48,7 +48,7 @@ service:
   additionalHosts:
   commonName: dev.nonprod.tower.cdrentertainment.com
   externalPort: 80
-  internalPort: 8080
+  internalPort: 80
 ingress:
   enabled: true
   paths: 
