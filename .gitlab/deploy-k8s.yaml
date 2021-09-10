@@ -21,4 +21,6 @@ dev:
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: never
     - if: '$DEV_ENABLED'
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
+      when: always
 

@@ -24,10 +24,11 @@ variables:
 # from gitlab project ci variables
   K8S_SECRET_SLACK_CHAT_TOKEN: "$SLACK_CHAT_TOKEN"
   K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
+  K8S_SECRET_MONGODB_URI: "$MONGODB_URI"
 
 
   DOCKER_DRIVER: overlay2
-  DEPLOY_TYPE: "kubernetes" # "kubernetes"
+  DEPLOY_TYPE: "kubernetes" # "kubernetes", "beanstalk", "both"
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
@@ -73,7 +74,7 @@ build_image:
     - if: $DEPLOY_TYPE == "beanstalk"
       when: never
     - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
-    - if: $DEPLOY_TYPE == "kubernetes"
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
       when: always
   needs:
     - job: build_app
