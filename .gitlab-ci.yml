@@ -11,8 +11,18 @@ variables:
   K8S_SECRET_RUMBLE_COMPONENT: "chat-service"
   K8S_SECRET_RUMBLE_CONFIG_SERVICE_URL: "https://config-service.cdrentertainment.com/"
   K8S_SECRET_RUMBLE_DEPLOYMENT: "107"
-  K8S_SECRET_MONGODB_NAME: player-service-107
-  # from gitlab project ci variables
+  K8S_SECRET_MONGODB_NAME: "player-service-107"
+  K8S_SECRET_RUMBLE_PUBLISHING_PLAYER_URL: "https://publishing-j8.cdrentertainment.com/cs/player/show"
+  K8S_SECRET_RUMBLE_TOKEN_VERIFICATION: "https://dev.services.tower.cdrentertainment.com/player/verify"
+  K8S_SECRET_SLACK_ENDPOINT_POST_MESSAGE: "https://slack.com/api/chat.postMessage"
+  K8S_SECRET_SLACK_MONITOR_CHANNEL: "C02CH2T6JQH"
+  K8S_SECRET_SLACK_MONITOR_FREQUENCY_SECONDS: "300"
+  K8S_SECRET_SLACK_REPORTS_CHANNEL: "C02CS2G9M4Y"
+  K8S_SECRET_STICKY_CHECK_FREQUENCY_SECONDS: "30"
+  K8S_SECRET_VERBOSE_LOGGING: "false"
+
+# from gitlab project ci variables
+  K8S_SECRET_SLACK_CHAT_TOKEN: "$SLACK_CHAT_TOKEN"
   K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
 
 
