@@ -47,7 +47,7 @@ service:
   url: https://dev.nonprod.tower.cdrentertainment.com/
   additionalHosts:
   commonName: dev.nonprod.tower.cdrentertainment.com
-  externalPort: 8080
+  externalPort: 5000
   internalPort: 80
 ingress:
   enabled: true
@@ -73,19 +73,19 @@ ingress:
 prometheus:
   metrics: true
 livenessProbe:
-  path: "/health"
+  path: "/chat/health"
   initialDelaySeconds: 15
   timeoutSeconds: 15
   scheme: "HTTP"
   probeType: "httpGet"
 readinessProbe:
-  path: "/health"
+  path: "/chat/health"
   initialDelaySeconds: 5
   timeoutSeconds: 3
   scheme: "HTTP"
   probeType: "httpGet"
 startupProbe:
-  path: "/health"
+  path: "/chat/health"
   failureThreshold: 30
   timeoutSeconds: 10
   scheme: "HTTP"
