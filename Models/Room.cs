@@ -50,7 +50,7 @@ namespace Rumble.Platform.ChatService.Models
 		public string Id { get; set; }
 		[BsonElement(DB_KEY_CAPACITY)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CAPACITY)]
-		public int Capacity { get; set; }
+		public int MemberCapacity { get; set; }
 		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
@@ -59,9 +59,9 @@ namespace Rumble.Platform.ChatService.Models
 		public string GuildId { get; set; }
 		[BsonIgnore]
 		[JsonIgnore]
-		public bool IsFull => Members.Count >= Capacity;
-		[BsonElement(DB_KEY_LANGUAGE)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE)]
+		public bool IsFull => Members.Count >= MemberCapacity;
+		[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE, NullValueHandling = NullValueHandling.Ignore)]
 		public string Language { get; set; }
 		[BsonElement(DB_KEY_MESSAGES)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGES)]
@@ -110,7 +110,7 @@ namespace Rumble.Platform.ChatService.Models
 			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
 				throw new AlreadyInRoomException();
 			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
-			if (Members.Count >= Capacity)
+			if (Members.Count >= MemberCapacity)
 				throw new RoomFullException();
 			Members.Add(playerInfo);
 		}
@@ -127,11 +127,11 @@ namespace Rumble.Platform.ChatService.Models
 			Messages.Add(msg);
 			OnMessageAdded?.Invoke(this, new RoomEventArgs(msg));
 			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
-			if (Messages.Count(m => !m.IsSticky) <= Capacity)
+			if (Messages.Count(m => !m.IsSticky) <= MESSAGE_CAPACITY)
 				return;
 
-			IEnumerable<Message> stickies = Messages.Where(m => m.IsSticky);
-			Messages.RemoveRange(0, Messages.Count - Capacity);
+			Message[] stickies = Messages.Where(m => m.IsSticky).ToArray();
+			Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
 			if (stickies.Any())	// Add the stickies back in
 				Messages = Messages.Union(stickies).OrderBy(m => m.Timestamp).ToList();
 			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));

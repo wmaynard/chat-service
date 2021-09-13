@@ -72,22 +72,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
 
 			Log.Info(Owner.Will, "New sticky message issued.", token, data: message);
-			Room stickies = null;
-			try
-			{
-				stickies = _roomService.GetStickyRoom();
-			}
-			catch (RoomNotFoundException)
-			{
-				Log.Info(Owner.Will, "Sticky room not found; creating it now.");
-				stickies = new Room()
-				{
-					Capacity = Room.MESSAGE_CAPACITY,
-					Type = Room.TYPE_STICKY,
-					Language = language
-				};
-				_roomService.Create(stickies);
-			}
+			Room stickies = _roomService.StickyRoom;
 			
 			if (string.IsNullOrEmpty(message.Text))
 			{
@@ -133,7 +118,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateAdminToken(auth);
 			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
 
-			Room room = _roomService.GetStickyRoom();
+			Room room = _roomService.StickyRoom;
 			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
 			_roomService.Update(room);
 			

@@ -14,6 +14,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_CHAT = "chat";
 		public const string TYPE_NOTIFICATION = "notification";
 		public const string TYPE_ANNOUNCEMENT = "announcement";
+		public const string TYPE_ARCHIVED = "archived";
 		public const string TYPE_BAN_ANNOUNCEMENT = "banAnnouncement";
 		public const string TYPE_UNBAN_ANNOUNCEMENT = "unbanAnnouncement";
 		public const string TYPE_UNKNOWN = "unknown";
@@ -49,7 +50,7 @@ namespace Rumble.Platform.ChatService.Models
 		// // TODO: Need a dynamic JSON deserialization
 		// public dynamic Data { get; set; }
 		[BsonElement(DB_KEY_TEXT)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]
 		public string Text { get; set; }
 		[BsonElement(DB_KEY_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]

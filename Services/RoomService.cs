@@ -25,6 +25,31 @@ namespace Rumble.Platform.ChatService.Services
 		);
 
 		private Timer _stickyTimer;
+
+		public Room StickyRoom
+		{
+			get
+			{
+				Room output;
+				try
+				{
+					output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
+					if (output == null)
+						throw new RoomNotFoundException();
+					return output;
+				}
+				catch (RoomNotFoundException)
+				{
+					Log.Info(Owner.Will, "Sticky room not found; creating it now.");
+					output = new Room()
+					{
+						Type = Room.TYPE_STICKY
+					};
+					Create(output);
+					return StickyRoom;
+				}
+			}
+		}
 		
 		private new readonly IMongoCollection<Room> _collection;
 
@@ -44,11 +69,7 @@ namespace Rumble.Platform.ChatService.Services
 		public void DeleteStickies(bool expiredOnly = false)
 		{
 			List<Room> rooms = GetGlobals();
-			try
-			{
-				rooms.Add(GetStickyRoom());
-			}
-			catch (RoomNotFoundException){} // Should only happen in the case where we've never had any stickies.
+			rooms.Add(StickyRoom);
 
 			int deleted = 0;
 			foreach (Room room in rooms)
@@ -58,6 +79,11 @@ namespace Rumble.Platform.ChatService.Services
 			}
 			if (deleted > 0)
 				Log.Info(Owner.Will, $"Deleted {deleted} stickies from {rooms.Count} rooms.", data: new { Rooms = rooms.Select(r => r.Id) });
+
+			Room sticky = StickyRoom;
+			foreach (Message m in sticky.Messages.Where(m => m.Type == Message.TYPE_STICKY))
+				m.Type = Message.TYPE_ARCHIVED;
+			Update(sticky);
 		}
 
 		private void CheckExpiredStickies(object sender, ElapsedEventArgs args)
@@ -113,23 +139,14 @@ namespace Rumble.Platform.ChatService.Services
 			return output;
 		}
 
-		public Room GetStickyRoom(bool all = false)
-		{
-			Room output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
-			if (output == null)
-				throw new RoomNotFoundException();
-			return output;
-		}
-
 		public IEnumerable<Message> GetStickyMessages(bool all = false)
 		{
 			try
 			{
-				Room sticky = GetStickyRoom();
 				long timestamp = Room.UnixTime;
 				return all
-					? sticky.Messages
-					: sticky.Messages.Where(m => m.VisibleFrom < timestamp && m.Expiration > timestamp);
+					? StickyRoom.Messages
+					: StickyRoom.Messages.Where(m => m.VisibleFrom < timestamp && m.Expiration > timestamp);
 			}
 			catch (RoomNotFoundException)
 			{
@@ -192,7 +209,7 @@ namespace Rumble.Platform.ChatService.Services
 				Log.Info(Owner.Will, $"Creating new global ({language}) room");
 				joined = new Room()
 				{
-					Capacity = Room.GLOBAL_PLAYER_CAPACITY,
+					MemberCapacity = Room.GLOBAL_PLAYER_CAPACITY,
 					Language = language,
 					Type = Room.TYPE_GLOBAL
 				};
