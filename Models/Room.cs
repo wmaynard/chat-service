@@ -42,15 +42,24 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_STICKY = "sticky";
 
 		public const int MESSAGE_CAPACITY = 200;
-		public const int GLOBAL_PLAYER_CAPACITY = 1000;
+		// public const int GLOBAL_PLAYER_CAPACITY = 1000;
+		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
+
+		private int _memberCapacity;
 		[BsonElement(DB_KEY_CAPACITY)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CAPACITY)]
-		public int MemberCapacity { get; set; }
+		public int MemberCapacity
+		{
+			get => Type == TYPE_GLOBAL 
+				? GLOBAL_PLAYER_CAPACITY 
+				: _memberCapacity;
+			set => _memberCapacity = value;
+		}
 		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
