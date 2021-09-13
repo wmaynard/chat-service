@@ -2,12 +2,33 @@ image: alpine:latest
 
 variables:
   # KUBE_INGRESS_BASE_DOMAIN is the application deployment domain and should be set as a variable at the group or project level.
-  # KUBE_INGRESS_BASE_DOMAIN: domain.example.com
+  KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
   POSTGRES_ENABLED: "false"
   HELM_SCALE_EXTRA_ARGS: --set postgresql.enabled="false" 
+
+  K8S_SECRET_GRAPHITE: "graphite.rumblegames.com:2003"
+  K8S_SECRET_LOGGLY_URL: "https://logs-01.loggly.com/bulk/f91d5019-e31d-4955-812c-31891b64b8d9/tag/chat-service/"
+  K8S_SECRET_RUMBLE_COMPONENT: "chat-service"
+  K8S_SECRET_RUMBLE_CONFIG_SERVICE_URL: "https://config-service.cdrentertainment.com/"
+  K8S_SECRET_RUMBLE_DEPLOYMENT: "107"
+  K8S_SECRET_MONGODB_NAME: "player-service-107"
+  K8S_SECRET_RUMBLE_PUBLISHING_PLAYER_URL: "https://publishing-j8.cdrentertainment.com/cs/player/show"
+  K8S_SECRET_RUMBLE_TOKEN_VERIFICATION: "https://dev.services.tower.cdrentertainment.com/player/verify"
+  K8S_SECRET_SLACK_ENDPOINT_POST_MESSAGE: "https://slack.com/api/chat.postMessage"
+  K8S_SECRET_SLACK_MONITOR_CHANNEL: "C02CH2T6JQH"
+  K8S_SECRET_SLACK_MONITOR_FREQUENCY_SECONDS: "300"
+  K8S_SECRET_SLACK_REPORTS_CHANNEL: "C02CS2G9M4Y"
+  K8S_SECRET_STICKY_CHECK_FREQUENCY_SECONDS: "30"
+  K8S_SECRET_VERBOSE_LOGGING: "false"
+
+# from gitlab project ci variables
+  K8S_SECRET_SLACK_CHAT_TOKEN: "$SLACK_CHAT_TOKEN"
   K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
-  K8S_SECRET_REDIS_PASSWORD: "$REDIS_PASSWORD"
+  K8S_SECRET_MONGODB_URI: "$MONGODB_URI"
+
+
   DOCKER_DRIVER: overlay2
+  DEPLOY_TYPE: "both" # "kubernetes", "beanstalk", "both"
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
@@ -23,26 +44,6 @@ stages:
   - performance
   - cleanup
 
-workflow:
-  rules:
-    - if: '$BUILDPACK_URL || $AUTO_DEVOPS_EXPLICITLY_ENABLED == "1" || $DOCKERFILE_PATH'
-    - exists:
-        - Dockerfile
-    # https://github.com/heroku/heroku-buildpack-gradle
-    - exists:
-        - gradlew
-        - build.gradle
-        - settings.gradle
-    # https://github.com/heroku/heroku-buildpack-multi
-    - exists:
-        - .buildpacks
-    # https://github.com/heroku/heroku-buildpack-python
-    # TODO: detect script checks that all of these exist, not any
-    - exists:
-        - requirements.txt
-        - setup.py
-        - Pipfile
-
 build_app:
   stage: app_build
   image: mcr.microsoft.com/dotnet/sdk:5.0
@@ -57,91 +58,28 @@ build_app:
       - bin/Release/net5.0/*
 
 
-# build_image:
-#   stage: build
-#   image: 'registry.gitlab.com/gitlab-org/cluster-integration/auto-build-image:v1.0.0'
-#   tags:
-#     - kubernetes
-#   variables:
-#     DOCKER_TLS_CERTDIR: ''
-#   services:
-#     - name: 'docker:20.10.6-dind'
-#       command: ['--tls=false', '--host=tcp://0.0.0.0:2375']
-#   script:
-#     - |
-#       if [[ -z "$CI_COMMIT_TAG" ]]; then
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-#       else
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-#       fi
-#     - /build/build.sh
-#   rules:
-#     - if: '$BUILD_DISABLED'
-#       when: never
-#     - if: '$AUTO_DEVOPS_PLATFORM_TARGET == "EC2"'
-#       when: never
-#     - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
-#   needs:
-#     - job: build_app
-#       artifacts: true
-
-
-dev:
-  stage: dev
-  image: ubuntu:latest
-  script:
-    - apt-get update -yq
-    - apt-get install -y ruby-dev zip git
-    - cd bin/Release/net5.0/
-    - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
-    - cd $CI_PROJECT_DIR
-    - gem install dpl --pre
-    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=1200
-  environment:
-    name: dev
-  needs:
-    - job: build_app
-      artifacts: true
-
-stage-a: 
-  image: ubuntu:latest
-  stage: staging
+build_image:
+  stage: build
   allow_failure: false
-  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   script:
-    - apt-get update -yq
-    - apt-get install -y ruby-dev zip git
-    - cd bin/Release/net5.0/
-    - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
-    - cd $CI_PROJECT_DIR
-    - gem install dpl --pre
-    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-A --wait_until_deployed --wait_until_deployed_timeout=1200
-  environment:
-    name: stage-a
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
+  rules:
+    - if: '$BUILD_DISABLED'
+      when: never
+    - if: $DEPLOY_TYPE == "beanstalk"
+      when: never
+    - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
+      when: always
   needs:
     - job: build_app
       artifacts: true
 
-stage-b: 
-  image: ubuntu:latest
-  stage: staging
-  allow_failure: false
-  when: manual
-  script:
-    - apt-get update -yq
-    - apt-get install -y ruby-dev zip git
-    - cd bin/Release/net5.0/
-    - zip -r $CI_PROJECT_NAME.zip .
-    - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
-    - cd $CI_PROJECT_DIR/
-    - gem install dpl --pre
-    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-B --wait_until_deployed --wait_until_deployed_timeout=1200
-  environment:
-    name: stage-b
-  needs:
-    - job: build_app
-      artifacts: true
+include: 
+  - '/.gitlab/deploy-eb.yaml'
+  - '/.gitlab/deploy-k8s.yaml'
