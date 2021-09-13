@@ -4,7 +4,7 @@
 
 dev:
   extends: .auto-deploy
-  stage: dev-k8s
+  stage: dev
   script:
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
