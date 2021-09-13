@@ -26,7 +26,7 @@ dev-eb:
 
 stage-a-eb: 
   image: ubuntu:latest
-  stage: stage-a
+  stage: staging
   allow_failure: false
   script:
     - apt-get update -yq
@@ -50,7 +50,7 @@ stage-a-eb:
 
 stage-b-eb: 
   image: ubuntu:latest
-  stage: stage-b
+  stage: staging
   allow_failure: false
   script:
     - apt-get update -yq
@@ -74,7 +74,7 @@ stage-b-eb:
 
 prod-eb: 
   image: ubuntu:latest
-  stage: prod
+  stage: production
   allow_failure: false
   script:
     - apt-get update -yq
