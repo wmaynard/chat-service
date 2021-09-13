@@ -21,10 +21,11 @@ variables:
   K8S_SECRET_STICKY_CHECK_FREQUENCY_SECONDS: "30"
   K8S_SECRET_VERBOSE_LOGGING: "false"
 
-# from gitlab project ci variables
+# from gitlab project ci variables - normally env specific
   K8S_SECRET_SLACK_CHAT_TOKEN: "$SLACK_CHAT_TOKEN"
   K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
   K8S_SECRET_MONGODB_URI: "$MONGODB_URI"
+  K8S_SECRET_GLOBAL_PLAYER_CAPACITY: "$GLOBAL_PLAYER_CAPACITY"
 
 
   DOCKER_DRIVER: overlay2
