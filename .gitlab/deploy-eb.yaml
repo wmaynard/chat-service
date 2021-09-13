@@ -2,7 +2,7 @@ variables:
   EB_DEPLOY_WAIT_TIME: 1200
 
 dev-eb:
-  stage: dev
+  stage: dev-eb
   image: ubuntu:latest
   script:
     - apt-get update -yq
@@ -14,7 +14,7 @@ dev-eb:
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=1200
   environment:
-    name: dev
+    name: dev-eb
   needs:
     - job: build_app
       artifacts: true
@@ -26,7 +26,7 @@ dev-eb:
 
 stage-a-eb: 
   image: ubuntu:latest
-  stage: staging
+  stage: stage-a-eb
   allow_failure: false
   script:
     - apt-get update -yq
@@ -38,7 +38,7 @@ stage-a-eb:
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-A --wait_until_deployed --wait_until_deployed_timeout=1200
   environment:
-    name: stage-a
+    name: stage-a-eb
   needs:
     - job: build_app
       artifacts: true
@@ -50,7 +50,7 @@ stage-a-eb:
 
 stage-b-eb: 
   image: ubuntu:latest
-  stage: staging
+  stage: stage-b-eb
   allow_failure: false
   script:
     - apt-get update -yq
@@ -62,7 +62,7 @@ stage-b-eb:
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Stage-B --wait_until_deployed --wait_until_deployed_timeout=1200
   environment:
-    name: stage-b
+    name: stage-b-eb
   needs:
     - job: build_app
       artifacts: true
@@ -74,7 +74,7 @@ stage-b-eb:
 
 prod-eb: 
   image: ubuntu:latest
-  stage: production
+  stage: prod-eb
   allow_failure: false
   script:
     - apt-get update -yq
@@ -86,7 +86,7 @@ prod-eb:
     - gem install dpl --pre
     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Prod --wait_until_deployed --wait_until_deployed_timeout=1200
   environment:
-    name: prod
+    name: prod-eb
   needs:
     - job: build_app
       artifacts: true
