@@ -42,7 +42,7 @@ env:
   - name: REDIS_PORT
     value: "18258"
 podAnnotations: 
-  linkerd.io/inject: enable
+  linkerd.io/inject: enabled
 nodeSelector: {}
 affinity: {}
 tolerations: []
