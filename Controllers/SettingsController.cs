@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
@@ -14,7 +15,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		private readonly SettingsService _settingsService;
 		
-		protected override string TokenAuthEndpoint => _config["player-service-verify"];
+		protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
 
 		public SettingsController(SettingsService preferences, IConfiguration config) : base(config)
 		{

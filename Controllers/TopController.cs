@@ -16,7 +16,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat")]
 	public class TopController : RumbleController
 	{
-		protected override string TokenAuthEndpoint => _config["player-service-verify"];
+		protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
 
 		// public TopController(IConfiguration config) => _config = config;
 
