@@ -34,6 +34,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_MEMBERS = "members";
 		public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
 		public const string FRIENDLY_KEY_TYPE = "type";
+		public const string FRIENDLY_KEY_VACANCIES = "vacancies";
 	
 		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
@@ -96,6 +97,10 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public bool IsStickyRoom => Type == TYPE_STICKY;
+		
+		[BsonIgnore]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_VACANCIES)]
+		public int Vacancies => MemberCapacity - Members.Count;
 		public Room ()
 		{
 			CreatedTimestamp = UnixTime;
