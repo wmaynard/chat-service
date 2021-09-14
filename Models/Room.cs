@@ -116,11 +116,11 @@ namespace Rumble.Platform.ChatService.Models
 			playerInfo.Validate();
 			if (playerInfo.ScreenName == null)
 				throw new InvalidPlayerInfoException("Screenname cannot be null.");
-			if (Members.Any(m => m.AccountId == playerInfo.AccountId))
+			if (HasMember(playerInfo.AccountId))
 				throw new AlreadyInRoomException();
-			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
 			if (Members.Count >= MemberCapacity)
 				throw new RoomFullException();
+			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
 			Members.Add(playerInfo);
 		}
 
@@ -184,6 +184,12 @@ namespace Rumble.Platform.ChatService.Models
 			// Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
 		}
 
+		public void RemoveMembers(params string[] accountIds)
+		{
+			foreach (string aid in accountIds)
+				RemoveMember(aid);
+		}
+
 		/// <summary>
 		/// Wrapper for a LINQ query to look for an accountID in the Room.
 		/// </summary>
@@ -192,6 +198,11 @@ namespace Rumble.Platform.ChatService.Models
 		public bool HasMember(string accountId)
 		{
 			return Members.Any(m => m.AccountId == accountId);
+		}
+
+		public bool HasMember(IEnumerable<string> accountIds)
+		{
+			return Members.Any(m => accountIds.Contains(m.AccountId));
 		}
 
 		/// <summary>

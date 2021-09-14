@@ -38,6 +38,23 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(CollectionResponseObject(_roomService.List()));
 		}
 
+		[HttpPost, Route(template: "rooms/removePlayers")]
+		public ActionResult RemovePlayers([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		{
+			TokenInfo token = ValidateAdminToken(auth);
+			string[] aids = ExtractRequiredValue("aids", body).ToObject<string[]>();
+
+			Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
+			foreach (Room room in rooms)
+			{
+				room.RemoveMembers(aids);
+				_roomService.Update(room);
+			}
+			
+			return Ok(new { Message = $"Removed {aids.Length} players from {rooms.Length} unique rooms."});
+		}
+		
+		
 		#region messages
 		[HttpPost, Route(template: "messages/delete")]
 		public ActionResult DeleteMessage([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)

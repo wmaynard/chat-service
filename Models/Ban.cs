@@ -33,7 +33,7 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonProperty(PropertyName = FRIENDLY_KEY_REASON)]
 		private string Reason { get; set; }
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
 		private long? Expiration { get; set; }
 
 		[BsonIgnore]
@@ -44,7 +44,7 @@ namespace Rumble.Platform.ChatService.Models
 		private long IssuedOn { get; set; }
 		private DateTime IssuedOnDate => DateTime.UnixEpoch.AddSeconds((double)IssuedOn);
 		[BsonElement(DB_KEY_SNAPSHOT)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_SNAPSHOT)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_SNAPSHOT, NullValueHandling = NullValueHandling.Ignore)]
 		private Room[] Snapshot { get; set; }
 
 		[BsonIgnore]
@@ -74,6 +74,11 @@ namespace Rumble.Platform.ChatService.Models
 			IssuedOn = UnixTime;
 			Expiration = expiration;
 			Snapshot = rooms.ToArray();
+		}
+
+		public void PurgeSnapshot()
+		{
+			Snapshot = null;
 		}
 	}
 }

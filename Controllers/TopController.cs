@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -41,7 +42,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
-			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId);
+			Ban[] bans = _banService.GetBansForUser(token.AccountId).ToArray();
+
+			foreach (Ban b in bans) // Players don't need to see their snapshot data.
+				b.PurgeSnapshot();
+			
 			ChatSettings settings = _settingsService.Get(token.AccountId);
 
 			Room global = _roomService.JoinGlobal(player, language);
@@ -49,7 +54,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 
 			return Ok(
-				CollectionResponseObject(bans), // TODO: Clear reports from response
+				new { Bans = bans },
+				// CollectionResponseObject(bans), // TODO: Clear reports from response
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
 				global.ResponseObject,
