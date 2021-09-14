@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
@@ -36,7 +38,20 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "launch")]
 		public ActionResult Launch([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
-			TokenInfo token = ValidateToken(auth);
+			TokenInfo token = null;
+			try
+			{
+				token = ValidateToken(auth);
+			}
+			catch (InvalidTokenException e)
+			{
+				Log.Error(Owner.Will, "Couldn't launch chat due to an invalid token.", token, new
+				{
+					AuthHeader = auth,
+					VerifyURL = TokenAuthEndpoint
+				}, e);
+				throw;
+			}
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			string language = ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
 			PlayerInfo player = PlayerInfo.FromJToken(ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), token);

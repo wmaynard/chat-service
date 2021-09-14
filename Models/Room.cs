@@ -35,6 +35,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
 		public const string FRIENDLY_KEY_TYPE = "type";
 		public const string FRIENDLY_KEY_VACANCIES = "vacancies";
+		public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "discriminator";
 	
 		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
@@ -47,6 +48,7 @@ namespace Rumble.Platform.ChatService.Models
 		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
+		private static Dictionary<string, List<string>> IDMap;
 		
 		[BsonId, BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
@@ -64,6 +66,25 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
+		[BsonIgnore]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR, NullValueHandling = NullValueHandling.Ignore)]
+		public int? Discriminator
+		{
+			get
+			{
+				// TODO: Documentation
+				if (Type != TYPE_GLOBAL)
+					return null;
+				IDMap ??= new Dictionary<string, List<string>>();
+				if (!IDMap.ContainsKey(Language))
+					IDMap.Add(Language, new List<string>());
+				int output = IDMap[Language].IndexOf(Id);
+				if (output >= 0)
+					return output + 1;
+				IDMap[Language].Add(Id);
+				return IDMap[Language].IndexOf(Id) + 1;
+			}
+		}
 		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
 		public string GuildId { get; set; }
@@ -101,6 +122,7 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_VACANCIES)]
 		public int Vacancies => MemberCapacity - Members.Count;
+		
 		public Room ()
 		{
 			CreatedTimestamp = UnixTime;
