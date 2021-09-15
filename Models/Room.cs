@@ -106,9 +106,10 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_TYPE)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
 		public string Type { get; set; }
+
 		[BsonIgnore]
 		[JsonIgnore]
-		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).ToHashSet();
+		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).Append(PlayerInfo.Admin).ToHashSet();
 		[BsonIgnore]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_HAS_STICKY, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public bool HasSticky => Messages.Any(message => message.IsSticky);

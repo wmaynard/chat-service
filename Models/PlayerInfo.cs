@@ -96,5 +96,16 @@ namespace Rumble.Platform.ChatService.Models
 			url: $"{RumbleEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
 			text: UniqueScreenname
 		);
+		
+		public static readonly PlayerInfo Admin = new PlayerInfo()
+		{
+			AccountId = "RumbleAdmin",
+			Avatar = null,
+			Discriminator = 10000,
+			InRoomSince = 0,
+			Level = 99,
+			Power = 9001,
+			ScreenName = "Administrator"
+		};
 	}
 }
