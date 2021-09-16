@@ -12,7 +12,7 @@ dev-eb:
     - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
     - cd $CI_PROJECT_DIR
     - gem install dpl --pre
-    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=1200
+    - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-prod-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Dev --wait_until_deployed --wait_until_deployed_timeout=1200
   environment:
     name: dev-eb
   needs:
