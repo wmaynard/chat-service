@@ -72,31 +72,6 @@ stage-b-eb:
     - if: $DEPLOY_TYPE == "beanstalk" || $DEPLOY_TYPE == "both"
       when: manual
 
-<<<<<<< HEAD
-# prod-eb: 
-#   image: ubuntu:latest
-#   stage: production
-#   allow_failure: false
-#   script:
-#     - apt-get update -yq
-#     - apt-get install -y ruby-dev zip git
-#     - cd bin/Release/net5.0/
-#     - zip -r $CI_PROJECT_NAME.zip .
-#     - mv $CI_PROJECT_NAME.zip $CI_PROJECT_DIR
-#     - cd $CI_PROJECT_DIR/
-#     - gem install dpl --pre
-#     - dpl --provider=elasticbeanstalk --zip_file=./$CI_PROJECT_NAME.zip --access_key_id=$EB_DEPLOY_ACCESS_KEY --secret_access_key=$EB_DEPLOY_SECRET_KEY --bucket=rumble-gitlab-eb-platform-deploy --bucket_path=chat-service --region=us-east-1 --app=chat-service --env=ChatService-Prod --wait_until_deployed --wait_until_deployed_timeout=1200
-#   environment:
-#     name: prod-eb
-#   needs:
-#     - job: build_app
-#       artifacts: true
-#   rules:
-#     - if: $DEPLOY_TYPE == "kubernetes"
-#       when: never
-#     - if: $DEPLOY_TYPE == "beanstalk" || $DEPLOY_TYPE == "both"
-#       when: manual
-=======
 prod-eb: 
   image: ubuntu:latest
   stage: production
@@ -120,4 +95,3 @@ prod-eb:
       when: never
     - if: $DEPLOY_TYPE == "beanstalk" || $DEPLOY_TYPE == "both"
       when: manual
->>>>>>> a0a1e32 (update the prod deploy with correct info for prod env)
