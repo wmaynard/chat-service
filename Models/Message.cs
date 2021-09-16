@@ -14,7 +14,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string TYPE_CHAT = "chat";
 		public const string TYPE_NOTIFICATION = "notification";
 		public const string TYPE_ANNOUNCEMENT = "announcement";
-		public const string TYPE_ARCHIVED = "archived";
+		public const string TYPE_STICKY_ARCHIVED = "archived";
 		public const string TYPE_BAN_ANNOUNCEMENT = "banAnnouncement";
 		public const string TYPE_UNBAN_ANNOUNCEMENT = "unbanAnnouncement";
 		public const string TYPE_UNKNOWN = "unknown";

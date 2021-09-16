@@ -35,7 +35,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
 		public const string FRIENDLY_KEY_TYPE = "type";
 		public const string FRIENDLY_KEY_VACANCIES = "vacancies";
-		public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "discriminator";
+		public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "listingId";
 	
 		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
@@ -46,6 +46,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const int MESSAGE_CAPACITY = 200;
 		// public const int GLOBAL_PLAYER_CAPACITY = 1000;
 		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
+		public static readonly string ENVIRONMENT = RumbleEnvironment.Variable("RUMBLE_DEPLOYMENT");
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		private static Dictionary<string, List<string>> IDMap;
@@ -278,10 +279,10 @@ namespace Rumble.Platform.ChatService.Models
 			List<Message> news = Messages.Where(message => message.Timestamp >= timestamp).ToList();
 			if (!news.Any())
 				return null;
-			string title = Type == Room.TYPE_STICKY ? "Stickies" : Language;
+			string title = Type == Room.TYPE_STICKY ? "Stickies" : $"{Language}-{Discriminator}";
 			List<SlackBlock> blocks = new List<SlackBlock>()
 			{
-				new(SlackBlock.BlockType.HEADER, $"{title} | {Id}")
+				new(SlackBlock.BlockType.HEADER, $"{title} | {ENVIRONMENT}.{Id}")
 			};
 			
 			// Process normal (non-sticky) messages.

@@ -82,7 +82,7 @@ namespace Rumble.Platform.ChatService.Services
 
 			Room sticky = StickyRoom;
 			foreach (Message m in sticky.Messages.Where(m => m.Type == Message.TYPE_STICKY))
-				m.Type = Message.TYPE_ARCHIVED;
+				m.Type = Message.TYPE_STICKY_ARCHIVED;
 			Update(sticky);
 		}
 
@@ -145,8 +145,8 @@ namespace Rumble.Platform.ChatService.Services
 			{
 				long timestamp = Room.UnixTime;
 				return all
-					? StickyRoom.Messages
-					: StickyRoom.Messages.Where(m => m.VisibleFrom < timestamp && m.Expiration > timestamp);
+					? StickyRoom.Messages.Where(m => m.Type is Message.TYPE_STICKY or Message.TYPE_STICKY_ARCHIVED)
+					: StickyRoom.Messages.Where(m => m.Type == Message.TYPE_STICKY && m.VisibleFrom < timestamp && m.Expiration > timestamp);
 			}
 			catch (RoomNotFoundException)
 			{
@@ -213,7 +213,7 @@ namespace Rumble.Platform.ChatService.Services
 					Language = language,
 					Type = Room.TYPE_GLOBAL
 				};
-				foreach (Message sticky in GetStickyMessages(true))
+				foreach (Message sticky in GetStickyMessages())
 					joined.AddMessage(sticky);
 				joined.AddMember(player);
 				Create(joined);
