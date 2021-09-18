@@ -244,13 +244,4 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok();
 		}
 	}
-
-	[BindProperties(SupportsGet = false)]
-	public class Fugal
-	{
-		[BindProperty]
-		public string Param1 { get; set; }
-		[BindProperty]
-		public string Param2 { get; set; }
-	}
 }

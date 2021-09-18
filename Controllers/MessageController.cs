@@ -76,7 +76,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Report report = _reportService.FindByPlayerAndMessage(reported.AccountId, reportedMessage.Id)
 				?? new Report()
 				{
-					Reported = reported,
+					ReportedPlayer = reported,
 					Log = logs,
 					MessageId = reportedMessage.Id,
 					Players = players

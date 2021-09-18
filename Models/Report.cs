@@ -44,7 +44,11 @@ namespace Rumble.Platform.ChatService.Models
 		public long Timestamp { get; set; }
 		[BsonElement(DB_KEY_REPORTED)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED)]
-		public PlayerInfo Reported { get; set; }
+		public PlayerInfo ReportedPlayer { get; set; }
+
+		[BsonIgnore]
+		[JsonIgnore]
+		public Message ReportedMessage => Log.FirstOrDefault(m => m.Reported == true);
 		[BsonElement(DB_KEY_REPORTER)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTER)]
 		public HashSet<PlayerInfo> Reporters { get; private set; }
@@ -66,7 +70,7 @@ namespace Rumble.Platform.ChatService.Models
 				List<SlackBlock> headers = new List<SlackBlock>()
 				{
 					new(SlackBlock.BlockType.HEADER, $"{(Reporters.Count > 1 ? "Updated" : "New")} Report | {DateTime.Now:yyyy.MM.dd HH:mm}"),
-					new($"Reported Player: {Reported.SlackLink}\nReporter{(Reporters.Count > 1 ? "s" : "")}: {string.Join(", ", Reporters.Select(info => info.SlackLink))}"),
+					new($"Reported Player: {ReportedPlayer.SlackLink}\nReporter{(Reporters.Count > 1 ? "s" : "")}: {string.Join(", ", Reporters.Select(info => info.SlackLink))}"),
 					new("_The message flagged by the user is indicated by a *!* and special formatting._"),
 					new(SlackBlock.BlockType.DIVIDER)
 				};
