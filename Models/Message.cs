@@ -45,10 +45,10 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ID)]
 		public string Id { get; set; }
-		// [BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
-		// [JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
-		// // TODO: Need a dynamic JSON deserialization
-		// public dynamic Data { get; set; }
+		[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
+		// TODO: Need a dynamic JSON deserialization
+		public dynamic Data { get; set; }
 		[BsonElement(DB_KEY_TEXT)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]
 		public string Text { get; set; }
@@ -101,6 +101,7 @@ namespace Rumble.Platform.ChatService.Models
 			long? expiration = durationInSeconds != null
 				? (startTime ?? UnixTime) + durationInSeconds
 				: input[FRIENDLY_KEY_EXPIRATION]?.ToObject<long?>();
+			JToken data = input[FRIENDLY_KEY_DATA];
 			
 			return new Message()
 			{
@@ -113,6 +114,7 @@ namespace Rumble.Platform.ChatService.Models
 				VisibleFrom = startTime,
 				Expiration = expiration,
 				AccountId = accountId
+				// Data = data
 			};
 		}
 

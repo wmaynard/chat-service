@@ -11,6 +11,7 @@ using Newtonsoft.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -129,7 +130,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(report.ResponseObject);
 		}
 		
-		[HttpPost, Route(template: "messages/unsticky")]
+		[HttpPost, Route(template: "messages/unsticky")] // TODO: DELETE
 		public ActionResult Unsticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateAdminToken(auth);
@@ -213,26 +214,6 @@ namespace Rumble.Platform.ChatService.Controllers
 				_banService.HealthCheckResponseObject,
 				_roomService.HealthCheckResponseObject
 			);
-		}
-
-		[HttpGet, Route(template: "environment")]
-		public ActionResult EnvironmentLst([FromHeader(Name = AUTH)] string auth)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-
-			IDictionary vars = Environment.GetEnvironmentVariables();
-			
-			List<object> output = new List<object>();
-			foreach (string key in vars.Keys)
-			{
-				output.Add(new
-				{
-					Key = key,
-					Value = vars[key]
-				});
-			}
-
-			return Ok(new {EnvironmentVariables = output});
 		}
 
 		[HttpPost, Route("slackHandler")]

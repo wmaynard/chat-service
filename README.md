@@ -7,7 +7,7 @@ The Chat Service does not differentiate between global chats, guild chats, direc
 
 Joining a room and sending a message alike should then be used to update client-side chats.
 
-Rooms do not hold messages indefinitely.  The capacity is configurable in the constant `Room.MESSAGE_CAPACITY`.  When at capacity, any new messages will push old ones out.  For customer service purposes, `Reports` and `Snapshots` both create complete copies of data that are stored independently from this limit.
+Rooms do not hold messages indefinitely.  The capacity is configurable in the constant `Room.MESSAGE_CAPACITY`.  When at capacity, any new messages will push old ones out, although **stickies** are ignored.  For customer service purposes, `Reports` and `Snapshots` both create complete copies of data that are stored independently from this limit.
 
 Chat can be used as a method to nearly instantaneously notify users.  By sending messages with different message **types**, we can silently pass data to clients.  To prevent this from becoming a monolithic service, this functionality should remain exclusive to *communication with or between the players*.  Customer service interactions and emergency game notifications are acceptable, but anything else should spark a discussion into new services.  For more information see the **Messages Notes** section.
 
@@ -31,7 +31,7 @@ Chat is integrated with Slack so that Rumble Admins can keep an eye on the servi
 | Room | All chat features can be broken down into **Rooms** of different types.  For example, a **direct message** is no different from a **global room** except for the fact that it can only have two members.  Other types of **room** include **guild** and **sticky**. |
 | Screenname / Username | The user-generated component for a friendly, readable name.  For example, if you see `JoeMcFugal#2006` in chat, the **screenname** is "JoeMcFugal".
 | Snapshot | When a player is **banned** by an administrator, a complete record of all of their **rooms** is created.  This may not necessarily include any offensive content; if the player's **messages** have fallen off from the **room**, the **snapshot** may be entirely innocent.  However, if administrators issued a **ban** from a **report**, a copy of that **report** will be included for historical purposes.
-| Sticky | A **sticky** or **sticky message** is a special kind of **message** that lives in its own, non-joinable **room**.  These **messages** are only viewable for a specific time period and can be used to promote events or send otherwise special server updates to players.
+| Sticky | A **sticky** or **sticky message** is a special kind of **message** that lives in its own, non-joinable **room**.  These **messages** are only viewable for a specific time period and can be used to promote events or send otherwise special server updates to players.  When a **sticky** is issued, copies of if are inserted into every room and added to every new room while it is active.
 | Token | An `Authorization` header in HTTP requests.  Currently, **tokens** are issued by `player-service`.  They should be included in the format `Bearer {token string}`. |
 | Unmute | The counterpart to **mute**.  **Unmuting** a player removes them from the **muted** players list. | 
 
@@ -72,8 +72,7 @@ Every JSON response contains an object that can be used to update the client, as
                         "aid": "5f727b4dc60f5a956eb1c551",
                         "avatar": "demon_axe_thrower",
                         "memberSince": 1626242762,
-                        "sn": "DoktorNik",
-                        "screenName": "Slartibartfast",
+                        "sn": "Slartibartfast",
                         "level": 17,
                         "power": 9001,
                         "discriminator": 4539
@@ -82,7 +81,7 @@ Every JSON response contains an object that can be used to update the client, as
                         "accountId": "60a43b0c70edc8aa7cf3bed6",
                         "avatar": "demon_axe_thrower",
                         "inRoomSince": 1626245489,
-                        "screenName": "Arthur Dent"
+                        "sn": "Arthur Dent"
                         "level": 6,
                         "power": 61,
                         "discriminator": 8039
@@ -142,7 +141,9 @@ All `Admin` endpoints other than `/admin/health` require a valid **admin token**
 | ---:    | :---      | :---        | :---                | :---                |
 | GET | `/admin/health` | Health check; returns the status of the `BanService` and `RoomService`. | | |
 | GET | `/admin/ban/list` | Lists all **bans** for all users, including expired **bans**. | | |
+| GET | `/admin/messages/sticky` | Gets a list of all **stickies**, both archived and active. | | |
 | GET | `/admin/rooms/list` | Lists all **rooms** and all data associated with the **rooms**.  Once live, this will probably need to be trimmed to just room IDs and basic metrics. | | |
+| POST | `/admin/rooms/removePlayers` | Removes an array of players from global rooms.  Used by the server to remove inactive players who didn't log out properly. | `aids` | |
 | POST | `/admin/ban/lift` | Removes a specific **ban**, provided its ID. | `banId` | |
 | POST | `/admin/ban/player` | Issues a **ban** against a player.  Can be temporary (timed) or indefinite. | `aid`<br />`reason` | `durationInSeconds`<br />`reportId` |
 | POST | `/admin/messages/delete` | Deletes a **message**.  It would be ideal to never use this. | `messageIds`<br />`roomId` | |
@@ -150,6 +151,7 @@ All `Admin` endpoints other than `/admin/health` require a valid **admin token**
 | POST | `/admin/messages/unsticky` | Deletes a **sticky message**. | `messageId` | |
 | POST | `/admin/reports/ignore` | Marks a **report** as *benign*.  This does not delete the **report**, but is an indicator that it should be kept for archival purposes. | `reportId` | |
 | POST | `/admin/reports/delete` | Deletes a **report**.  For clearly harmless **reports** that serve no useful purpose. | `reportId` | |
+| POST | `/admin/slackHandler` | Placeholder for processing Slack API requests.
 
 ## Debug
 

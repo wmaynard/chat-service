@@ -25,6 +25,30 @@ namespace Rumble.Platform.ChatService.Models
 			+ (long)Math.Pow(RepeatedMessageCount, WEIGHT_EXPONENTIAL_REPEATED_MESSAGES);
 
 		public const int MENTION_THRESHOLD = 5;
+
+		public bool Equals(ReportMetrics other)
+		{
+			try
+			{
+				return ReportedPlayer.AccountId == other.ReportedPlayer.AccountId
+					&& Severity == other.Severity
+					&& IgnoredReportCount == other.IgnoredReportCount
+					&& NewReportCount == other.NewReportCount
+					&& UniqueReporterCount == other.UniqueReporterCount
+					&& RepeatedMessageCount == other.RepeatedMessageCount
+					&& MostReportedMessages.Equals(other.MostReportedMessages);
+			}
+			catch (Exception e)
+			{
+				return false;
+			}
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(RepeatedMessageCount, ReportedPlayer, NewReportCount, UniqueReporterCount, IgnoredReportCount, MostReportedMessages);
+		}
+
 		public ReportMetrics(IGrouping<string, Report> group)
 		{
 			ReportedPlayer = group.First().ReportedPlayer;
