@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -109,7 +110,11 @@ namespace Rumble.Platform.ChatService
 					}
 				);
 			});
-			services.AddResponseCompression(); // gzip
+			services.AddResponseCompression(options =>
+			{
+				options.Providers.Add<GzipCompressionProvider>();
+				options.MimeTypes = new[] {"application/json"};
+			});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
