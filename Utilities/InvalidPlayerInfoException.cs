@@ -17,7 +17,7 @@ namespace Rumble.Platform.ChatService.Utilities
 			Player = info;
 		}
 
-		public InvalidPlayerInfoException(PlayerInfo info, string badFieldName) : this($"Invalid player information. (Erroneous field name: {badFieldName}")
+		public InvalidPlayerInfoException(PlayerInfo info, string badFieldName) : this($"Invalid player information. (Erroneous field name: {badFieldName})")
 		{
 			Player = info;
 		}

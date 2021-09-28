@@ -109,6 +109,7 @@ namespace Rumble.Platform.ChatService
 					}
 				);
 			});
+			services.AddResponseCompression(); // gzip
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -118,6 +119,7 @@ namespace Rumble.Platform.ChatService
 			app.UseCors(CORS_SETTINGS_NAME);
 			app.UseAuthorization();
 			app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+			app.UseResponseCompression();
 		}
 	}
 }

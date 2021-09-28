@@ -1,4 +1,5 @@
 # chat-service
+
  An API for in-game social messaging
 
 # Introduction
