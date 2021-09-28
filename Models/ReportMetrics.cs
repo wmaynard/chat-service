@@ -36,7 +36,7 @@ namespace Rumble.Platform.ChatService.Models
 					&& NewReportCount == other.NewReportCount
 					&& UniqueReporterCount == other.UniqueReporterCount
 					&& RepeatedMessageCount == other.RepeatedMessageCount
-					&& MostReportedMessages.Equals(other.MostReportedMessages);
+					&& MostReportedMessages.SequenceEqual(other.MostReportedMessages);
 			}
 			catch (Exception e)
 			{

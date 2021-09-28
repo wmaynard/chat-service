@@ -85,9 +85,9 @@ namespace Rumble.Platform.ChatService.Models
 		public void Validate()
 		{
 			if (AccountId == null)
-				throw new InvalidPlayerInfoException("AccountId cannot be null.");
+				throw new InvalidPlayerInfoException(this, "AccountId");
 			if (ScreenName == null)
-				throw new InvalidPlayerInfoException("ScreenName cannot be null.");
+				throw new InvalidPlayerInfoException(this, "ScreenName");
 		}
 
 		[BsonIgnore]

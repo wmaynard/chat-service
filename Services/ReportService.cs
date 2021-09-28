@@ -25,6 +25,7 @@ namespace Rumble.Platform.ChatService.Services
 			channel: RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
 			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"
 		));
+		private ReportMetrics[] PreviousMetrics { get; set; }
 
 		public ReportService(ReportDBSettings settings) : base(settings)
 		{
@@ -44,12 +45,29 @@ namespace Rumble.Platform.ChatService.Services
 				List<Report> reports = _collection.Find(r => r.Status != Report.STATUS_BANNED).ToList();
 				ReportMetrics[] metrics = ReportMetrics.Generate(ref reports)
 					.Take(100)
+					.OrderByDescending(m => m.Severity)
 					.ToArray();
+				if (metrics.Length == (PreviousMetrics?.Length ?? 1) && !metrics
+					.Select(m => m.Equals(PreviousMetrics[Array.IndexOf(metrics, m)]))
+					.Any(b => b == false))
+				{
+					Log.Info(Owner.Will, "Report metrics have been calculated, but are unchanged from last time.  No Slack message will be sent.");
+					SummaryTimer.Start();
+					return;
+				}
+				PreviousMetrics = metrics;
 
 				string title = $"{RumbleEnvironment.Variable("RUMBLE_DEPLOYMENT")} Reports Summary";
-				
-				
-				int pad1 = metrics.Max(m => m.ReportedPlayer.UniqueScreenname.Length);
+
+				int pad1 = 19; // The length of a default name like "Playerc8bc9805#4223"
+				try
+				{
+					pad1 = metrics.Max(m => m.ReportedPlayer.UniqueScreenname.Length);
+				}
+				catch (Exception e)
+				{
+					Log.Warn(Owner.Will, $"Unable to calculate padding for summary report's username field.  Using default value of {pad1} instead.", data: metrics, exception: e);
+				}
 				
 				string col1 = "Username".PadRight(pad1, ' ');
 				string col2 = "Count   ";
@@ -75,12 +93,12 @@ namespace Rumble.Platform.ChatService.Services
 					new SlackBlock($"Here are the top {metrics.Length} offenders:"),
 					new SlackBlock(header)
 				};
-				foreach (ReportMetrics rm in metrics.OrderByDescending(m => m.Severity))
+				foreach (ReportMetrics rm in metrics)
 				{
 					string c1 = rm.ReportedPlayer.UniqueScreenname.PadRight(pad1, ' ');
 					string c2 = rm.NewReportCount.ToString();
 					if (rm.IgnoredReportCount > 0)
-						c2 += $" {rm.IgnoredReportCount}";
+						c2 += $" ({rm.IgnoredReportCount})";
 					c2 = c2.PadRight(pad2, ' ');
 					
 					string c3 = rm.UniqueReporterCount.ToString().PadRight(pad3, ' ');

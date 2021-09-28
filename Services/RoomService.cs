@@ -35,7 +35,7 @@ namespace Rumble.Platform.ChatService.Services
 				{
 					output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
 					if (output == null)
-						throw new RoomNotFoundException();
+						throw new RoomNotFoundException("sticky");
 					return output;
 				}
 				catch (RoomNotFoundException)
@@ -135,7 +135,7 @@ namespace Rumble.Platform.ChatService.Services
 		{
 			Room output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
 			if (output == null)
-				throw new RoomNotFoundException();
+				throw new RoomNotFoundException(id);
 			return output;
 		}
 
@@ -152,7 +152,6 @@ namespace Rumble.Platform.ChatService.Services
 			{
 				return Array.Empty<Message>();
 			}
-			throw new Exception("Couldn't retrieve sticky messages.");
 		}
 
 		public List<Room> GetGlobals(string language = null)

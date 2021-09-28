@@ -43,6 +43,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
 			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), aid).Validate();
 			msg.Type = Message.TYPE_BROADCAST;
+			Log.Info(Owner.Will, "New broadcast message", token, data : new
+			{
+				AccountId = aid,
+				Broadcast = msg
+			});
 
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(aid);
 			foreach (Room r in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
@@ -106,11 +111,13 @@ namespace Rumble.Platform.ChatService.Controllers
 				.Where(b => !b.IsExpired)
 				.OrderByDescending(b => b.ExpirationDate);
 			if (bans.Any())
-				throw new UserBannedException(bans.First().TimeRemaining);
+				throw new UserBannedException(token, msg, bans.FirstOrDefault());
 
 			object updates = GetAllUpdates(token, body, delegate(IEnumerable<Room> rooms)
 			{
-				Room room = rooms.First(r => r.Id == roomId);
+				Room room = rooms.FirstOrDefault(r => r.Id == roomId);
+				if (room == null)
+					throw new RoomNotFoundException(roomId);
 				room.AddMessage(msg);
 				_roomService.Update(room);
 			});

@@ -28,7 +28,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			TokenInfo token = ValidateToken(auth);
 			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
 			if (info.AccountId == token.AccountId)
-				throw new InvalidPlayerInfoException("You can't mute yourself!");
+				throw new InvalidPlayerInfoException(info, "AccountId", "You can't mute yourself!");
 
 			ChatSettings prefs = _settingsService.Get(token.AccountId);
 			prefs.AddMutedPlayer(info);

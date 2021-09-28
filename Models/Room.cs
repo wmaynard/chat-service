@@ -144,11 +144,11 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			playerInfo.Validate();
 			if (playerInfo.ScreenName == null)
-				throw new InvalidPlayerInfoException("Screenname cannot be null.");
+				throw new InvalidPlayerInfoException(playerInfo, "ScreenName");
 			if (HasMember(playerInfo.AccountId))
-				throw new AlreadyInRoomException();
+				throw new AlreadyInRoomException(this, playerInfo);
 			if (Members.Count >= MemberCapacity)
-				throw new RoomFullException();
+				throw new RoomFullException(this, playerInfo);
 			PreviousMembers.RemoveWhere(m => m.AccountId == playerInfo.AccountId);
 			Members.Add(playerInfo);
 		}
@@ -243,7 +243,7 @@ namespace Rumble.Platform.ChatService.Models
 		private void RequireMember(string accountId)
 		{
 			if (!HasMember(accountId))
-				throw new NotInRoomException();
+				throw new NotInRoomException(this, accountId);
 		}
 
 		/// <summary>

@@ -51,7 +51,7 @@ namespace Rumble.Platform.ChatService
 			Log.Verbose(Owner.Will, "Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_rooms";
+				settings.CollectionName = "chat_rooms_wm";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
