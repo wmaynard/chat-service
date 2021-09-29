@@ -52,28 +52,28 @@ namespace Rumble.Platform.ChatService
 			Log.Verbose(Owner.Will, "Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_roomz";
+				settings.CollectionName = "rooms";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
 			Log.Verbose(Owner.Will, "Initializing ReportDBSettings");
 			services.Configure<ReportDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_reports";
+				settings.CollectionName = "reports";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
 			Log.Verbose(Owner.Will, "Initializing SettingsDBSettings");
 			services.Configure<SettingsDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_settings";
+				settings.CollectionName = "settings";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
 			Log.Verbose(Owner.Will, "Initializing BanDBSettings");
 			services.Configure<BanDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_bans";
+				settings.CollectionName = "bans";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
