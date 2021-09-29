@@ -52,7 +52,7 @@ namespace Rumble.Platform.ChatService
 			Log.Verbose(Owner.Will, "Initializing ChatDBSettings");
 			services.Configure<ChatDBSettings>(settings =>
 			{
-				settings.CollectionName = "chat_rooms_wm";
+				settings.CollectionName = "chat_roomz";
 				settings.ConnectionString = mongoConnection;
 				settings.DatabaseName = database;
 			});
