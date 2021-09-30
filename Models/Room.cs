@@ -301,7 +301,8 @@ namespace Rumble.Platform.ChatService.Models
 					entries = "";
 				}
 
-				foreach (Message msg in nonStickies)
+				// 2021.09.30: Omit Broadcasts from the chat monitor
+				foreach (Message msg in nonStickies.Where(message => message.Type != Message.TYPE_BROADCAST))
 				{
 					if (msg.AccountId != aid)
 					{
