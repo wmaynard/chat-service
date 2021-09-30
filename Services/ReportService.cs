@@ -39,10 +39,16 @@ namespace Rumble.Platform.ChatService.Services
 
 		private void SendSummaryReport(object sender, ElapsedEventArgs args)
 		{
+			List<Report> reports = _collection.Find(r => r.Status != Report.STATUS_BANNED).ToList();
+			if (!reports.Any())
+			{
+				Log.Info(Owner.Will, "Tried to send a report summary, but there are no reports.", localIfNotDeployed: true);
+				return;
+			}
+				
 			SummaryTimer.Stop();
 			try
 			{
-				List<Report> reports = _collection.Find(r => r.Status != Report.STATUS_BANNED).ToList();
 				ReportMetrics[] metrics = ReportMetrics.Generate(ref reports)
 					.Take(100)
 					.OrderByDescending(m => m.Severity)
