@@ -276,7 +276,8 @@ namespace Rumble.Platform.ChatService.Models
 
 		public SlackAttachment ToSlackAttachment(long timestamp)
 		{
-			List<Message> news = Messages.Where(message => message.Timestamp >= timestamp).ToList();
+			// 2021.09.30: Omit Broadcasts from the chat monitor
+			List<Message> news = Messages.Where(message => message.Timestamp >= timestamp && message.Type != Message.TYPE_BROADCAST).ToList();
 			if (!news.Any())
 				return null;
 			string title = Type == Room.TYPE_STICKY ? "Stickies" : $"{Language}-{Discriminator}";
@@ -286,8 +287,7 @@ namespace Rumble.Platform.ChatService.Models
 			};
 			
 			// Process normal (non-sticky) messages.
-			// 2021.09.30: Omit Broadcasts from the chat monitor
-			Message[] nonStickies = news.Where(message => !message.IsSticky && message.Type != Message.TYPE_BROADCAST).ToArray();
+			Message[] nonStickies = news.Where(message => !message.IsSticky).ToArray();
 			if (nonStickies.Any())
 			{
 				string aid = nonStickies.First().AccountId;
