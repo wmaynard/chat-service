@@ -286,7 +286,8 @@ namespace Rumble.Platform.ChatService.Models
 			};
 			
 			// Process normal (non-sticky) messages.
-			Message[] nonStickies = news.Where(message => !message.IsSticky).ToArray();
+			// 2021.09.30: Omit Broadcasts from the chat monitor
+			Message[] nonStickies = news.Where(message => !message.IsSticky && message.Type != Message.TYPE_BROADCAST).ToArray();
 			if (nonStickies.Any())
 			{
 				string aid = nonStickies.First().AccountId;
@@ -301,8 +302,7 @@ namespace Rumble.Platform.ChatService.Models
 					entries = "";
 				}
 
-				// 2021.09.30: Omit Broadcasts from the chat monitor
-				foreach (Message msg in nonStickies.Where(message => message.Type != Message.TYPE_BROADCAST))
+				foreach (Message msg in nonStickies)
 				{
 					if (msg.AccountId != aid)
 					{
