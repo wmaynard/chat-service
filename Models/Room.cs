@@ -5,6 +5,7 @@ using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
+using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -13,7 +14,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 namespace Rumble.Platform.ChatService.Models
 {
 	[BsonIgnoreExtraElements]
-	public class Room : RumbleModel
+	public class Room : PlatformDataModel
 	{
 		internal const string DB_KEY_CAPACITY = "cap";
 		internal const string DB_KEY_CREATED_TIMESTAMP = "ts";
@@ -73,7 +74,6 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			get
 			{
-				// TODO: Documentation
 				if (Type != TYPE_GLOBAL)
 					return null;
 				IDMap ??= new Dictionary<string, List<string>>();

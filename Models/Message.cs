@@ -8,7 +8,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Message : RumbleModel
+	public class Message : PlatformDataModel
 	{
 		public const string TYPE_ACTIVITY = "activity";
 		public const string TYPE_CHAT = "chat";
@@ -47,7 +47,7 @@ namespace Rumble.Platform.ChatService.Models
 		public string Id { get; set; }
 		[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
-		// TODO: Need a dynamic JSON deserialization
+		// TODO: When this gets serialized going to Mongo, there's a bunch of garbage that screws up future retrieval.
 		public dynamic Data { get; set; }
 		[BsonElement(DB_KEY_TEXT)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]

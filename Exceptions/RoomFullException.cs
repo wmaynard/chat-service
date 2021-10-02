@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.ChatService.Models;
 
-namespace Rumble.Platform.ChatService.Utilities
+namespace Rumble.Platform.ChatService.Exceptions
 {
 	public class RoomFullException : RoomException
 	{

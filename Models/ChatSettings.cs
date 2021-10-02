@@ -9,7 +9,7 @@ using Rumble.Platform.Common.Web;
 namespace Rumble.Platform.ChatService.Models
 {
 	// The class name "Settings" appears to be reserved; "ChatSettings" is used to avoid "Models.Settings"
-	public class ChatSettings : RumbleModel
+	public class ChatSettings : PlatformDataModel
 	{
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_MUTED_PLAYERS = "mp";

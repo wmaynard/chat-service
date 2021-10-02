@@ -70,7 +70,7 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(
 				new { Bans = bans },
-				// CollectionResponseObject(bans), // TODO: Clear reports from response
+				// CollectionResponseObject(bans)
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
 				global.ResponseObject,

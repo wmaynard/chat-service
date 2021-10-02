@@ -17,9 +17,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	// TODO: Magic Values
-	// TODO: Documentation
-	[EnableCors(Startup.CORS_SETTINGS_NAME)]
+	[EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
 	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
 	public class AdminController : ChatControllerBase
 	{
@@ -130,7 +128,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			return Ok(report.ResponseObject);
 		}
 		
-		[HttpPost, Route(template: "messages/unsticky")] // TODO: DELETE
+		[HttpPost, Route(template: "messages/unsticky")]
 		public ActionResult Unsticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
 		{
 			TokenInfo token = ValidateAdminToken(auth);

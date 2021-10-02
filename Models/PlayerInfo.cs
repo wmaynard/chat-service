@@ -1,6 +1,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -8,7 +9,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class PlayerInfo : RumbleModel
+	public class PlayerInfo : PlatformDataModel
 	{
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_AVATAR = "pic";

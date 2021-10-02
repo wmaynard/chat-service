@@ -10,7 +10,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Report : RumbleModel
+	public class Report : PlatformDataModel
 	{
 		public const int COUNT_MESSAGES_BEFORE_REPORTED = 25;
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;

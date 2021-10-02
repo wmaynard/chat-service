@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using Rumble.Platform.Common.Exceptions;
 
-namespace Rumble.Platform.ChatService.Utilities
+namespace Rumble.Platform.ChatService.Exceptions
 {
 	public class RoomNotFoundException : RumbleException
 	{

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Timers;
 using MongoDB.Driver;
+using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
@@ -53,7 +54,7 @@ namespace Rumble.Platform.ChatService.Services
 		
 		private new readonly IMongoCollection<Room> _collection;
 
-		public RoomService(ChatDBSettings settings) : base(settings)
+		public RoomService(RoomDBSettings settings) : base(settings)
 		{
 			Log.Verbose(Owner.Will, "Creating RoomService");
 			_collection = _database.GetCollection<Room>(settings.CollectionName);

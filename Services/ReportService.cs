@@ -5,8 +5,10 @@ using System.Linq;
 using System.Timers;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Settings;
+using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -143,7 +145,7 @@ namespace Rumble.Platform.ChatService.Services
 		{
 			Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
 			if (output == null)
-				throw new RumbleException("Report not found!"); // TODO: ReportNotFoundException
+				throw new ReportNotFoundException(id);
 			return output;
 		}
 		public List<Report> List() => _collection.Find(filter: r => true).ToList();

@@ -8,7 +8,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Ban : RumbleModel
+	public class Ban : PlatformDataModel
 	{
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_REASON = "why";

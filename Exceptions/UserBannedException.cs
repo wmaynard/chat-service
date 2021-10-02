@@ -3,7 +3,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Web;
 
-namespace Rumble.Platform.ChatService.Utilities
+namespace Rumble.Platform.ChatService.Exceptions
 {
 	public class UserBannedException : RumbleException
 	{

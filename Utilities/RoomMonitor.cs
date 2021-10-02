@@ -19,7 +19,7 @@ namespace Rumble.Platform.ChatService.Utilities
 		public event EventHandler<MonitorEventArgs> OnFlush;
 		public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
 		{
-			LastRead = int.Parse(RumbleEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp?
+			LastRead = int.Parse(RumbleEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp so that the monitor can persist past restarts?
 			MessageCount = new Dictionary<string, int>();
 			Timer = new Timer(FREQUENCY_IN_MS) { AutoReset = true};
 			Timer.Elapsed += Flush;
