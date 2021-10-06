@@ -54,16 +54,20 @@ ingress:
   paths: 
     - "/chat"
   tls:
-    enabled: true
-    acme: true
+    enabled: false
+    acme: false
     secretName: "chat-service-stage-a"
     useDefaultSecret: false
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/group.name: stage-a
+    alb.ingress.kubernetes.io/load-balancer-name: stage-a-k8s-alb
+    alb.ingress.kubernetes.io/certificate-arn:  arn:aws:acm:us-east-1:806393939654:certificate/96677281-65fc-43dd-9c5d-289f8895c64a
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:806393939654:regional/webacl/PlatformWafACLs/eb75cd1a-78cd-44a4-a6f0-72766d330363
+    alb.ingress.kubernetes.io/healthcheck-path: /chat/health
   modSecurity:
-    enabled: true
+    enabled: false
     secRuleEngine: "DetectionOnly"
     # secRules:
     #   - variable: ""
