@@ -10,7 +10,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Report : PlatformDataModel
+	public class Report : PlatformCollectionDocument
 	{
 		public const int COUNT_MESSAGES_BEFORE_REPORTED = 25;
 		public const int COUNT_MESSAGES_AFTER_REPORTED = 5;
@@ -37,8 +37,8 @@ namespace Rumble.Platform.ChatService.Models
 		public const string STATUS_BANNED = "banned";
 		public const string STATUS_UNADDRESSED = "new";
 		
-		[BsonId, BsonRepresentation(BsonType.ObjectId)]
-		public string Id { get; set; }
+		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
+		// public string Id { get; set; }
 		[BsonElement(DB_KEY_TIMESTAMP)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }

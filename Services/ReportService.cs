@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
@@ -17,22 +16,23 @@ using Foo = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	public class ReportService : RumbleMongoService
+	public class ReportService : PlatformMongoService<Report>
 	{
+		// protected sealed override string CollectionName => "reports";
 		private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 		
 		private Timer SummaryTimer { get; set; }
-		private new readonly IMongoCollection<Report> _collection;
+		// private new readonly IMongoCollection<Report> _collection;
 		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
 			channel: RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
 			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"
 		));
 		private ReportMetrics[] PreviousMetrics { get; set; }
 
-		public ReportService(ReportDBSettings settings) : base(settings)
+		public ReportService() : base("reports")
 		{
-			Log.Verbose(Owner.Will, "Creating ReportService");
-			_collection = _database.GetCollection<Report>(settings.CollectionName);
+			// Log.Verbose(Owner.Will, "Creating ReportService");
+			// _collection = _database.GetCollection<Report>(CollectionName);
 			SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
 			SummaryTimer.Elapsed += SendSummaryReport;
 			SummaryTimer.Start();
@@ -141,15 +141,16 @@ namespace Rumble.Platform.ChatService.Services
 			return _collection.Find(filter: report => report.ReportedPlayer.AccountId == aid && report.MessageId == messageId).FirstOrDefault();
 		}
 		
-		public Report Get(string id)
+		public override Report Get(string id)
 		{
-			Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+			Report output = base.Get(id);
+			// Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
 			if (output == null)
 				throw new ReportNotFoundException(id);
 			return output;
 		}
-		public List<Report> List() => _collection.Find(filter: r => true).ToList();
-		public void Create(Report report) => _collection.InsertOne(document: report);
+		// public List<Report> List() => _collection.Find(filter: r => true).ToList();
+		// public void Create(Report report) => _collection.InsertOne(document: report);
 
 		public void UpdateOrCreate(Report report)
 		{
@@ -159,10 +160,9 @@ namespace Rumble.Platform.ChatService.Services
 				Update(report);
 		}
 
-		public void Update(Report report) =>
-			_collection.ReplaceOne(filter: r => r.Id == report.Id, replacement: report);
+		// public void Update(Report report) => _collection.ReplaceOne(filter: r => r.Id == report.Id, replacement: report);
 
-		public void Remove(Report report) => _collection.DeleteOne(filter: r => r.Id == report.Id);
+		// public void Remove(Report report) => _collection.DeleteOne(filter: r => r.Id == report.Id);
 
 		public object SendToSlack(Report report)
 		{

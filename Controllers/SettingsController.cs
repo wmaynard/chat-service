@@ -11,11 +11,11 @@ using Rumble.Platform.Common.Web;
 namespace Rumble.Platform.ChatService.Controllers
 {
 	[ApiController, Route("chat/settings")]
-	public class SettingsController : RumbleController
+	public class SettingsController : PlatformController
 	{
 		private readonly SettingsService _settingsService;
 		
-		protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
+		// protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
 
 		public SettingsController(SettingsService preferences, IConfiguration config) : base(config)
 		{

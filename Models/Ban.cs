@@ -8,7 +8,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public class Ban : PlatformDataModel
+	public class Ban : PlatformCollectionDocument
 	{
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_REASON = "why";
@@ -22,10 +22,10 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_EXPIRATION = "expiration";
 		public const string FRIENDLY_KEY_SNAPSHOT = "snapshot";
 		public const string FRIENDLY_KEY_TIME_REMAINING = "timeRemaining";
-		
-		
-		[BsonId, BsonRepresentation(BsonType.ObjectId)]
-		public string Id { get; set; }
+
+
+		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
+		// public string Id { get; set; }
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; private set; }

@@ -6,7 +6,6 @@ using System.Timers;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Settings;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -15,8 +14,9 @@ using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services
 {
-	public class RoomService : RumbleMongoService
+	public class RoomService : PlatformMongoService<Room>
 	{
+		// protected sealed override string CollectionName => "rooms";
 		internal const string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 		internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 		private readonly RoomMonitor _monitor;
@@ -52,12 +52,12 @@ namespace Rumble.Platform.ChatService.Services
 			}
 		}
 		
-		private new readonly IMongoCollection<Room> _collection;
+		// private new readonly IMongoCollection<Room> _collection;
 
-		public RoomService(RoomDBSettings settings) : base(settings)
+		public RoomService() : base("rooms")
 		{
-			Log.Verbose(Owner.Will, "Creating RoomService");
-			_collection = _database.GetCollection<Room>(settings.CollectionName);
+			// Log.Verbose(Owner.Will, "Creating RoomService");
+			// _collection = _database.GetCollection<Room>(CollectionName);
 			_monitor = new RoomMonitor(SendToSlack);
 			_stickyTimer = new Timer(int.Parse(RumbleEnvironment.Variable("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
 			{
@@ -127,14 +127,15 @@ namespace Rumble.Platform.ChatService.Services
 		}
 
 		// basic CRUD operations
-		public List<Room> List()
-		{
-			return _collection.Find(filter: r => true).ToList();
-		}
+		// public List<Room> List()
+		// {
+		// 	return _collection.Find(filter: r => true).ToList();
+		// }
 
-		public Room Get(string id)
+		public override Room Get(string id)
 		{
-			Room output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+			Room output = base.Get(id);
+			// Room output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
 			if (output == null)
 				throw new RoomNotFoundException(id);
 			return output;
@@ -226,8 +227,8 @@ namespace Rumble.Platform.ChatService.Services
 			
 			return joined;
 		}
-		public void Create(Room room) => _collection.InsertOne(document: room);
-		public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);
-		public void Remove(Room room) => _collection.DeleteOne(filter: r => r.Id == room.Id);
+		// public void Create(Room room) => _collection.InsertOne(document: room);
+		// public void Update(Room room) => _collection.ReplaceOne(filter: r => r.Id == room.Id, replacement: room);
+		// public void Remove(Room room) => _collection.DeleteOne(filter: r => r.Id == room.Id);
 	}
 }

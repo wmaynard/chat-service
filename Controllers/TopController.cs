@@ -14,9 +14,9 @@ using Rumble.Platform.CSharp.Common.Interop;
 namespace Rumble.Platform.ChatService.Controllers
 {
 	[ApiController, Route("chat")]
-	public class TopController : RumbleController
+	public class TopController : PlatformController
 	{
-		protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
+		// protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
 
 		// public TopController(IConfiguration config) => _config = config;
 

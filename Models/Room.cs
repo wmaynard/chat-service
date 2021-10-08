@@ -14,7 +14,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 namespace Rumble.Platform.ChatService.Models
 {
 	[BsonIgnoreExtraElements]
-	public class Room : PlatformDataModel
+	public class Room : PlatformCollectionDocument
 	{
 		internal const string DB_KEY_CAPACITY = "cap";
 		internal const string DB_KEY_CREATED_TIMESTAMP = "ts";
@@ -52,8 +52,8 @@ namespace Rumble.Platform.ChatService.Models
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		private static Dictionary<string, List<string>> IDMap;
 		
-		[BsonId, BsonRepresentation(BsonType.ObjectId)]
-		public string Id { get; set; }
+		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
+		// public string Id { get; set; }
 
 		private int _memberCapacity;
 		[BsonElement(DB_KEY_CAPACITY)]
