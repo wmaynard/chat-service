@@ -1,14 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Utilities;
-using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
@@ -18,7 +14,6 @@ namespace Rumble.Platform.ChatService.Services
 {
 	public class ReportService : PlatformMongoService<Report>
 	{
-		// protected sealed override string CollectionName => "reports";
 		private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 		
 		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
@@ -27,14 +22,11 @@ namespace Rumble.Platform.ChatService.Services
 			));
 		
 		private Timer SummaryTimer { get; set; }
-		// private new readonly IMongoCollection<Report> _collection;
 		
 		private ReportMetrics[] PreviousMetrics { get; set; }
 
 		public ReportService() : base("reports")
 		{
-			// Log.Verbose(Owner.Will, "Creating ReportService");
-			// _collection = _database.GetCollection<Report>(CollectionName);
 			SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
 			SummaryTimer.Elapsed += SendSummaryReport;
 			SummaryTimer.Start();
@@ -43,6 +35,8 @@ namespace Rumble.Platform.ChatService.Services
 		
 		#region CRUD
 		public override Report Get(string id) => base.Get(id) ?? throw new ReportNotFoundException(id);
+
+		public Report[] GetReportsForPlayer(string aid) => _collection.Find(report => report.ReportedPlayer.AccountId == aid).ToList().ToArray();
 		
 		public Report FindByPlayerAndMessage(string aid, string messageId)
 		{

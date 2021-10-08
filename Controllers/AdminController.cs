@@ -25,14 +25,28 @@ namespace Rumble.Platform.ChatService.Controllers
 			_reportService = reports;
 		}
 
+		[HttpPost, Route("playerDetails")]
+		public ActionResult PlayerDetails()
+		{
+			string aid = Require<string>("aid");
+			Ban[] bans = _banService.GetBansForUser(aid).ToArray();
+			Report[] reports = _reportService.GetReportsForPlayer(aid);
+
+			return Ok(new
+			{
+				Bans = bans,
+				Reports = reports
+			});
+		}
+
 		#region BANS
 		[HttpPost, Route(template: "ban/player")]
 		public ActionResult Ban()
 		{
-			string accountId = Require<string>("aid");//ExtractRequiredValue("aid", body).ToObject<string>();
-			string reason = Require<string>("reason");//ExtractRequiredValue("reason", body).ToObject<string>();
-			string reportId = Optional<string>("reportId");//ExtractOptionalValue("reportId", body)?.ToObject<string>();
-			long? duration = Optional<long?>("durationInSeconds");//ExtractOptionalValue("durationInSeconds", body)?.ToObject<long?>();
+			string accountId = Require<string>("aid");
+			string reason = Require<string>("reason");
+			string reportId = Optional<string>("reportId"); // TODO: ReportId not used in player bans
+			long? duration = Optional<long?>("durationInSeconds");
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
