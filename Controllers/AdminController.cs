@@ -29,7 +29,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult PlayerDetails()
 		{
 			string aid = Require<string>("aid");
-			Ban[] bans = _banService.GetBansForUser(aid).ToArray();
+			Ban[] bans = _banService.GetBansForUser(aid, true).ToArray();
 			Report[] reports = _reportService.GetReportsForPlayer(aid);
 
 			return Ok(new
