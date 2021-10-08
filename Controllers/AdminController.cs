@@ -76,6 +76,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			string banId = Require<string>("banId");// ExtractRequiredValue("banId", body).ToObject<string>();
 
 			Ban ban = _banService.Get(banId);
+			if (ban == null)
+				return Ok(new {}); // TODO: Should probably throw a BanNotFound exception instead
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
 			foreach (Room r in rooms)
 			{
@@ -98,7 +100,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			
 			_banService.Remove(banId);
 
-			return Ok();
+			return Ok(ban.ResponseObject);
 		}
 
 		[HttpGet, Route(template: "ban/list")]
