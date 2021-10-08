@@ -4,11 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
-using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
+	// TODO: Either polish this up or get rid of it; it doesn't do a lot.
 	/// <summary>
 	/// All client-facing chat endpoints (not Admin) should return all RoomUpdates in their responses.
 	/// This base class should make it easier for them to do that.
@@ -35,7 +35,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		protected object GetAllUpdates(TokenInfo token, JObject body, Action<IEnumerable<Room>> preUpdateAction = null)
 		{
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(token.AccountId);
-			long timestamp = ExtractRequiredValue(name: "lastRead", body).ToObject<long>();
+			long timestamp = Require<long>("lastRead");//ExtractRequiredValue(name: "lastRead", body).ToObject<long>();
 			preUpdateAction?.Invoke(rooms);
 			return RoomUpdate.GenerateResponseFrom(rooms, timestamp);
 		}

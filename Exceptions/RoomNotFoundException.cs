@@ -10,7 +10,7 @@ namespace Rumble.Platform.ChatService.Exceptions
 		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
 		public string RoomId { get; private set; }
 
-		public RoomNotFoundException(string roomId, string language = null) : base($"Room {roomId} not found.")
+		public RoomNotFoundException(string roomId, string language = null) : base("Room not found")
 		{
 			Language = language;
 			RoomId = roomId;

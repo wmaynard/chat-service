@@ -21,12 +21,14 @@ namespace Rumble.Platform.ChatService.Services
 		// protected sealed override string CollectionName => "reports";
 		private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 		
-		private Timer SummaryTimer { get; set; }
-		// private new readonly IMongoCollection<Report> _collection;
 		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
 			channel: RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
 			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"
-		));
+			));
+		
+		private Timer SummaryTimer { get; set; }
+		// private new readonly IMongoCollection<Report> _collection;
+		
 		private ReportMetrics[] PreviousMetrics { get; set; }
 
 		public ReportService() : base("reports")
@@ -38,7 +40,23 @@ namespace Rumble.Platform.ChatService.Services
 			SummaryTimer.Start();
 			SendSummaryReport(null, null);
 		}
-
+		
+		#region CRUD
+		public override Report Get(string id) => base.Get(id) ?? throw new ReportNotFoundException(id);
+		
+		public Report FindByPlayerAndMessage(string aid, string messageId)
+		{
+			return _collection.Find(filter: report => report.ReportedPlayer.AccountId == aid && report.MessageId == messageId).FirstOrDefault();
+		}
+		public void UpdateOrCreate(Report report) // TODO: Worth adding to PlatformMongoService
+		{
+			if (report.Id == null)
+				Create(report);
+			else
+				Update(report);
+		}
+		#endregion CRUD
+		
 		private void SendSummaryReport(object sender, ElapsedEventArgs args)
 		{
 			List<Report> reports = _collection.Find(r => r.Status != Report.STATUS_BANNED).ToList();
@@ -135,30 +153,18 @@ namespace Rumble.Platform.ChatService.Services
 
 			SummaryTimer.Start();
 		}
-
-		public Report FindByPlayerAndMessage(string aid, string messageId)
-		{
-			return _collection.Find(filter: report => report.ReportedPlayer.AccountId == aid && report.MessageId == messageId).FirstOrDefault();
-		}
 		
-		public override Report Get(string id)
-		{
-			Report output = base.Get(id);
-			// Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
-			if (output == null)
-				throw new ReportNotFoundException(id);
-			return output;
-		}
+		// {
+		// 	Report output = base.Get(id);
+		// 	// Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
+		// 	if (output == null)
+		// 		throw new ReportNotFoundException(id);
+		// 	return output;
+		// }
 		// public List<Report> List() => _collection.Find(filter: r => true).ToList();
 		// public void Create(Report report) => _collection.InsertOne(document: report);
 
-		public void UpdateOrCreate(Report report)
-		{
-			if (report.Id == null)
-				Create(report);
-			else
-				Update(report);
-		}
+
 
 		// public void Update(Report report) => _collection.ReplaceOne(filter: r => r.Id == report.Id, replacement: report);
 

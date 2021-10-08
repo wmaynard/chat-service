@@ -2,7 +2,6 @@ using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
@@ -13,21 +12,23 @@ namespace Rumble.Platform.ChatService.Models
 	{
 		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_AVATAR = "pic";
-		internal const string DB_KEY_SCREENNAME = "sn";
-		internal const string DB_KEY_MEMBER_SINCE = "ms";
-		internal const string DB_KEY_LEVEL = "lv";
-		internal const string DB_KEY_POWER = "pwr";
 		internal const string DB_KEY_DISCRIMINATOR = "disc";
+		internal const string DB_KEY_LEVEL = "lv";
+		internal const string DB_KEY_MEMBER_SINCE = "ms";
+		internal const string DB_KEY_POWER = "pwr";
+		internal const string DB_KEY_SCREENNAME = "sn";
 		
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
 		public const string FRIENDLY_KEY_AVATAR = "avatar";
-		public const string FRIENDLY_KEY_SCREENNAME = "sn";
-		public const string FRIENDLY_KEY_MEMBER_SINCE = "memberSince";
-		public const string FRIENDLY_KEY_LEVEL = "level";
-		public const string FRIENDLY_KEY_POWER = "power";
 		public const string FRIENDLY_KEY_DISCRIMINATOR = "discriminator";
+		public const string FRIENDLY_KEY_LEVEL = "level";
+		public const string FRIENDLY_KEY_MEMBER_SINCE = "memberSince";
+		public const string FRIENDLY_KEY_POWER = "power";
+		public const string FRIENDLY_KEY_SCREENNAME = "sn";
+		public const string FRIENDLY_KEY_SELF = "playerInfo";	// Special key for parsing playerInfo from the Client
 		public const string FRIENDLY_KEY_UNIQUE_SCREENNAME = "screenname";
 
+		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
@@ -35,26 +36,41 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonElement(DB_KEY_AVATAR)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_AVATAR)]
 		public string Avatar { get; set; }
+		
+		[BsonElement(DB_KEY_DISCRIMINATOR)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_DISCRIMINATOR, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		public int Discriminator { get; set; }
+		
 		[BsonElement(DB_KEY_MEMBER_SINCE), BsonIgnoreIfNull]
 		[JsonProperty(FRIENDLY_KEY_MEMBER_SINCE, NullValueHandling = NullValueHandling.Ignore)]
 		public long InRoomSince { get; set; }
 		
-		[BsonElement(DB_KEY_SCREENNAME)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_SCREENNAME)]
-		public string ScreenName { get; set; }
 		[BsonElement(DB_KEY_LEVEL)]
 		[JsonProperty(FRIENDLY_KEY_LEVEL)]
 		public int Level { get; set; }
+		
 		[BsonElement(DB_KEY_POWER)]
 		[JsonProperty(FRIENDLY_KEY_POWER, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public int Power { get; set; }
-		[BsonElement(DB_KEY_DISCRIMINATOR)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_DISCRIMINATOR, DefaultValueHandling = DefaultValueHandling.Ignore)]
-		public int Discriminator { get; set; }
+		
+		[BsonElement(DB_KEY_SCREENNAME)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_SCREENNAME)]
+		public string ScreenName { get; set; }
+		#endregion MONGO
+
+		#region INTERNAL
+		[BsonIgnore]
+		[JsonIgnore]
+		public string SlackLink => SlackFormatter.Link(
+			url: $"{RumbleEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
+			text: UniqueScreenname
+		);
+		
 		[BsonIgnore]
 		[JsonIgnore]
 		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
-
+		#endregion INTERNAL
+		
 		public static PlayerInfo FromJToken(JToken input)
 		{
 			return new PlayerInfo()
@@ -68,7 +84,28 @@ namespace Rumble.Platform.ChatService.Models
 				Discriminator = input[FRIENDLY_KEY_DISCRIMINATOR]?.ToObject<int>() ?? 0,
 			};
 		}
+		
+		public void Validate()
+		{
+			if (AccountId == null)
+				throw new InvalidPlayerInfoException(this, "AccountId");
+			if (ScreenName == null)
+				throw new InvalidPlayerInfoException(this, "ScreenName");
+		}
 
+		// TODO: This is a super janky kluge to allow the server to send messages to rooms.
+		// This really should be done by allowing Rooms to allow messages from non-members in special circumstances.
+		public static readonly PlayerInfo Admin = new PlayerInfo()
+		{
+			AccountId = "RumbleAdmin",
+			Avatar = null,
+			Discriminator = 10000,
+			InRoomSince = 0,
+			Level = 99,
+			Power = 9001,
+			ScreenName = "Administrator"
+		};
+		
 		public static PlayerInfo FromJToken(JToken input, TokenInfo token)
 		{
 			return new PlayerInfo()
@@ -82,31 +119,5 @@ namespace Rumble.Platform.ChatService.Models
 				Discriminator = token.Discriminator
 			};
 		}
-
-		public void Validate()
-		{
-			if (AccountId == null)
-				throw new InvalidPlayerInfoException(this, "AccountId");
-			if (ScreenName == null)
-				throw new InvalidPlayerInfoException(this, "ScreenName");
-		}
-
-		[BsonIgnore]
-		[JsonIgnore]
-		public string SlackLink => SlackFormatter.Link(
-			url: $"{RumbleEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
-			text: UniqueScreenname
-		);
-		
-		public static readonly PlayerInfo Admin = new PlayerInfo()
-		{
-			AccountId = "RumbleAdmin",
-			Avatar = null,
-			Discriminator = 10000,
-			InRoomSince = 0,
-			Level = 99,
-			Power = 9001,
-			ScreenName = "Administrator"
-		};
 	}
 }

@@ -4,13 +4,12 @@ using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route("chat/settings")]
+	[ApiController, Route("chat/settings"), RequireAuth]
 	public class SettingsController : PlatformController
 	{
 		private readonly SettingsService _settingsService;
@@ -21,16 +20,24 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			_settingsService = preferences;
 		}
+		
+		#region CLIENT
+		[HttpGet]
+		public ActionResult Get()
+		{
+			ChatSettings prefs = _settingsService.Get(Token.AccountId);
+
+			return Ok(prefs.ResponseObject);
+		}
 
 		[HttpPost, Route(template: "mute")]
-		public ActionResult Mute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Mute()
 		{
-			TokenInfo token = ValidateToken(auth);
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
-			if (info.AccountId == token.AccountId)
+			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"));//ExtractRequiredValue("playerInfo", body));
+			if (info.AccountId == Token.AccountId)
 				throw new InvalidPlayerInfoException(info, "AccountId", "You can't mute yourself!");
 
-			ChatSettings prefs = _settingsService.Get(token.AccountId);
+			ChatSettings prefs = _settingsService.Get(Token.AccountId);
 			prefs.AddMutedPlayer(info);
 			_settingsService.Update(prefs);
 
@@ -38,31 +45,25 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "unmute")]
-		public ActionResult Unmute([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Unmute()
 		{
-			TokenInfo token = ValidateToken(auth); // TODO: Switch to aid to unmute
-			PlayerInfo info = PlayerInfo.FromJToken(ExtractRequiredValue("playerInfo", body));
+			// TODO: Switch to aid to unmute
+			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"));//ExtractRequiredValue("playerInfo", body));
 
-			ChatSettings prefs = _settingsService.Get(token.AccountId);
+			ChatSettings prefs = _settingsService.Get(Token.AccountId);
 			prefs.RemoveMutedPlayer(info);
 			_settingsService.Update(prefs);
 
 			return Ok(prefs.ResponseObject);
 		}
+		#endregion CLIENT
 
-		[HttpGet]
-		public ActionResult Get([FromHeader(Name = AUTH)] string auth)
-		{
-			TokenInfo token = ValidateToken(auth);
-
-			ChatSettings prefs = _settingsService.Get(token.AccountId);
-
-			return Ok(prefs.ResponseObject);
-		}
-		[HttpGet, Route("health")]
+		#region LOAD BALANCER
+		[HttpGet, Route("health"), NoAuth]
 		public override ActionResult HealthCheck()
 		{
 			return Ok(_settingsService.HealthCheckResponseObject);
 		}
+		#endregion LOAD BALANCER
 	}
 }

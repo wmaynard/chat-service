@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
-using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Services
 {

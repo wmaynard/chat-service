@@ -1,24 +1,19 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
-using Rumble.Platform.ChatService.Utilities;
-using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
 	[EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
-	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(TokenType.ADMIN)]
 	public class AdminController : ChatControllerBase
 	{
 		private readonly BanService _banService;
@@ -30,127 +25,14 @@ namespace Rumble.Platform.ChatService.Controllers
 			_reportService = reports;
 		}
 
-		[HttpGet, Route(template: "rooms/list")]
-		public ActionResult ListAllRooms([FromHeader(Name = AUTH)] string auth)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			return Ok(CollectionResponseObject(_roomService.List()));
-		}
-
-		[HttpPost, Route(template: "rooms/removePlayers")]
-		public ActionResult RemovePlayers([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string[] aids = ExtractRequiredValue("aids", body).ToObject<string[]>();
-
-			Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
-			foreach (Room room in rooms)
-			{
-				room.RemoveMembers(aids);
-				_roomService.Update(room);
-			}
-			
-			return Ok(new { Message = $"Removed {aids.Length} players from {rooms.Length} unique rooms."});
-		}
-		
-		
-		#region messages
-		[HttpPost, Route(template: "messages/delete")]
-		public ActionResult DeleteMessage([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string[] messageIds = ExtractRequiredValue("messageIds", body).ToObject<string[]>();
-			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
-
-			Room room = _roomService.Get(roomId);
-			room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
-			_roomService.Update(room);
-
-			return Ok(room.ResponseObject);
-		}
-
-		[HttpGet, Route(template: "messages/sticky")]
-		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-
-			IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
-
-			return Ok(new { Stickies = stickies });
-		}
-
-		[HttpPost, Route(template: "messages/sticky")]
-		public ActionResult Sticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			Message message = Message.FromJToken(ExtractRequiredValue("message", body), token.AccountId);
-			message.Type = Message.TYPE_STICKY;
-			string language = ExtractOptionalValue("language", body)?.ToObject<string>();
-
-			Log.Info(Owner.Will, "New sticky message issued.", token, data: message);
-			Room stickies = _roomService.StickyRoom;
-			
-			if (string.IsNullOrEmpty(message.Text))
-			{
-				_roomService.DeleteStickies();
-				return Ok();
-			}
-			stickies.AddMessage(message);
-			foreach (Room r in _roomService.GetGlobals())
-			{
-				r.AddMessage(message);
-				_roomService.Update(r);
-			}
-			_roomService.Update(stickies);
-			return Ok(stickies.ResponseObject);
-		}
-
-		[HttpPost, Route("reports/ignore")]
-		public ActionResult IgnoreReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
-			
-			Report report = _reportService.Get(reportId);
-			report.Status = Report.STATUS_BENIGN;
-			_reportService.Update(report);
-			return Ok(report.ResponseObject);
-		}
-
-		[HttpPost, Route("reports/delete")]
-		public ActionResult DeleteReport([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string reportId = ExtractRequiredValue("reportId", body).ToObject<string>();
-
-			Report report = _reportService.Get(reportId);
-			_reportService.Remove(report);
-			return Ok(report.ResponseObject);
-		}
-		
-		[HttpPost, Route(template: "messages/unsticky")]
-		public ActionResult Unsticky([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
-		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
-
-			Room room = _roomService.StickyRoom;
-			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
-			_roomService.Update(room);
-			
-			return Ok(room.ResponseObject);
-		}
-		#endregion messages
-
-		#region players
+		#region BANS
 		[HttpPost, Route(template: "ban/player")]
-		public ActionResult Ban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Ban()
 		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string accountId = ExtractRequiredValue("aid", body).ToObject<string>();
-			string reason = ExtractRequiredValue("reason", body).ToObject<string>();
-			string reportId = ExtractOptionalValue("reportId", body)?.ToObject<string>();
-			long? duration = ExtractOptionalValue("durationInSeconds", body)?.ToObject<long?>();
+			string accountId = Require<string>("aid");//ExtractRequiredValue("aid", body).ToObject<string>();
+			string reason = Require<string>("reason");//ExtractRequiredValue("reason", body).ToObject<string>();
+			string reportId = Optional<string>("reportId");//ExtractOptionalValue("reportId", body)?.ToObject<string>();
+			long? duration = Optional<long?>("durationInSeconds");//ExtractOptionalValue("durationInSeconds", body)?.ToObject<long?>();
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
@@ -173,10 +55,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpPost, Route(template: "ban/lift")]
-		public ActionResult Unban([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Unban()
 		{
-			TokenInfo token = ValidateAdminToken(auth);
-			string banId = ExtractRequiredValue("banId", body).ToObject<string>();
+			string banId = Require<string>("banId");// ExtractRequiredValue("banId", body).ToObject<string>();
 
 			Ban ban = _banService.Get(banId);
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
@@ -197,15 +78,123 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 
 		[HttpGet, Route(template: "ban/list")]
-		public ActionResult ListBans([FromHeader(Name = AUTH)] string auth)
+		public ActionResult ListBans()
 		{
-			TokenInfo token = ValidateAdminToken(auth);
-
 			return Ok(CollectionResponseObject(_banService.List()));
 		}
-		#endregion players
+		#endregion BANS
+		
+		#region ROOMS
+		[HttpGet, Route(template: "rooms/list")]
+		public ActionResult ListAllRooms()
+		{
+			return Ok(CollectionResponseObject(_roomService.List()));
+		}
 
-		[HttpGet, Route(template: "health")]
+		[HttpPost, Route(template: "rooms/removePlayers")]
+		public ActionResult RemovePlayers()
+		{
+			string[] aids = Require<string[]>("aids");// ExtractRequiredValue("aids", body).ToObject<string[]>();
+
+			Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
+			foreach (Room room in rooms)
+			{
+				room.RemoveMembers(aids);
+				_roomService.Update(room);
+			}
+			
+			return Ok(new { Message = $"Removed {aids.Length} players from {rooms.Length} unique rooms."});
+		}
+		#endregion ROOMS
+		
+		#region MESSAGES
+		[HttpPost, Route(template: "messages/delete")]
+		public ActionResult DeleteMessage()
+		{
+			string[] messageIds = Require<string[]>("messageIds");// ExtractRequiredValue("messageIds", body).ToObject<string[]>();
+			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
+
+			Room room = _roomService.Get(roomId);
+			room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
+			_roomService.Update(room);
+
+			return Ok(room.ResponseObject);
+		}
+
+		[HttpGet, Route(template: "messages/sticky")]
+		public ActionResult StickyList()
+		{
+			IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
+
+			return Ok(new { Stickies = stickies });
+		}
+
+		[HttpPost, Route(template: "messages/sticky")]
+		public ActionResult Sticky()
+		{
+			// Message message = Message.FromJToken(ExtractRequiredValue("message", body), Token.AccountId);
+			Message message = Message.FromJToken(Require<JToken>("message"), Token.AccountId);
+			message.Type = Message.TYPE_STICKY;
+			string language = Optional<string>("language");//ExtractOptionalValue("language", body)?.ToObject<string>();
+
+			Log.Info(Owner.Will, "New sticky message issued.", Token, data: message);
+			Room stickies = _roomService.StickyRoom;
+			
+			if (string.IsNullOrEmpty(message.Text))
+			{
+				_roomService.DeleteStickies();
+				return Ok();
+			}
+			stickies.AddMessage(message);
+			foreach (Room r in _roomService.GetGlobals())
+			{
+				r.AddMessage(message);
+				_roomService.Update(r);
+			}
+			_roomService.Update(stickies);
+			return Ok(stickies.ResponseObject);
+		}
+
+		[HttpPost, Route(template: "messages/unsticky")]
+		public ActionResult Unsticky()
+		{
+			string messageId = Require<string>("messageId");//ExtractRequiredValue("messageId", body).ToObject<string>();
+
+			Room room = _roomService.StickyRoom;
+			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
+			_roomService.Update(room);
+			
+			return Ok(room.ResponseObject);
+		}
+		#endregion MESSAGES
+		
+		#region REPORTS
+		[HttpPost, Route("reports/delete")]
+		public ActionResult DeleteReport()
+		{
+			string reportId = Require<string>("reportId");//ExtractRequiredValue("reportId", body).ToObject<string>();
+
+			Report report = _reportService.Get(reportId);
+			_reportService.Remove(report);
+			return Ok(report.ResponseObject);
+		}
+		
+		[HttpPost, Route("reports/ignore")]
+		public ActionResult IgnoreReport()
+		{
+			string reportId = Require<string>("reportId");//ExtractRequiredValue("reportId", body).ToObject<string>();
+			
+			Report report = _reportService.Get(reportId);
+			report.Status = Report.STATUS_BENIGN;
+			_reportService.Update(report);
+			return Ok(report.ResponseObject);
+		}
+
+		
+		#endregion REPORTS
+		
+		#region LOAD BALANCER
+		[HttpGet, Route(template: "health"), NoAuth]
 		public override ActionResult HealthCheck()
 		{
 			return Ok(
@@ -214,7 +203,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			);
 		}
 
-		[HttpPost, Route("slackHandler")]
+		[HttpPost, Route("slackHandler"), NoAuth]
 		public ActionResult SlackHandler()
 		{
 			// TODO: Send slack interactions here (e.g. button presses)
@@ -222,5 +211,6 @@ namespace Rumble.Platform.ChatService.Controllers
 			// And deserialize it to accomplish admin things in a secure way
 			return Ok();
 		}
+		#endregion LOAD BALANCER
 	}
 }

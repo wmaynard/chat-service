@@ -6,24 +6,17 @@ namespace Rumble.Platform.ChatService.Exceptions
 {
 	public class InvalidPlayerInfoException : RumbleException
 	{
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public string BadFieldName { get; private set; }
 		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
 		public PlayerInfo Player { get; private set; }
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public string Reason { get; private set; }
 		
-		private InvalidPlayerInfoException(string message) : base(message) { }
-		public InvalidPlayerInfoException(PlayerInfo info) : this("Invalid player information.")
+		public InvalidPlayerInfoException(PlayerInfo info, string badFieldName = null, string reason = null) : base("Invalid player information.")
 		{
 			Player = info;
-		}
-
-		public InvalidPlayerInfoException(PlayerInfo info, string badFieldName) : this($"Invalid player information. (Erroneous field name: {badFieldName})")
-		{
-			Player = info;
-		}
-
-		public InvalidPlayerInfoException(PlayerInfo info, string badFieldName, string reason) : this(info, badFieldName)
-		{
+			BadFieldName = badFieldName;
 			Reason = reason;
 		}
 	}

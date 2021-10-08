@@ -1,20 +1,16 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using RestSharp;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
-using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
-	[ApiController, Route(template: "chat/messages"), Produces(contentType: "application/json")]
+	[ApiController, Route(template: "chat/messages"), Produces(contentType: "application/json"), RequireAuth]
 	public class MessageController : ChatControllerBase
 	{
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
@@ -26,12 +22,12 @@ namespace Rumble.Platform.ChatService.Controllers
 			_reportService = reports;
 			_banService = bans;
 		}
-		
+		#region SERVER
 		/// <summary>
 		/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
 		[HttpPost, Route(template: "broadcast")]
-		public ActionResult Broadcast([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Broadcast()
 		{
 			// Unlike other endpoints, broadcast is called from the game server.
 			// As such, this is the only endpoint that needs to grab "aid", as it does not have access
@@ -39,12 +35,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			// (e.g. screenname / avatar / discriminator).
 			// If there are other endpoints that get modified, however, this and others should be split off
 			// into their own controllers to keep client-facing endpoints consistent in their behavior.
-			TokenInfo token = ValidateToken(auth);
-			string aid = ExtractRequiredValue("aid", body).ToObject<string>();
-			long lastRead = ExtractRequiredValue("lastRead", body).ToObject<long>();
-			Message msg = Message.FromJToken(ExtractRequiredValue("message", body), aid).Validate();
+			string aid = Require<string>("aid");//ExtractRequiredValue("aid", body).ToObject<string>();
+			long lastRead = Require<long>("lastRead");//ExtractRequiredValue("lastRead", body).ToObject<long>();
+			Message msg = Message.FromJToken(Require<JToken>("message"), aid).Validate();//(ExtractRequiredValue("message", body), aid).Validate();
 			msg.Type = Message.TYPE_BROADCAST;
-			Log.Info(Owner.Will, "New broadcast message", token, data : new
+			Log.Info(Owner.Will, "New broadcast message", Token, data : new
 			{
 				AccountId = aid,
 				Broadcast = msg
@@ -61,13 +56,14 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(updates);
 		}
-
+		#endregion SERVER
+		
+		#region CLIENT
 		[HttpPost, Route(template: "report")]
-		public ActionResult Report([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Report()
 		{
-			TokenInfo token = ValidateToken(auth);
-			string messageId = ExtractRequiredValue("messageId", body).ToObject<string>();
-			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
+			string messageId = Require<string>("messageId");//ExtractRequiredValue("messageId", body).ToObject<string>();
+			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
 
 			Room room = _roomService.Get(roomId);
 			
@@ -77,7 +73,7 @@ namespace Rumble.Platform.ChatService.Controllers
 					.Contains(p.AccountId));
 			Message reportedMessage = room.Messages.First(m => m.Id == messageId);
 			PlayerInfo reported = room.AllMembers.First(p => p.AccountId == reportedMessage.AccountId);
-			PlayerInfo reporter = room.Members.First(p => p.AccountId == token.AccountId);
+			PlayerInfo reporter = room.Members.First(p => p.AccountId == Token.AccountId);
 			
 			Report report = _reportService.FindByPlayerAndMessage(reported.AccountId, reportedMessage.Id)
 				?? new Report()
@@ -92,29 +88,28 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 
 			if (!added) 
-				return Ok(report.ResponseObject, GetAllUpdates(token, body));
+				return Ok(report.ResponseObject, GetAllUpdates(Token, Body));
 			
 			_reportService.UpdateOrCreate(report);
 			object slack = _reportService.SendToSlack(report);
-			return Ok(report.ResponseObject, GetAllUpdates(token, body), slack);
+			return Ok(report.ResponseObject, GetAllUpdates(Token, Body), slack);
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
 		[HttpPost, Route(template: "send")]
-		public ActionResult Send([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Send()
 		{
-			TokenInfo token = ValidateToken(auth);
-			string roomId = ExtractRequiredValue("roomId", body).ToObject<string>();
-			Message msg = Message.FromJToken(body["message"], token.AccountId).Validate();
+			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
+			Message msg = Message.FromJToken(Body["message"], Token.AccountId).Validate();
 
-			IEnumerable<Ban> bans = _banService.GetBansForUser(token.AccountId)
+			IEnumerable<Ban> bans = _banService.GetBansForUser(Token.AccountId)
 				.Where(b => !b.IsExpired)
 				.OrderByDescending(b => b.ExpirationDate);
 			if (bans.Any())
-				throw new UserBannedException(token, msg, bans.FirstOrDefault());
+				throw new UserBannedException(Token, msg, bans.FirstOrDefault());
 
-			object updates = GetAllUpdates(token, body, delegate(IEnumerable<Room> rooms)
+			object updates = GetAllUpdates(Token, Body, delegate(IEnumerable<Room> rooms)
 			{
 				Room room = rooms.FirstOrDefault(r => r.Id == roomId);
 				if (room == null)
@@ -127,22 +122,23 @@ namespace Rumble.Platform.ChatService.Controllers
 		}
 		
 		[HttpPost, Route(template: "unread")]
-		public ActionResult Unread([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult Unread()
 		{
-			TokenInfo token = ValidateToken(auth);
-
-			return Ok(GetAllUpdates(token, body));
+			return Ok(GetAllUpdates(Token, Body));
 		}
-
+		
 		[HttpPost, Route(template: "sticky")]
-		public ActionResult StickyList([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ActionResult StickyList()
 		{
-			TokenInfo token = ValidateToken(auth);
-			bool all = ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
+			// TODO: Is this ever used?  Or is it time to retire it now that we insert stickies into every room?
+			bool all = Optional<bool>("all");//ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
 
-			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates(token, body));
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates(Token, Body));
 		}
-		[HttpGet, Route("health")]
+		#endregion CLIENT
+		
+		#region LOAD BALANCER
+		[HttpGet, Route("health"), NoAuth]
 		public override ActionResult HealthCheck()
 		{
 			return Ok(
@@ -150,5 +146,6 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.HealthCheckResponseObject
 			);
 		}
+		#endregion LOAD BALANCER
 	}
 }

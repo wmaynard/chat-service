@@ -14,7 +14,7 @@ namespace Rumble.Platform.ChatService.Exceptions
 		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
 		public Ban Ban { get; set; }
 
-		public UserBannedException(TokenInfo tokenInfo, Message message, Ban ban) : base($"You are banned. (Time Remaining: {ban?.TimeRemaining ?? "permanent"})")
+		public UserBannedException(TokenInfo tokenInfo, Message message, Ban ban) : base("You are banned.")
 		{
 			Token = tokenInfo;
 			AttemptedMessage = message;

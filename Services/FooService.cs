@@ -27,9 +27,7 @@ namespace Rumble.Platform.ChatService.Services
 		public Foo() {}
 	}
 	
-
-	[ApiController, Route("foos")]
-	[RequireAuth(TokenType.ADMIN)]
+	[ApiController, Route("foos"), RequireAuth]
 	public class FooController : PlatformController
 	{
 		private readonly FooService _fooService;
@@ -46,13 +44,11 @@ namespace Rumble.Platform.ChatService.Services
 		}
 
 		[HttpPost, Route("new")]
-		public ObjectResult Post([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		public ObjectResult MakeNew()
 		{
-			ValidateToken(auth);
-
 			Foo foo = new Foo()
 			{
-				Data = JTokenToRawJSON(body)
+				Data = JsonHelper.RawJsonFrom(Require<JObject>("data"))//Body)
 			};
 			_fooService.Create(foo);
 
@@ -60,30 +56,14 @@ namespace Rumble.Platform.ChatService.Services
 		}
 		
 		[HttpGet, Route("list")]
-		public ObjectResult List([FromHeader(Name = AUTH)] string auth)
+		public ObjectResult List()
 		{
-			ValidateToken(auth);
-
-			return Ok(CollectionResponseObject(_fooService.List()));
-		}
-		
-		[HttpDelete, Route("foobar")]
-		[NoAuth]
-		public ObjectResult Foobar()
-		{
-			// ValidateToken(auth);
-
-			JObject body = Body;
-			JObject body2 = Body;
-			_fooService.DeleteAll();
-
-			return Ok();
+			return Ok(CollectionResponseObject(_fooService.List())); // TODO: Automatically do this
 		}
 
-		[HttpDelete, Route("deletes")]
-		public ObjectResult DeleteA([FromHeader(Name = AUTH)] string auth, [FromBody] JObject body)
+		[HttpDelete, Route("delete")]
+		public ObjectResult Delete()
 		{
-			ValidateToken(auth);
 			_fooService.DeleteAll();
 			return Ok();
 		}

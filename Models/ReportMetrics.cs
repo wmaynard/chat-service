@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	
+	// TODO: Comments
 	public class ReportMetrics
 	{
+		public const int MENTION_THRESHOLD = 5;
 		private const int WEIGHT_UNIQUE_REPORTS = 10;
 		private const int WEIGHT_UNIQUE_REPORTERS = 100;
 		private const int WEIGHT_EXPONENTIAL_REPEATED_MESSAGES = 2;
@@ -23,31 +23,6 @@ namespace Rumble.Platform.ChatService.Models
 			NewReportCount * WEIGHT_UNIQUE_REPORTS
 			+ UniqueReporterCount * WEIGHT_UNIQUE_REPORTERS
 			+ (long)Math.Pow(RepeatedMessageCount, WEIGHT_EXPONENTIAL_REPEATED_MESSAGES);
-
-		public const int MENTION_THRESHOLD = 5;
-
-		public bool Equals(ReportMetrics other)
-		{
-			try
-			{
-				return ReportedPlayer.AccountId == other.ReportedPlayer.AccountId
-					&& Severity == other.Severity
-					&& IgnoredReportCount == other.IgnoredReportCount
-					&& NewReportCount == other.NewReportCount
-					&& UniqueReporterCount == other.UniqueReporterCount
-					&& RepeatedMessageCount == other.RepeatedMessageCount
-					&& MostReportedMessages.SequenceEqual(other.MostReportedMessages);
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(RepeatedMessageCount, ReportedPlayer, NewReportCount, UniqueReporterCount, IgnoredReportCount, MostReportedMessages);
-		}
 
 		public ReportMetrics(IGrouping<string, Report> group)
 		{
@@ -89,6 +64,29 @@ namespace Rumble.Platform.ChatService.Models
 				.Select(grouping => new ReportMetrics(grouping))
 				.OrderByDescending(metrics => metrics.Severity)
 				.ToArray();
+		}
+		
+		public bool Equals(ReportMetrics other)
+		{
+			try
+			{
+				return ReportedPlayer.AccountId == other.ReportedPlayer.AccountId
+					&& Severity == other.Severity
+					&& IgnoredReportCount == other.IgnoredReportCount
+					&& NewReportCount == other.NewReportCount
+					&& UniqueReporterCount == other.UniqueReporterCount
+					&& RepeatedMessageCount == other.RepeatedMessageCount
+					&& MostReportedMessages.SequenceEqual(other.MostReportedMessages);
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(RepeatedMessageCount, ReportedPlayer, NewReportCount, UniqueReporterCount, IgnoredReportCount, MostReportedMessages);
 		}
 	}
 }

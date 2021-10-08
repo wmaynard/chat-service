@@ -1,12 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Exceptions;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
@@ -20,8 +17,8 @@ namespace Rumble.Platform.ChatService.Models
 		internal const string DB_KEY_CREATED_TIMESTAMP = "ts";
 		internal const string DB_KEY_GUILD_ID = "gid";
 		internal const string DB_KEY_LANGUAGE = "lang";
-		internal const string DB_KEY_MESSAGES = "msg";
 		internal const string DB_KEY_MEMBERS = "who";
+		internal const string DB_KEY_MESSAGES = "msg";
 		internal const string DB_KEY_PREVIOUS_MEMBERS = "pwho";
 		internal const string DB_KEY_TYPE = "t";
 
@@ -31,23 +28,24 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_GUILD_ID = "guildId";
 		public const string FRIENDLY_KEY_HAS_STICKY = "hasSticky";
 		public const string FRIENDLY_KEY_LANGUAGE = "language";
-		public const string FRIENDLY_KEY_MESSAGES = "messages";
+		public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "listingId";
 		public const string FRIENDLY_KEY_MEMBERS = "members";
+		public const string FRIENDLY_KEY_MESSAGES = "messages";
 		public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
 		public const string FRIENDLY_KEY_TYPE = "type";
 		public const string FRIENDLY_KEY_VACANCIES = "vacancies";
-		public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "listingId";
 	
-		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_DIRECT_MESSAGE = "dm";
+		public const string TYPE_GLOBAL = "global";
 		public const string TYPE_GUILD = "guild";
-		public const string TYPE_UNKNOWN = "unknown";
 		public const string TYPE_STICKY = "sticky";
+		public const string TYPE_UNKNOWN = "unknown";
 
 		public const int MESSAGE_CAPACITY = 200;
+		
 		// public const int GLOBAL_PLAYER_CAPACITY = 1000;
-		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 		public static readonly string ENVIRONMENT = RumbleEnvironment.Variable("RUMBLE_DEPLOYMENT");
+		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		private static Dictionary<string, List<string>> IDMap;
@@ -56,6 +54,20 @@ namespace Rumble.Platform.ChatService.Models
 		// public string Id { get; set; }
 
 		private int _memberCapacity;
+		
+		#region MONGO
+		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
+		public long CreatedTimestamp { get; set; }
+		
+		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
+		public string GuildId { get; set; }
+		
+		[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE, NullValueHandling = NullValueHandling.Ignore)]
+		public string Language { get; set; }
+		
 		[BsonElement(DB_KEY_CAPACITY)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_CAPACITY)]
 		public int MemberCapacity
@@ -65,9 +77,25 @@ namespace Rumble.Platform.ChatService.Models
 				: _memberCapacity;
 			set => _memberCapacity = value;
 		}
-		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
-		public long CreatedTimestamp { get; set; }
+		
+		[BsonElement(DB_KEY_MEMBERS)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_MEMBERS)]
+		public HashSet<PlayerInfo> Members { get; set; }
+		
+		[BsonElement(DB_KEY_MESSAGES)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGES)]
+		public List<Message> Messages { get; set; }
+		
+		[BsonElement(DB_KEY_PREVIOUS_MEMBERS)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_PREVIOUS_MEMBERS, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		public HashSet<PlayerInfo> PreviousMembers { get; set; }
+		
+		[BsonElement(DB_KEY_TYPE)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
+		public string Type { get; set; }
+		#endregion MONGO
+		
+		#region CLIENT
 		[BsonIgnore]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR, NullValueHandling = NullValueHandling.Ignore)]
 		public int? Discriminator
@@ -86,44 +114,33 @@ namespace Rumble.Platform.ChatService.Models
 				return IDMap[Language].IndexOf(Id) + 1;
 			}
 		}
-		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
-		public string GuildId { get; set; }
-		[BsonIgnore]
-		[JsonIgnore]
-		public bool IsFull => Members.Count >= MemberCapacity;
-		[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE, NullValueHandling = NullValueHandling.Ignore)]
-		public string Language { get; set; }
-		[BsonElement(DB_KEY_MESSAGES)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGES)]
-		public List<Message> Messages { get; set; }
-		[BsonElement(DB_KEY_MEMBERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MEMBERS)]
-		public HashSet<PlayerInfo> Members { get; set; }
-		[BsonElement(DB_KEY_PREVIOUS_MEMBERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_PREVIOUS_MEMBERS, DefaultValueHandling = DefaultValueHandling.Ignore)]
-		public HashSet<PlayerInfo> PreviousMembers { get; set; }
-		[BsonElement(DB_KEY_TYPE)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
-		public string Type { get; set; }
-
-		[BsonIgnore]
-		[JsonIgnore]
-		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).Append(PlayerInfo.Admin).ToHashSet();
+		
 		[BsonIgnore]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_HAS_STICKY, DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public bool HasSticky => Messages.Any(message => message.IsSticky);
+		
+		[BsonIgnore]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_VACANCIES)]
+		public int Vacancies => MemberCapacity - Members.Count;
+		#endregion CLIENT
+		
+		#region INTERNAL
 		[BsonIgnore]
 		[JsonIgnore]
-		public string SlackColor => Id[^6..];
+		public HashSet<PlayerInfo> AllMembers => Members.Union(PreviousMembers).Append(PlayerInfo.Admin).ToHashSet();
+		
+		[BsonIgnore]
+		[JsonIgnore]
+		public bool IsFull => Members.Count >= MemberCapacity;
+		
 		[BsonIgnore]
 		[JsonIgnore]
 		public bool IsStickyRoom => Type == TYPE_STICKY;
 		
 		[BsonIgnore]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_VACANCIES)]
-		public int Vacancies => MemberCapacity - Members.Count;
+		[JsonIgnore]
+		public string SlackColor => Id[^6..];
+		#endregion INTERNAL
 		
 		public Room ()
 		{
@@ -274,6 +291,11 @@ namespace Rumble.Platform.ChatService.Models
 			return PreviousMembers.Add(info);
 		}
 
+		/// <summary>
+		/// Converts a Room to a SlackAttachment for the Room Monitor.
+		/// </summary>
+		/// <param name="timestamp"></param>
+		/// <returns>A SlackAttachment, or null if there are no new messages.  Null attachments should be removed during the Compress stage.</returns>
 		public SlackAttachment ToSlackAttachment(long timestamp)
 		{
 			// 2021.09.30: Omit Broadcasts from the chat monitor

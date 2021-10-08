@@ -18,6 +18,6 @@ namespace Rumble.Platform.ChatService.Exceptions
 				Language = room.Language,
 				OpenSpots = room.Vacancies
 			};
-		}
+		} // TODO: Add PlayerInfo to properties, take from subclasses
 	}
 }

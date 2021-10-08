@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using MongoDB.Bson.Serialization.Attributes;
 using System.Linq;
 using Newtonsoft.Json;
 
@@ -8,20 +7,26 @@ namespace Rumble.Platform.ChatService.Models
 	/// <summary>
 	/// A model for information to be output to clients.  Contains unread messages for a room and member information.
 	/// </summary>
-	public class RoomUpdate
+	public class RoomUpdate // TODO: Inherit from PlatformDataModel?
 	{
 		private const string FRIENDLY_KEY_UNREAD_MESSAGES = "unreadMessages";
 		
-		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_ID)]
-		private string Id { get; set; }
+		#region CLIENT
 		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_HAS_STICKY)]
 		private bool HasSticky { get; set; }
-		[JsonProperty(PropertyName = FRIENDLY_KEY_UNREAD_MESSAGES, DefaultValueHandling = DefaultValueHandling.Ignore)]
-		private Message[] UnreadMessages { get; set; }
+		
+		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_ID)]
+		private string Id { get; set; }
+		
 		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_MEMBERS)]
 		private IEnumerable<PlayerInfo> Members { get; set; }
+		
 		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
 		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
+		
+		[JsonProperty(PropertyName = FRIENDLY_KEY_UNREAD_MESSAGES, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		private Message[] UnreadMessages { get; set; }
+		#endregion CLIENT
 
 		/// <summary>
 		/// Creates a RoomUpdate from a given room and timestamp.
@@ -42,6 +47,7 @@ namespace Rumble.Platform.ChatService.Models
 		}
 		/// <summary>
 		/// Standardizes the RoomUpdates for JSON output by returning a new Object with property RoomUpdates.
+		/// TODO: This was before PlatformDataModel existed.
 		/// </summary>
 		/// <param name="room">The Room to retrieve updates from.</param>
 		/// <param name="lastRead">The timestamp from the last read message.</param>

@@ -1,29 +1,20 @@
-using System;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Timers;
-using MongoDB.Bson.Serialization.Conventions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using RestSharp;
-using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Utilities;
-using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {
-	public struct SlackReport
+	public struct SlackReport // TODO: PlatformDataModel?
 	{
-		[JsonProperty(PropertyName = "channel")]
-		public string DestinationChannel { get; set; }
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public object[] Attachments { get; set; }
+		
 		[JsonProperty]
 		public List<SlackBlock> Blocks { get; set; }
+		
+		[JsonProperty(PropertyName = "channel")]
+		public string DestinationChannel { get; set; }
 
 		public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)
 		{

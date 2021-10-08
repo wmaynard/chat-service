@@ -34,10 +34,12 @@ namespace Rumble.Platform.ChatService.Services
 				Room output;
 				try
 				{
-					output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
-					if (output == null)
-						throw new RoomNotFoundException("sticky");
-					return output;
+					return _collection.Find(room => room.Type == Room.TYPE_STICKY).FirstOrDefault() 
+						?? throw new RoomNotFoundException("sticky");
+					// output = _collection.Find(filter: r => r.Type == Room.TYPE_STICKY).FirstOrDefault();
+					// if (output == null)
+					// 	throw new RoomNotFoundException("sticky");
+					// return output;
 				}
 				catch (RoomNotFoundException)
 				{

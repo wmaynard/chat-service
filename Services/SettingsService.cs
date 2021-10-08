@@ -21,7 +21,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		public override ChatSettings Get(string accountId)
 		{
-			ChatSettings output = base.Get(accountId);
+			ChatSettings output = _collection.Find(s => s.AccountId == accountId).FirstOrDefault();
 			if (output != null)
 				return output;
 			output = new ChatSettings(accountId);

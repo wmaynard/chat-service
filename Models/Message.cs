@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,77 +9,94 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public class Message : PlatformDataModel
 	{
+		// TODO: This is probably better if we convert it to an enum and a property that converts it to camelCase based on its name.
 		public const string TYPE_ACTIVITY = "activity";
+		public const string TYPE_ANNOUNCEMENT = "announcement";
+		public const string TYPE_BAN_ANNOUNCEMENT = "banAnnouncement";
+		public const string TYPE_BROADCAST = "broadcast";
 		public const string TYPE_CHAT = "chat";
 		public const string TYPE_NOTIFICATION = "notification";
-		public const string TYPE_ANNOUNCEMENT = "announcement";
+		public const string TYPE_STICKY = "sticky";
 		public const string TYPE_STICKY_ARCHIVED = "archived";
-		public const string TYPE_BAN_ANNOUNCEMENT = "banAnnouncement";
 		public const string TYPE_UNBAN_ANNOUNCEMENT = "unbanAnnouncement";
 		public const string TYPE_UNKNOWN = "unknown";
-		public const string TYPE_BROADCAST = "broadcast";
-		public const string TYPE_STICKY = "sticky";
 
+		internal const string DB_KEY_ACCOUNT_ID = "aid";
 		internal const string DB_KEY_ID = "id";
 		internal const string DB_KEY_DATA = "d";
+		internal const string DB_KEY_EXPIRATION = "exp";
+		internal const string DB_KEY_REPORTED = "bad";
 		internal const string DB_KEY_TEXT = "txt";
 		internal const string DB_KEY_TIMESTAMP = "ts";
 		internal const string DB_KEY_TYPE = "mt";
-		internal const string DB_KEY_ACCOUNT_ID = "aid";
-		internal const string DB_KEY_REPORTED = "bad";
 		internal const string DB_KEY_VISIBLE_FROM = "vf";
-		internal const string DB_KEY_EXPIRATION = "exp";
 
+		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
 		public const string FRIENDLY_KEY_ID = "id";
 		public const string FRIENDLY_KEY_DATA = "data";
+		public const string FRIENDLY_KEY_DURATION_IN_SECONDS = "durationInSeconds";
+		public const string FRIENDLY_KEY_EXPIRATION = "expiration";
+		public const string FRIENDLY_KEY_REPORTED = "flagged";
 		public const string FRIENDLY_KEY_TEXT = "text";
 		public const string FRIENDLY_KEY_TIMESTAMP = "timestamp";
 		public const string FRIENDLY_KEY_TYPE = "type";
-		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
-		public const string FRIENDLY_KEY_REPORTED = "flagged";
 		public const string FRIENDLY_KEY_VISIBLE_FROM = "visibleFrom";
-		public const string FRIENDLY_KEY_EXPIRATION = "expiration";
-		public const string FRIENDLY_KEY_DURATION_IN_SECONDS = "durationInSeconds";
 
-		[BsonElement(DB_KEY_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ID)]
-		public string Id { get; set; }
-		[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
-		// TODO: When this gets serialized going to Mongo, there's a bunch of garbage that screws up future retrieval.
-		public dynamic Data { get; set; }
-		[BsonElement(DB_KEY_TEXT)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]
-		public string Text { get; set; }
-		[BsonElement(DB_KEY_TIMESTAMP)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
-		public long Timestamp { get; set; }
-		[BsonElement(DB_KEY_TYPE)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
-		public string Type { get; set; }
+		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
-		[BsonElement(DB_KEY_REPORTED), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED, NullValueHandling = NullValueHandling.Ignore)]
-		public bool? Reported { get; set; }
-		[BsonElement(DB_KEY_VISIBLE_FROM), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_VISIBLE_FROM, NullValueHandling = NullValueHandling.Ignore)]
-		public long? VisibleFrom { get; set; }
+		
+		[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
+		
+		// TODO: Giving up on generic objects.  Just use serialized JSON as a string instead.
+		public dynamic Data { get; set; }
+		
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
 		public long? Expiration { get; set; }
+		
+		// Note that because this isn't a collection-level document, it's not a BsonId.
+		[BsonElement(DB_KEY_ID)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_ID)]
+		public string Id { get; set; }
+		
+		[BsonElement(DB_KEY_TEXT)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]
+		public string Text { get; set; }
+		
+		[BsonElement(DB_KEY_TIMESTAMP)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
+		public long Timestamp { get; set; }
+		
+		[BsonElement(DB_KEY_REPORTED), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED, NullValueHandling = NullValueHandling.Ignore)]
+		public bool? Reported { get; set; } // TODO: Might be worth a ReportedMessage subclass
+		
+		[BsonElement(DB_KEY_TYPE)]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
+		public string Type { get; set; }
+
+		[BsonElement(DB_KEY_VISIBLE_FROM), BsonIgnoreIfNull]
+		[JsonProperty(PropertyName = FRIENDLY_KEY_VISIBLE_FROM, NullValueHandling = NullValueHandling.Ignore)]
+		public long? VisibleFrom { get; set; } // TODO: This is probably irrelevant now that stickies are inserted into rooms.
+		#endregion MONGO
+		
+		#region INTERNAL
 		[BsonIgnore]
 		[JsonIgnore]
 		public DateTime Date => DateTime.UnixEpoch.AddSeconds(Timestamp);
 
 		[BsonIgnore]
 		[JsonIgnore]
-		public bool IsSticky => Type == Message.TYPE_STICKY;
-
+		public bool IsExpired => Expiration != null && UnixTime > Expiration;
+		
 		[BsonIgnore]
 		[JsonIgnore]
-		public bool IsExpired => Expiration != null && UnixTime > Expiration;
+		public bool IsSticky => Type == Message.TYPE_STICKY; // TODO: This is probably worth a StickyMessage subclass
+		#endregion INTERNAL
+
 		public Message()
 		{
 			Id = Guid.NewGuid().ToString();

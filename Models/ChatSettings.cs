@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Rumble.Platform.Common.Web;
@@ -17,18 +16,24 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_ACCOUNT_ID = "aid";
 		public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
 		
+		#region MONGO
 		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
 		// public string Id { get; set; }
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
+		
 		[BsonElement(DB_KEY_MUTED_PLAYERS)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_MUTED_PLAYERS)]
 		private List<PlayerInfo> MutedPlayers { get; set; }
-
+		#endregion MONGO
+		
+		#region INTERNAL
+		// Since the class can't be named "Settings", we'll override it in the ResponseObject.
 		[BsonIgnore]
 		[JsonIgnore]
 		public override object ResponseObject => new { Settings = this };
+		#endregion INTERNAL
 
 		public ChatSettings(string accountId)
 		{
@@ -42,21 +47,14 @@ namespace Rumble.Platform.ChatService.Models
 				return;
 			MutedPlayers.Add(muted);
 		}
-
-		public void UnmuteAll()
-		{
-			MutedPlayers = new List<PlayerInfo>();
-		}
-
+		
 		public void RemoveMutedPlayer(PlayerInfo muted)
 		{
 			try
 			{
 				MutedPlayers.Remove(MutedPlayers.First(p => p.AccountId == muted.AccountId));
 			}
-			catch (InvalidOperationException)	// We don't need to do anything since the player was no longer muted.
-			{
-			}
+			catch (InvalidOperationException) { }	// We don't need to do anything since the player was no longer muted.
 		}
 	}
 }
