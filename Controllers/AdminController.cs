@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Utilities;
@@ -78,13 +79,21 @@ namespace Rumble.Platform.ChatService.Controllers
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
 			foreach (Room r in rooms)
 			{
-				r.AddMessage(new Message()
+				try
 				{
-					AccountId = ban.AccountId,
-					Text = $"Ban {ban.Id} was lifted by an administrator.",
-					Type = Message.TYPE_UNBAN_ANNOUNCEMENT
-				});
-				_roomService.Update(r);
+					r.AddMessage(new Message()
+					{
+						AccountId = ban.AccountId,
+						Text = $"Ban {ban.Id} was lifted by an administrator.",
+						Type = Message.TYPE_UNBAN_ANNOUNCEMENT
+					}, allowPreviousMemberPost: true);
+					_roomService.Update(r);
+				}
+				catch (NotInRoomException)
+				{
+					// Not actually an error; just banned for long enough that user fell out of the room.
+				}
+				
 			}
 			
 			_banService.Remove(banId);
