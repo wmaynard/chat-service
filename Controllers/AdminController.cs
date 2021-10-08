@@ -49,7 +49,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			long? duration = Optional<long?>("durationInSeconds");
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
-			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
+			// IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
+			Room[] rooms = _roomService.GetSnapshotRooms(accountId);
 			Ban ban = new Ban(accountId, reason, expiration, rooms);
 			_banService.Create(ban);
 
@@ -61,7 +62,7 @@ namespace Rumble.Platform.ChatService.Controllers
 					AccountId = accountId,
 					Text = $"Player {accountId} was banned by an administrator.",
 					Type = Message.TYPE_BAN_ANNOUNCEMENT
-				});
+				}, allowPreviousMemberPost: true);
 				_roomService.Update(r);
 			}
 

@@ -175,10 +175,10 @@ namespace Rumble.Platform.ChatService.Models
 		/// is thrown.
 		/// </summary>
 		/// <param name="msg">The Message to add.</param>
-		public void AddMessage(Message msg)
+		public void AddMessage(Message msg, bool allowPreviousMemberPost = false)
 		{
 			if (!msg.IsSticky)
-				RequireMember(msg.AccountId);
+				RequireMember(msg.AccountId, allowPreviousMemberPost);
 			Messages.Add(msg);
 			OnMessageAdded?.Invoke(this, new RoomEventArgs(msg));
 			Messages = Messages.OrderBy(m => m.Timestamp).ToList();
@@ -246,6 +246,11 @@ namespace Rumble.Platform.ChatService.Models
 			return Members.Any(m => m.AccountId == accountId);
 		}
 
+		public bool HasPreviousMember(string accountId)
+		{
+			return PreviousMembers.Any(m => m.AccountId == accountId);
+		}
+
 		public bool HasMember(IEnumerable<string> accountIds)
 		{
 			return Members.Any(m => accountIds.Contains(m.AccountId));
@@ -257,9 +262,9 @@ namespace Rumble.Platform.ChatService.Models
 		/// </summary>
 		/// <param name="accountId">The account ID to look for.</param>
 		/// <exception cref="NotInRoomException">Indicates that the account does not exist in the given room.</exception>
-		private void RequireMember(string accountId)
+		private void RequireMember(string accountId, bool orPrevious = false)
 		{
-			if (!HasMember(accountId))
+			if (!(HasMember(accountId) || (orPrevious && HasPreviousMember(accountId))))
 				throw new NotInRoomException(this, accountId);
 		}
 

@@ -176,6 +176,11 @@ namespace Rumble.Platform.ChatService.Services
 			return output;
 		}
 
+		public Room[] GetSnapshotRooms(string aid)
+		{
+			return _collection.Find(room => room.Members.Any(p => p.AccountId == aid) || room.PreviousMembers.Any(p => p.AccountId == aid)).ToList().ToArray();
+		}
+
 		public List<Room> GetPastAndPresentRoomsForUser(string aid)
 		{
 			FilterDefinitionBuilder<Room> builder = Builders<Room>.Filter;
