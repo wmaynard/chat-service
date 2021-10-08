@@ -73,7 +73,7 @@ namespace Rumble.Platform.ChatService.Services
 					.Take(100)
 					.OrderByDescending(m => m.Severity)
 					.ToArray();
-				if (metrics.Length == (PreviousMetrics?.Length ?? 1) && !metrics
+				if (PreviousMetrics != null && metrics.Length == PreviousMetrics.Length && !metrics
 					.Select(m => m.Equals(PreviousMetrics[Array.IndexOf(metrics, m)]))
 					.Any(b => b == false))
 				{
