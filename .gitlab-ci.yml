@@ -37,6 +37,7 @@ variables:
 stages:
   - app_build
   - build
+  - scan
   - deploy  # dummy stage to follow the template guidelines
   - dev
   - staging
@@ -79,6 +80,25 @@ build_image:
   needs:
     - job: build_app
       artifacts: true
+
+scan_repo:
+  stage: scan
+  allow_failure: false
+  cache:
+    key: chat-service-scan
+    paths:
+      - ./.trivycache
+  image:
+    name: aquasec/trivy:0.20.0
+    entrypoint: [""]
+  script:
+    - mkdir -p ~/.trivycache
+    - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+    - trivy --cache-dir ./.trivycache fs --security-checks vuln,config --format template --template "@html.tpl" --output $CI_COMMIT_REF_SLUG.$CI_COMMIT_SHA.html $PWD
+  artifacts:
+    paths:
+      - $CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA.html
+    expire_in: 1 week
 
 include: 
   - '/.gitlab/deploy-eb.yaml'
