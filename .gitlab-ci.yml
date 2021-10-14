@@ -97,7 +97,7 @@ scan_repo:
     - trivy --cache-dir ./.trivycache fs --security-checks vuln,config --format template --template "@html.tpl" --output $CI_COMMIT_REF_SLUG.$CI_COMMIT_SHA.html $PWD
   artifacts:
     paths:
-      - $CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA.html
+      - $CI_COMMIT_REF_SLUG.$CI_COMMIT_SHA.html
     expire_in: 1 week
 
 include: 
