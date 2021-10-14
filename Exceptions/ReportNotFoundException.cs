@@ -3,7 +3,7 @@ using Rumble.Platform.Common.Exceptions;
 
 namespace Rumble.Platform.ChatService.Exceptions
 {
-	public class ReportNotFoundException : RumbleException
+	public class ReportNotFoundException : PlatformException
 	{
 		[JsonProperty]
 		public string ReportId { get; private set; }

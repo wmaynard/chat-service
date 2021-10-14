@@ -18,7 +18,7 @@ namespace Rumble.Platform.ChatService.Models
 
 		public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)
 		{
-			DestinationChannel = RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL");
+			DestinationChannel = PlatformEnvironment.Variable("SLACK_REPORTS_CHANNEL");
 			Blocks = blocks;
 			Attachments = new object[]{ new
 			{

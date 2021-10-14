@@ -5,7 +5,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Exceptions
 {
-	public class UserBannedException : RumbleException
+	public class UserBannedException : PlatformException
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
 		public TokenInfo Token { get; set; }

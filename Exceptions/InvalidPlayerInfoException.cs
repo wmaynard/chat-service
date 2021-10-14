@@ -4,7 +4,7 @@ using Rumble.Platform.Common.Exceptions;
 
 namespace Rumble.Platform.ChatService.Exceptions
 {
-	public class InvalidPlayerInfoException : RumbleException
+	public class InvalidPlayerInfoException : PlatformException
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public string BadFieldName { get; private set; }

@@ -21,8 +21,8 @@ namespace Rumble.Platform.ChatService.Services
 		internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 		private readonly RoomMonitor _monitor;
 		private readonly SlackMessageClient SlackMonitorChannel = new SlackMessageClient(
-			channel: RumbleEnvironment.Variable("SLACK_MONITOR_CHANNEL"), 
-			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN")
+			channel: PlatformEnvironment.Variable("SLACK_MONITOR_CHANNEL"), 
+			token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN")
 		);
 
 		private Timer _stickyTimer;
@@ -61,7 +61,7 @@ namespace Rumble.Platform.ChatService.Services
 			// Log.Verbose(Owner.Will, "Creating RoomService");
 			// _collection = _database.GetCollection<Room>(CollectionName);
 			_monitor = new RoomMonitor(SendToSlack);
-			_stickyTimer = new Timer(int.Parse(RumbleEnvironment.Variable("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
+			_stickyTimer = new Timer(int.Parse(PlatformEnvironment.Variable("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
 			{
 				AutoReset = true
 			};

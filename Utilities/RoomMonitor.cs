@@ -14,12 +14,12 @@ namespace Rumble.Platform.ChatService.Utilities
 		private const int THRESHOLD = Room.MESSAGE_CAPACITY / 2;
 		private long LastRead { get; set; }
 		private Dictionary<string, int> MessageCount { get; set; }
-		private readonly int FREQUENCY_IN_MS = int.Parse(RumbleEnvironment.Variable("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
+		private readonly int FREQUENCY_IN_MS = int.Parse(PlatformEnvironment.Variable("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
 		private readonly Timer Timer;
 		public event EventHandler<MonitorEventArgs> OnFlush;
 		public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
 		{
-			LastRead = int.Parse(RumbleEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp so that the monitor can persist past restarts?
+			LastRead = int.Parse(PlatformEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp so that the monitor can persist past restarts?
 			MessageCount = new Dictionary<string, int>();
 			Timer = new Timer(FREQUENCY_IN_MS) { AutoReset = true};
 			Timer.Elapsed += Flush;

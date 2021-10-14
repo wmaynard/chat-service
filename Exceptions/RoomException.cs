@@ -4,7 +4,7 @@ using Rumble.Platform.Common.Exceptions;
 
 namespace Rumble.Platform.ChatService.Exceptions
 {
-	public abstract class RoomException : RumbleException
+	public abstract class RoomException : PlatformException
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
 		public object Room { get; private set; }

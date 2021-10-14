@@ -3,7 +3,7 @@ using Rumble.Platform.Common.Exceptions;
 
 namespace Rumble.Platform.ChatService.Exceptions
 {
-	public class RoomNotFoundException : RumbleException
+	public class RoomNotFoundException : PlatformException
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public string Language { get; private set; }

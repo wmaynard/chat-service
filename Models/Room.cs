@@ -44,8 +44,8 @@ namespace Rumble.Platform.ChatService.Models
 		public const int MESSAGE_CAPACITY = 200;
 		
 		// public const int GLOBAL_PLAYER_CAPACITY = 1000;
-		public static readonly string ENVIRONMENT = RumbleEnvironment.Variable("RUMBLE_DEPLOYMENT");
-		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(RumbleEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
+		public static readonly string ENVIRONMENT = PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT");
+		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(PlatformEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
 		private static Dictionary<string, List<string>> IDMap;

@@ -62,7 +62,7 @@ namespace Rumble.Platform.ChatService.Models
 		[BsonIgnore]
 		[JsonIgnore]
 		public string SlackLink => SlackFormatter.Link(
-			url: $"{RumbleEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
+			url: $"{PlatformEnvironment.Variable("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
 			text: UniqueScreenname
 		);
 		

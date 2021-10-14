@@ -14,7 +14,7 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		private readonly SettingsService _settingsService;
 		
-		// protected override string TokenAuthEndpoint => RumbleEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
+		// protected override string TokenAuthEndpoint => PlatformEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
 
 		public SettingsController(SettingsService preferences, IConfiguration config) : base(config)
 		{

@@ -91,14 +91,11 @@ namespace Rumble.Platform.ChatService.Controllers
 					}, allowPreviousMemberPost: true);
 					_roomService.Update(r);
 				}
-				catch (NotInRoomException)
-				{
-					// Not actually an error; just banned for long enough that user fell out of the room.
-				}
+				catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
 				
 			}
 			
-			_banService.Remove(banId);
+			_banService.Delete(banId);
 
 			return Ok(ban.ResponseObject);
 		}
@@ -201,7 +198,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			string reportId = Require<string>("reportId");//ExtractRequiredValue("reportId", body).ToObject<string>();
 
 			Report report = _reportService.Get(reportId);
-			_reportService.Remove(report);
+			_reportService.Delete(report);
 			return Ok(report.ResponseObject);
 		}
 		

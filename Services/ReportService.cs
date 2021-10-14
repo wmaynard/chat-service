@@ -17,8 +17,8 @@ namespace Rumble.Platform.ChatService.Services
 		private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 		
 		private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
-			channel: RumbleEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
-			token: RumbleEnvironment.Variable("SLACK_CHAT_TOKEN"
+			channel: PlatformEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
+			token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN"
 			));
 		
 		private Timer SummaryTimer { get; set; }
@@ -77,7 +77,7 @@ namespace Rumble.Platform.ChatService.Services
 				}
 				PreviousMetrics = metrics;
 
-				string title = $"{RumbleEnvironment.Variable("RUMBLE_DEPLOYMENT")} Reports Summary";
+				string title = $"{PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT")} Reports Summary";
 
 				int pad1 = 19; // The length of a default name like "Playerc8bc9805#4223"
 				try
