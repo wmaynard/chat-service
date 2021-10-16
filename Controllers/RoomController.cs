@@ -32,8 +32,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);//ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), Token);
 
 			Room joined = _roomService.JoinGlobal(player, language, roomId);
+			
 			object updates = GetAllUpdates(Token, Body);
-
 			return Ok(joined.ResponseObject, updates);
 		}
 

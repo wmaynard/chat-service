@@ -231,7 +231,15 @@ namespace Rumble.Platform.ChatService.Services
 				// Do nothing.
 				// The client didn't leave the room properly, but we don't want to send an error to it, either.
 			}
+
+			if (joined == null) 
+				return null;
 			
+			double percentChat = 100 * (float)joined.Messages.Count(m => m.Type == Message.TYPE_CHAT) / joined.Messages.Count;
+			Graphite.Track("avg-room-members", joined?.Members.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
+			Graphite.Track("avg-room-offline-members", joined?.PreviousMembers.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
+			Graphite.Track("avg-percent-chats", percentChat, type: Graphite.Metrics.Type.AVERAGE);
+
 			return joined;
 		}
 		// public void Create(Room room) => _collection.InsertOne(document: room);

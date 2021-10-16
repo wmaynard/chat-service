@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService
 {
@@ -13,6 +14,8 @@ namespace Rumble.Platform.ChatService
 #else
 			base.ConfigureServices(services, defaultOwner: Owner.Will, warnMS: 500, errorMS: 2_000, criticalMS: 30_000);
 #endif
+			
+			// rumble.platform-csharp.{deployment}.{service-name}.{endpoint}.{metric-name} {value} {ts}
 		}
 	}
 }

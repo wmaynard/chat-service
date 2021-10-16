@@ -11,7 +11,7 @@
 		<PackageReference Include="MongoDB.Driver.Core" Version="2.13.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
-		<PackageReference Include="platform-csharp-common" Version="1.0.28" />
+		<PackageReference Include="platform-csharp-common" Version="1.0.29" />
 		<PackageReference Include="System.Json" Version="4.7.1" />
 	</ItemGroup>
 

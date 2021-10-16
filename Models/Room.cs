@@ -187,7 +187,7 @@ namespace Rumble.Platform.ChatService.Models
 
 			Message[] stickies = Messages.Where(m => m.IsSticky).ToArray();
 			Messages.RemoveRange(0, Messages.Count - MESSAGE_CAPACITY);
-			if (stickies.Any())	// Add the stickies back in
+			if (stickies.Any())	// Track the stickies back in
 				Messages = Messages.Union(stickies).OrderBy(m => m.Timestamp).ToList();
 			PreviousMembers.RemoveWhere(p => !Messages.Any(m => m.AccountId == p.AccountId));
 		}
@@ -333,8 +333,8 @@ namespace Rumble.Platform.ChatService.Models
 				{
 					if (msg.AccountId != aid)
 					{
-						// Add the built block, then reset the values to the next message author / date.
-						// blocks.Add(new (
+						// Track the built block, then reset the values to the next message author / date.
+						// blocks.Track(new (
 						// 	$"`{date:HH:mm}` *{AllMembers.First(p => p.AccountId == aid).SlackLink}*\n{entries}"
 						// ));
 						// aid = msg.AccountId;

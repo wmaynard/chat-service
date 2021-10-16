@@ -139,6 +139,7 @@ namespace Rumble.Platform.ChatService.Services
 				
 				SlackMessage message = new SlackMessage(blocks);
 				SlackReportChannel.Send(message);
+				Graphite.Track("avg-report-severity", metrics.Sum(metric => metric.Severity), type: Graphite.Metrics.Type.AVERAGE);
 			}
 			catch (Exception ex)
 			{
