@@ -17,9 +17,6 @@
 
 	<ItemGroup>
 	  <None Remove="StaticFiles\demo.html" />
-	  <Content Include="StaticFiles\demo.html">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
 	</ItemGroup>
 
 </Project>
