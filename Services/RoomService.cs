@@ -236,9 +236,9 @@ namespace Rumble.Platform.ChatService.Services
 				return null;
 			
 			double percentChat = 100 * (float)joined.Messages.Count(m => m.Type == Message.TYPE_CHAT) / joined.Messages.Count;
-			Graphite.Track("avg-room-members", joined?.Members.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
-			Graphite.Track("avg-room-offline-members", joined?.PreviousMembers.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
-			Graphite.Track("avg-percent-chats", percentChat, type: Graphite.Metrics.Type.AVERAGE);
+			Graphite.Track("room-members", joined?.Members.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
+			Graphite.Track("room-offline-members", joined?.PreviousMembers.Count ?? 0, type: Graphite.Metrics.Type.AVERAGE);
+			Graphite.Track("percent-chats", percentChat, type: Graphite.Metrics.Type.AVERAGE);
 
 			return joined;
 		}

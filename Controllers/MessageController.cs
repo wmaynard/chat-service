@@ -53,7 +53,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Update(r); // TODO: Push the message rather than update the room.
 			}
 			
-			Graphite.Track("flat-broadcasts", 1, type: Graphite.Metrics.Type.FLAT);
+			Graphite.Track("broadcasts", 1, type: Graphite.Metrics.Type.FLAT);
 
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
 			return Ok(updates);
@@ -93,7 +93,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				return Ok(report.ResponseObject, GetAllUpdates(Token, Body));
 			
 			_reportService.UpdateOrCreate(report);
-			Graphite.Track("flat-reports", 1, type: Graphite.Metrics.Type.FLAT);
+			Graphite.Track("reports", 1, type: Graphite.Metrics.Type.FLAT);
 			
 			object slack = _reportService.SendToSlack(report);
 			return Ok(report.ResponseObject, GetAllUpdates(Token, Body), slack);
@@ -113,7 +113,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			if (bans.Any())
 				throw new UserBannedException(Token, msg, bans.FirstOrDefault());
 
-			Graphite.Track("flat-messages", 1, type: Graphite.Metrics.Type.FLAT);
+			Graphite.Track("messages", 1, type: Graphite.Metrics.Type.FLAT);
 			object updates = GetAllUpdates(Token, Body, delegate(IEnumerable<Room> rooms)
 			{
 				Room room = rooms.FirstOrDefault(r => r.Id == roomId);
