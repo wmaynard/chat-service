@@ -17,9 +17,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		protected readonly RoomService _roomService;
 		
-		// protected override string TokenAuthEndpoint => PlatformEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
-
-		// public ChatControllerBase(IConfiguration config) : base(config){}
 		protected ChatControllerBase(RoomService rooms, IConfiguration config) : base(config)
 		{
 			_roomService = rooms;
@@ -35,7 +32,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		protected object GetAllUpdates(TokenInfo token, JObject body, Action<IEnumerable<Room>> preUpdateAction = null)
 		{
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(token.AccountId);
-			long timestamp = Require<long>("lastRead");//ExtractRequiredValue(name: "lastRead", body).ToObject<long>();
+			long timestamp = Require<long>("lastRead");
 			preUpdateAction?.Invoke(rooms);
 			return RoomUpdate.GenerateResponseFrom(rooms, timestamp);
 		}

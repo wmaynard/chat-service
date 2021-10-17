@@ -16,7 +16,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		// TODO: Inconsistency: Either clean these out or convert other controllers to use constants as well.
 		public const string KEY_ROOM_ID = "roomId";
-		// public const string POST_KEY_PLAYER_INFO = "playerInfo";
 		
 		// TODO: Destroy empty global rooms
 		public RoomController(RoomService service, IConfiguration config) : base(service, config){}
@@ -27,9 +26,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "global/join")]
 		public ActionResult JoinGlobal()
 		{
-			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);//ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
-			string roomId = Optional<string>(KEY_ROOM_ID);//ExtractOptionalValue(POST_KEY_ROOM_ID, body)?.ToObject<string>();
-			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);//ExtractRequiredValue(POST_KEY_PLAYER_INFO, body), Token);
+			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
+			string roomId = Optional<string>(KEY_ROOM_ID);
+			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			Room joined = _roomService.JoinGlobal(player, language, roomId);
 			
@@ -57,7 +56,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "available")]
 		public ActionResult Available()
 		{
-			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);//ExtractRequiredValue(POST_KEY_LANGUAGE, body).ToObject<string>();
+			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			
 			object updates = GetAllUpdates(Token, Body);
 
@@ -69,7 +68,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "leave")]
 		public ActionResult Leave()
 		{
-			string roomId = Require<string>(KEY_ROOM_ID);//ExtractRequiredValue(POST_KEY_ROOM_ID, body).ToObject<string>();
+			string roomId = Require<string>(KEY_ROOM_ID);
 
 			object updates = GetAllUpdates(Token, Body, (IEnumerable<Room> rooms) =>
 			{
@@ -100,7 +99,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("update")]
 		public ActionResult UpdatePlayerInfo()
 		{
-			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"), Token);//ExtractRequiredValue("playerInfo", body), Token);
+			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"), Token);
 
 			IEnumerable<Room> rooms = _roomService.GetPastAndPresentRoomsForUser(Token.AccountId);
 			foreach (Room room in rooms)

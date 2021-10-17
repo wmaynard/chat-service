@@ -36,8 +36,6 @@ namespace Rumble.Platform.ChatService.Models
 		public const string STATUS_UNADDRESSED = "new";
 		
 		#region MONGO
-		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
-		// public string Id { get; set; }
 		[BsonElement(DB_KEY_MESSAGE_LOG)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGE_LOG)]
 		public IEnumerable<Message> Log { get; set; }

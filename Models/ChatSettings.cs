@@ -17,8 +17,6 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
 		
 		#region MONGO
-		// [BsonId, BsonRepresentation(BsonType.ObjectId)]
-		// public string Id { get; set; }
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }

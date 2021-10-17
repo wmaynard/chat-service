@@ -11,7 +11,6 @@ namespace Rumble.Platform.ChatService.Models
 		private const int WEIGHT_UNIQUE_REPORTS = 10;
 		private const int WEIGHT_UNIQUE_REPORTERS = 100;
 		private const int WEIGHT_EXPONENTIAL_REPEATED_MESSAGES = 2;
-		// public string AccountId { get; private set; }
 		public int RepeatedMessageCount { get; private set; }
 		public PlayerInfo ReportedPlayer { get; private set; }
 		public int NewReportCount { get; private set; }

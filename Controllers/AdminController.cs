@@ -50,7 +50,6 @@ namespace Rumble.Platform.ChatService.Controllers
 			long? duration = Optional<long?>("durationInSeconds");
 			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
 
-			// IEnumerable<Room> rooms = _roomService.GetRoomsForUser(accountId);
 			Room[] rooms = _roomService.GetSnapshotRooms(accountId);
 			Ban ban = new Ban(accountId, reason, expiration, rooms);
 			_banService.Create(ban);
@@ -73,7 +72,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "ban/lift")]
 		public ActionResult Unban()
 		{
-			string banId = Require<string>("banId");// ExtractRequiredValue("banId", body).ToObject<string>();
+			string banId = Require<string>("banId");
 
 			Ban ban = _banService.Get(banId);
 			if (ban == null)
@@ -117,7 +116,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "rooms/removePlayers")]
 		public ActionResult RemovePlayers()
 		{
-			string[] aids = Require<string[]>("aids");// ExtractRequiredValue("aids", body).ToObject<string[]>();
+			string[] aids = Require<string[]>("aids");
 
 			Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
 			foreach (Room room in rooms)
@@ -134,8 +133,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/delete")]
 		public ActionResult DeleteMessage()
 		{
-			string[] messageIds = Require<string[]>("messageIds");// ExtractRequiredValue("messageIds", body).ToObject<string[]>();
-			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
+			string[] messageIds = Require<string[]>("messageIds");
+			string roomId = Require<string>("roomId");
 
 			Room room = _roomService.Get(roomId);
 			room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
@@ -155,10 +154,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky()
 		{
-			// Message message = Message.FromJToken(ExtractRequiredValue("message", body), Token.AccountId);
 			Message message = Message.FromJToken(Require<JToken>("message"), Token.AccountId);
 			message.Type = Message.TYPE_STICKY;
-			string language = Optional<string>("language");//ExtractOptionalValue("language", body)?.ToObject<string>();
+			string language = Optional<string>("language");
 
 			Log.Info(Owner.Will, "New sticky message issued.", Token, data: message);
 			Room stickies = _roomService.StickyRoom;
@@ -181,7 +179,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/unsticky")]
 		public ActionResult Unsticky()
 		{
-			string messageId = Require<string>("messageId");//ExtractRequiredValue("messageId", body).ToObject<string>();
+			string messageId = Require<string>("messageId");
 
 			Room room = _roomService.StickyRoom;
 			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
@@ -195,7 +193,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("reports/delete")]
 		public ActionResult DeleteReport()
 		{
-			string reportId = Require<string>("reportId");//ExtractRequiredValue("reportId", body).ToObject<string>();
+			string reportId = Require<string>("reportId");
 
 			Report report = _reportService.Get(reportId);
 			_reportService.Delete(report);
@@ -205,7 +203,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("reports/ignore")]
 		public ActionResult IgnoreReport()
 		{
-			string reportId = Require<string>("reportId");//ExtractRequiredValue("reportId", body).ToObject<string>();
+			string reportId = Require<string>("reportId");
 			
 			Report report = _reportService.Get(reportId);
 			report.Status = Report.STATUS_BENIGN;

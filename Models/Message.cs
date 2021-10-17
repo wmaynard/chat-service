@@ -122,15 +122,12 @@ namespace Rumble.Platform.ChatService.Models
 			return new Message()
 			{
 				Id = Guid.NewGuid().ToString(),
-				// Data = BsonDocument.Parse(input[FRIENDLY_KEY_DATA].ToString()),
-				// Data = input[FRIENDLY_KEY_DATA]?.ToObject<object>(),
 				Text = input[FRIENDLY_KEY_TEXT]?.ToObject<string>(),
 				Timestamp = UnixTime,
 				Type = TYPE_CHAT,
 				VisibleFrom = startTime,
 				Expiration = expiration,
 				AccountId = accountId
-				// Data = data
 			};
 		}
 

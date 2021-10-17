@@ -36,9 +36,9 @@ namespace Rumble.Platform.ChatService.Controllers
 			// (e.g. screenname / avatar / discriminator).
 			// If there are other endpoints that get modified, however, this and others should be split off
 			// into their own controllers to keep client-facing endpoints consistent in their behavior.
-			string aid = Require<string>("aid");//ExtractRequiredValue("aid", body).ToObject<string>();
-			long lastRead = Require<long>("lastRead");//ExtractRequiredValue("lastRead", body).ToObject<long>();
-			Message msg = Message.FromJToken(Require<JToken>("message"), aid).Validate();//(ExtractRequiredValue("message", body), aid).Validate();
+			string aid = Require<string>("aid");
+			long lastRead = Require<long>("lastRead");
+			Message msg = Message.FromJToken(Require<JToken>("message"), aid).Validate();
 			msg.Type = Message.TYPE_BROADCAST;
 			Log.Info(Owner.Will, "New broadcast message", Token, data : new
 			{
@@ -64,8 +64,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "report")]
 		public ActionResult Report()
 		{
-			string messageId = Require<string>("messageId");//ExtractRequiredValue("messageId", body).ToObject<string>();
-			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
+			string messageId = Require<string>("messageId");
+			string roomId = Require<string>("roomId");
 
 			Room room = _roomService.Get(roomId);
 			
@@ -104,7 +104,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "send")]
 		public ActionResult Send()
 		{
-			string roomId = Require<string>("roomId");//ExtractRequiredValue("roomId", body).ToObject<string>();
+			string roomId = Require<string>("roomId");
 			Message msg = Message.FromJToken(Body["message"], Token.AccountId).Validate();
 
 			IEnumerable<Ban> bans = _banService.GetBansForUser(Token.AccountId)
@@ -136,7 +136,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult StickyList()
 		{
 			// TODO: Is this ever used?  Or is it time to retire it now that we insert stickies into every room?
-			bool all = Optional<bool>("all");//ExtractOptionalValue("all", body)?.ToObject<bool>() ?? false;
+			bool all = Optional<bool>("all");
 
 			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates(Token, Body));
 		}

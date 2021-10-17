@@ -15,10 +15,6 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat"), RequireAuth]
 	public class TopController : PlatformController
 	{
-		// protected override string TokenAuthEndpoint => PlatformEnvironment.Variable("RUMBLE_TOKEN_VERIFICATION");
-
-		// public TopController(IConfiguration config) => _config = config;
-
 		private readonly BanService _banService;
 		private readonly ReportService _reportService;
 		private readonly RoomService _roomService;
@@ -37,14 +33,14 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "launch")]
 		public ActionResult Launch()
 		{
-			long lastRead = Require<long>("lastRead");//ExtractRequiredValue("lastRead", body).ToObject<long>();
-			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);//ExtractRequiredValue(RoomController.POST_KEY_LANGUAGE, body).ToObject<string>();
-			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);//ExtractRequiredValue(RoomController.POST_KEY_PLAYER_INFO, body), Token);
+			long lastRead = Require<long>("lastRead");
+			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
+			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			Ban[] bans = _banService.GetBansForUser(Token.AccountId).ToArray();
 
-			foreach (Ban b in bans) // Players don't need to see their snapshot data.
+			foreach (Ban b in bans)
 				b.PurgeSnapshot();
 			
 			ChatSettings settings = _settingsService.Get(Token.AccountId);
@@ -55,7 +51,6 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			return Ok(
 				new { Bans = bans },
-				// CollectionResponseObject(bans)
 				settings.ResponseObject,
 				Message.GenerateStickyResponseFrom(stickies),
 				global.ResponseObject,

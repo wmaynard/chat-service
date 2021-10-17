@@ -149,22 +149,6 @@ namespace Rumble.Platform.ChatService.Services
 			SummaryTimer.Start();
 		}
 		
-		// {
-		// 	Report output = base.Get(id);
-		// 	// Report output = _collection.Find(filter: r => r.Id == id).FirstOrDefault();
-		// 	if (output == null)
-		// 		throw new ReportNotFoundException(id);
-		// 	return output;
-		// }
-		// public List<Report> List() => _collection.Find(filter: r => true).ToList();
-		// public void Create(Report report) => _collection.InsertOne(document: report);
-
-
-
-		// public void Update(Report report) => _collection.ReplaceOne(filter: r => r.Id == report.Id, replacement: report);
-
-		// public void Remove(Report report) => _collection.DeleteOne(filter: r => r.Id == report.Id);
-
 		public object SendToSlack(Report report)
 		{
 			bool success = false;
