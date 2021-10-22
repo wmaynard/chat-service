@@ -33,6 +33,10 @@ hpa:
   maxReplicas: 5
   CPUUtilizationPercentage: 60
   MemUtilizationPercentage: 60
+  keda:
+    enabled: true
+    requestsPerSecond: "500"
+    serverAddress: http://prometheus-prometheus-server.gitlab-managed-apps.svc:80
 gitlab:
   app:
   env:
@@ -98,11 +102,11 @@ postgresql:
 
 resources:
   limits:
-    cpu: 512m
-    memory: 1024Mi
+    cpu: 256m
+    memory: 256Mi
   requests:
     cpu: 256m
-    memory: 600Mi
+    memory: 256Mi
 
 ## Configure PodDisruptionBudget
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
