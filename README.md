@@ -28,7 +28,7 @@ Chat is integrated with Slack so that Rumble Admins can keep an eye on the servi
 | Mute | **Muting** a player is merely an update to their preferences.  The game client needs to actually hide messages from **muted** players. |
 | PlayerInfo | To reduce bottlenecks, the chat service stores a copy of relevant player data for its own purposes.  This includes the player's avatar, screenname, discriminator, level, and power.  Other player data may be added as chat evolves.|
 | Report | Refers to both the action of flagging an offensive **message** and the saved record of those **messages** and involved players.   Reports are viewable from the `publishing-app` and links to them are dumped into the (TBD) Slack channel. | 
-| Response Object | Platform-specific term for a standard data delivery vehicle.  Room information, for example, should always be returned in a JSON key / value pair like `"room": { /* ... */ }`.  The key should match the name of the class, and is handled through reflection via the `RumbleModel` class.
+| Response Object | Platform-specific term for a standard data delivery vehicle.  Room information, for example, should always be returned in a JSON key / value pair like `"room": { /* ... */ }`.  The key should match the name of the class, and is handled through reflection via the `PlatformDataModel` class.
 | Room | All chat features can be broken down into **Rooms** of different types.  For example, a **direct message** is no different from a **global room** except for the fact that it can only have two members.  Other types of **room** include **guild** and **sticky**. |
 | Screenname / Username | The user-generated component for a friendly, readable name.  For example, if you see `JoeMcFugal#2006` in chat, the **screenname** is "JoeMcFugal".
 | Snapshot | When a player is **banned** by an administrator, a complete record of all of their **rooms** is created.  This may not necessarily include any offensive content; if the player's **messages** have fallen off from the **room**, the **snapshot** may be entirely innocent.  However, if administrators issued a **ban** from a **report**, a copy of that **report** will be included for historical purposes.
@@ -245,15 +245,15 @@ Helpful resources for working with Slack:
 
 ## Project Maintenance
 
-* Every set of related endpoints should be contained in its own **controller** class that inherits from `RumbleController` unless there's a good reason to fragment it (such as the `AdminController`, which contains all endpoints that require elevated permissions).
-* Every `MongoDB collection` used in the project should have its own **service** class and should inherit from `RumbleMongoService`.  Examples include `BanService` and `RoomService`.
-* Every data **model** should inherit from `RumbleModel`.
+* Every set of related endpoints should be contained in its own **controller** class that inherits from `PlatformController` unless there's a good reason to fragment it (such as the `AdminController`, which contains all endpoints that require elevated permissions).
+* Every `MongoDB collection` used in the project should have its own **service** class and should inherit from `PlatformMongoService`.  Examples include `BanService` and `RoomService`.
+* Every data **model** should inherit from `PlatformDataModel`.
 * Every **model** should contain two sets of constant keys for each property.  Any space savings in MongoDB will be significant with a global launch on the storage side.
   * A `DB_KEY`: an abbreviated or other shorthand string for storage in MongoDB.
   * A `FRIENDLY_KEY`: a more verbose key, used for parameter parsing (incoming traffic)  and response serialization (outgoing traffic).
   * These can be set for each property separately, with the `DB_KEY` specified in `[BsonElement]` attributes and the `FRIENDLY_KEY` specified in `[JsonProperty]` attributes.
-* Any data sent back to a client should be contained in a **response object**.  Unless overridden, any `RumbleModel` has a `ResponseObject` that can be used.  This uses reflection to generate a JSON key / value pair of the class name and object data, and helps keep responses standardized.
-    * When sending collections of models back (such as a List of messages), use the `RumbleController`'s `CollectionResponseObject(IEnumerable<T> objects)` method instead.
+* Any data sent back to a client should be contained in a **response object**.  Unless overridden, any `PlatformDataModel` has a `ResponseObject` that can be used.  This uses reflection to generate a JSON key / value pair of the class name and object data, and helps keep responses standardized.
+    * When sending collections of models back (such as a List of messages), use the `PlatformController`'s `CollectionResponseObject(IEnumerable<T> objects)` method instead.
 
 ## Future Updates, Optimizations, and Nice-to-Haves
 
@@ -277,4 +277,4 @@ Helpful resources for working with Slack:
       "RUMBLE_ENDPOINT_TOKEN_VERIFICATION": "https://dev.services.tower.cdrentertainment.com/player/verify"
     }
 
-Any time you need to ask for an environment variable, use `RumbleEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only; environments.json will not exist on deployed environments.**
+Any time you need to ask for an environment variable, use `PlatformEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only; environments.json will not exist on deployed environments.**

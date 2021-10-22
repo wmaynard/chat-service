@@ -108,7 +108,7 @@ namespace Rumble.Platform.ChatService.Models
 		/// Parses a JToken coming from a request to instantiate a new Message.
 		/// </summary>
 		/// <param name="input">The JToken corresponding to a message object.</param>
-		/// <param name="accountId">The account ID for the author.  This should always come from the Rumble.Controller.TokenInfo object.</param>
+		/// <param name="accountId">The account ID for the author.  This should always come from the TokenInfo object.</param>
 		/// <returns>A new Message object.</returns>
 		internal static Message FromJToken(JToken input, string accountId)
 		{
