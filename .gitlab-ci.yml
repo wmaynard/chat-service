@@ -63,7 +63,7 @@ build_image:
   stage: build
   allow_failure: false
   cache:
-    key: receipt-service-scan
+    key: $CI_PROJECT_NAME-scan
     paths:
       - ./.trivycache
   image:
