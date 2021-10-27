@@ -59,17 +59,28 @@ build_app:
     paths:
       - bin/Release/net5.0/*
 
-
 build_image:
   stage: build
   allow_failure: false
+  cache:
+    key: receipt-service-scan
+    paths:
+      - ./.trivycache
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
     - mkdir -p /kaniko/.docker
+    - mkdir -p $CI_PROJECT_DIR/trivy
+    - mkdir -p $CI_PROJECT_DIR/.trivycache
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
+    - cd $CI_PROJECT_DIR/trivy
+    - wget https://github.com/aquasecurity/trivy/releases/download/v0.20.1/trivy_0.20.1_Linux-64bit.tar.gz
+    - tar -zxvf trivy*
+    - chmod +x $CI_PROJECT_DIR/trivy
+    - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+    - ./trivy --cache-dir $CI_PROJECT_DIR/.trivycache image --severity HIGH,CRITICAL --format template --template "@html.tpl" --output $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
   rules:
     - if: '$BUILD_DISABLED'
       when: never
@@ -81,25 +92,33 @@ build_image:
   needs:
     - job: build_app
       artifacts: true
-
-scan_repo:
-  stage: scan
-  allow_failure: false
-  cache:
-    key: chat-service-scan
-    paths:
-      - ./.trivycache
-  image:
-    name: aquasec/trivy:0.20.0
-    entrypoint: [""]
-  script:
-    - mkdir -p ~/.trivycache
-    - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
-    - trivy --cache-dir ./.trivycache fs --security-checks vuln,config --format template --template "@html.tpl" --output $CI_COMMIT_REF_SLUG.$CI_COMMIT_SHA.html $PWD
   artifacts:
     paths:
-      - $CI_COMMIT_REF_SLUG.$CI_COMMIT_SHA.html
+      - $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html
     expire_in: 1 week
+
+commit_scan_results:
+  stage: scan
+  allow_failure: false
+  image:
+    name: ubuntu
+  script:
+    - apt update
+    - apt install -y git
+    - git clone https://eric.sheris:${NUGET_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.wiki.git
+    - mkdir -p $CI_PROJECT_DIR/$CI_PROJECT_NAME.wiki/securityscans/
+    - cp $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html $CI_PROJECT_NAME.wiki/securityscans/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.md
+    - cd $CI_PROJECT_NAME.wiki
+    - export TZ=":America/Los_Angeles"
+    - export OUTPUT="[`date +\"%m-%d-%y %r\"`]\(securityscans/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA\)\n\n"
+    - echo "$(echo -e $OUTPUT; cat securityscans/SecurityScans.md)" > securityscans/SecurityScans.md
+    - git config --global user.email "platform-ops@rumbleentertainment.com"
+    - git config --global user.name "Gitlab"
+    - git add .; git commit -m "securityscan for image $CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA"; git push
+  needs:
+    - job: build_image
+      artifacts: true
+
 
 include: 
   - '/.gitlab/deploy-eb.yaml'
