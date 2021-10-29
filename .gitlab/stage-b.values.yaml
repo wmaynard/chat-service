@@ -58,8 +58,8 @@ ingress:
   paths: 
     - "/chat"
   tls:
-    enabled: false
-    acme: false
+    enabled: true
+    acme: true
     secretName: "chat-service-stage-b"
     useDefaultSecret: false
   annotations:
