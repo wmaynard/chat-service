@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.CSharp.Common.Interop;
 
@@ -7,13 +7,17 @@ namespace Rumble.Platform.ChatService.Models
 {
 	public struct SlackReport // TODO: PlatformDataModel?
 	{
-		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public const string FRIENDLY_KEY_ATTACHMENTS = "Attachments";
+		public const string FRIENDLY_KEY_BLOCKS = "Blocks";
+		public const string FRIENDLY_KEY_CHANNEL = "Channel";
+		
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ATTACHMENTS), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public object[] Attachments { get; set; }
 		
-		[JsonProperty]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_BLOCKS)]
 		public List<SlackBlock> Blocks { get; set; }
 		
-		[JsonProperty(PropertyName = "channel")]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_CHANNEL)]
 		public string DestinationChannel { get; set; }
 
 		public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.CSharp.Common.Interop;
 
@@ -37,35 +37,35 @@ namespace Rumble.Platform.ChatService.Models
 		
 		#region MONGO
 		[BsonElement(DB_KEY_MESSAGE_LOG)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGE_LOG)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_LOG)]
 		public IEnumerable<Message> Log { get; set; }
 		
 		[BsonElement(DB_KEY_MESSAGE_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGE_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_ID)]
 		public string MessageId { get; set; }
 
 		[BsonElement(DB_KEY_PLAYERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_PLAYERS)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_PLAYERS)]
 		public IEnumerable<PlayerInfo> Players { get; set; }
 		
 		[BsonElement(DB_KEY_REASON), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REASON, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REASON), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string Reason { get; set; }
 		
 		[BsonElement(DB_KEY_REPORTED)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REPORTED)]
 		public PlayerInfo ReportedPlayer { get; set; }
 
 		[BsonElement(DB_KEY_REPORTER)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTER)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REPORTER)]
 		public HashSet<PlayerInfo> Reporters { get; private set; }
 		
 		[BsonElement(DB_KEY_STATUS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_STATUS)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_STATUS)]
 		public string Status { get; set; }
 		
 		[BsonElement(DB_KEY_TIMESTAMP)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }
 		#endregion MONGO
 		

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -24,29 +24,29 @@ namespace Rumble.Platform.ChatService.Models
 		
 		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; private set; }
 		
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_EXPIRATION), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		private long? Expiration { get; set; }
 		
 		[BsonElement(DB_KEY_ISSUED)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ISSUED)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ISSUED)]
 		private long IssuedOn { get; set; }
 		
 		[BsonElement(DB_KEY_REASON), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REASON)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REASON)]
 		private string Reason { get; set; }
 		
 		[BsonElement(DB_KEY_SNAPSHOT)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_SNAPSHOT, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_SNAPSHOT), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		private Room[] Snapshot { get; set; }
 		#endregion MONGO
 
 		#region CLIENT
 		[BsonIgnore]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TIME_REMAINING)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TIME_REMAINING)]
 		public string TimeRemaining
 		{
 			get

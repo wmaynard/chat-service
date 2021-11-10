@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -154,7 +154,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky()
 		{
-			Message message = Message.FromJToken(Require<JToken>("message"), Token.AccountId);
+			Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
 			message.Type = Message.TYPE_STICKY;
 			string language = Optional<string>("language");
 

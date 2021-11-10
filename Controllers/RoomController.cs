@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -28,18 +27,18 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			string roomId = Optional<string>(KEY_ROOM_ID);
-			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);
+			PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			Room joined = _roomService.JoinGlobal(player, language, roomId);
 			
-			object updates = GetAllUpdates(Token, Body);
+			object updates = GetAllUpdates();
 			return Ok(joined.ResponseObject, updates);
 		}
 
 		[HttpPost, Route("global/leave")]
 		public ActionResult LeaveGlobal()
 		{
-			object updates = GetAllUpdates(Token, Body, rooms =>
+			object updates = GetAllUpdates(preUpdateAction: rooms =>
 			{
 				foreach (Room room in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
 				{
@@ -58,7 +57,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			
-			object updates = GetAllUpdates(Token, Body);
+			object updates = GetAllUpdates();
 
 			IEnumerable<Room> rooms = _roomService.GetGlobals(language); // TODO: Only return IDs with this instead of the entire room objects.
 			return Ok(updates, CollectionResponseObject(rooms));
@@ -70,7 +69,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			string roomId = Require<string>(KEY_ROOM_ID);
 
-			object updates = GetAllUpdates(Token, Body, (IEnumerable<Room> rooms) =>
+			object updates = GetAllUpdates(preUpdateAction: rooms =>
 			{
 				Room ciao;
 				try { ciao = rooms.First(r => r.Id == roomId); }
@@ -88,7 +87,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			object roomResponse = null;
 			// Since the RoomUpdates needs to get all of the rooms anyway, grab the room response object from them.
-			object updates = GetAllUpdates(Token, Body,(IEnumerable<Room> rooms) =>
+			object updates = GetAllUpdates(preUpdateAction: rooms =>
 			{
 				roomResponse = CollectionResponseObject(rooms);
 			});
@@ -99,7 +98,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("update")]
 		public ActionResult UpdatePlayerInfo()
 		{
-			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"), Token);
+			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"), Token);
 
 			IEnumerable<Room> rooms = _roomService.GetPastAndPresentRoomsForUser(Token.AccountId);
 			foreach (Room room in rooms)
@@ -108,7 +107,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				_roomService.Update(room); // TODO: Only update user details, not whole room
 			}
 
-			return Ok(GetAllUpdates(Token, Body));
+			return Ok(GetAllUpdates());
 		}
 		#endregion GENERAL
 		

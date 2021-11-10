@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Web;
@@ -7,11 +7,11 @@ namespace Rumble.Platform.ChatService.Exceptions
 {
 	public class UserBannedException : PlatformException
 	{
-		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
+		[JsonInclude]
 		public TokenInfo Token { get; set; }
-		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public Message AttemptedMessage { get; set; }
-		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
+		[JsonInclude]
 		public Ban Ban { get; set; }
 
 		public UserBannedException(TokenInfo tokenInfo, Message message, Ban ban) : base("You are banned.")

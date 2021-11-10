@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -35,7 +34,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			long lastRead = Require<long>("lastRead");
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
-			PlayerInfo player = PlayerInfo.FromJToken(Require<JToken>(PlayerInfo.FRIENDLY_KEY_SELF), Token);
+			PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			Ban[] bans = _banService.GetBansForUser(Token.AccountId).ToArray();

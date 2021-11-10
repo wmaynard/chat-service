@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -18,11 +18,11 @@ namespace Rumble.Platform.ChatService.Models
 		
 		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
 		
 		[BsonElement(DB_KEY_MUTED_PLAYERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MUTED_PLAYERS)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MUTED_PLAYERS)]
 		private List<PlayerInfo> MutedPlayers { get; set; }
 		#endregion MONGO
 		

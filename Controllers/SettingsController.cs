@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -31,7 +30,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "mute")]
 		public ActionResult Mute()
 		{
-			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"));
+			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
 			if (info.AccountId == Token.AccountId)
 				throw new InvalidPlayerInfoException(info, "AccountId", "You can't mute yourself!");
 
@@ -46,7 +45,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Unmute()
 		{
 			// TODO: Switch to aid to unmute
-			PlayerInfo info = PlayerInfo.FromJToken(Require<JToken>("playerInfo"));
+			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
 
 			ChatSettings prefs = _settingsService.Get(Token.AccountId);
 			prefs.RemoveMutedPlayer(info);

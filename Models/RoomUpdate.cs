@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Rumble.Platform.ChatService.Models
 {
@@ -12,19 +12,19 @@ namespace Rumble.Platform.ChatService.Models
 		private const string FRIENDLY_KEY_UNREAD_MESSAGES = "unreadMessages";
 		
 		#region CLIENT
-		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_HAS_STICKY)]
+		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_HAS_STICKY)]
 		private bool HasSticky { get; set; }
 		
-		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_ID)]
+		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_ID)]
 		private string Id { get; set; }
 		
-		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_MEMBERS)]
+		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_MEMBERS)]
 		private IEnumerable<PlayerInfo> Members { get; set; }
 		
-		[JsonProperty(PropertyName = Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
+		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
 		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
 		
-		[JsonProperty(PropertyName = FRIENDLY_KEY_UNREAD_MESSAGES, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_UNREAD_MESSAGES), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		private Message[] UnreadMessages { get; set; }
 		#endregion CLIENT
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Web;
@@ -29,9 +28,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <param name="body">The JSON body of the request.  Must have the field "lastRead".</param>
 		/// <param name="preUpdateAction">A function used to modify one or more of the user's Rooms before the updates are generated.</param>
 		/// <returns>A ResponseObject of rooms.</returns>
-		protected object GetAllUpdates(TokenInfo token, JObject body, Action<IEnumerable<Room>> preUpdateAction = null)
+		protected object GetAllUpdates(Action<IEnumerable<Room>> preUpdateAction = null)
 		{
-			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(token.AccountId);
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(Token.AccountId);
 			long timestamp = Require<long>("lastRead");
 			preUpdateAction?.Invoke(rooms);
 			return RoomUpdate.GenerateResponseFrom(rooms, timestamp);

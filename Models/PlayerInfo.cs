@@ -1,6 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -30,31 +30,31 @@ namespace Rumble.Platform.ChatService.Models
 
 		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
 		
 		[BsonElement(DB_KEY_AVATAR)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_AVATAR)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_AVATAR)]
 		public string Avatar { get; set; }
 		
 		[BsonElement(DB_KEY_DISCRIMINATOR)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_DISCRIMINATOR, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_DISCRIMINATOR), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public int Discriminator { get; set; }
 		
 		[BsonElement(DB_KEY_MEMBER_SINCE), BsonIgnoreIfNull]
-		[JsonProperty(FRIENDLY_KEY_MEMBER_SINCE, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MEMBER_SINCE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public long InRoomSince { get; set; }
 		
 		[BsonElement(DB_KEY_LEVEL)]
-		[JsonProperty(FRIENDLY_KEY_LEVEL)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LEVEL)]
 		public int Level { get; set; }
 		
 		[BsonElement(DB_KEY_POWER)]
-		[JsonProperty(FRIENDLY_KEY_POWER, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_POWER), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public int Power { get; set; }
 		
 		[BsonElement(DB_KEY_SCREENNAME)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_SCREENNAME)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_SCREENNAME)]
 		public string ScreenName { get; set; }
 		#endregion MONGO
 
@@ -71,17 +71,31 @@ namespace Rumble.Platform.ChatService.Models
 		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 		#endregion INTERNAL
 		
-		public static PlayerInfo FromJToken(JToken input)
+		public static PlayerInfo FromJsonElement(JsonElement input)
+		{
+			// TODO: This should be abandoned, instead using the other overload (TokenInfo for AccountId / sn / discriminator)
+			return new PlayerInfo()
+			{
+				AccountId = JsonHelper.Optional<string>(input, FRIENDLY_KEY_ACCOUNT_ID),
+				Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
+				ScreenName = JsonHelper.Optional<string>(input, FRIENDLY_KEY_SCREENNAME),
+				InRoomSince = UnixTime,
+				Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
+				Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
+				Discriminator = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_DISCRIMINATOR) ?? 0
+			};
+		}
+		public static PlayerInfo FromJsonElement(JsonElement input, TokenInfo token)
 		{
 			return new PlayerInfo()
 			{
-				AccountId = input[FRIENDLY_KEY_ACCOUNT_ID]?.ToObject<string>(),
-				Avatar = input[FRIENDLY_KEY_AVATAR]?.ToObject<string>(),
-				ScreenName = input[FRIENDLY_KEY_SCREENNAME]?.ToObject<string>(),
+				AccountId = token.AccountId,
+				Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
+				ScreenName = token.ScreenName,
 				InRoomSince = UnixTime,
-				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
-				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
-				Discriminator = input[FRIENDLY_KEY_DISCRIMINATOR]?.ToObject<int>() ?? 0,
+				Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
+				Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
+				Discriminator = token.Discriminator
 			};
 		}
 		
@@ -105,19 +119,5 @@ namespace Rumble.Platform.ChatService.Models
 			Power = 9001,
 			ScreenName = "Administrator"
 		};
-		
-		public static PlayerInfo FromJToken(JToken input, TokenInfo token)
-		{
-			return new PlayerInfo()
-			{
-				AccountId = token.AccountId,
-				Avatar = input[FRIENDLY_KEY_AVATAR]?.ToObject<string>(),
-				ScreenName = token.ScreenName,
-				InRoomSince = UnixTime,
-				Level = input[FRIENDLY_KEY_LEVEL]?.ToObject<int>() ?? 0,
-				Power = input[FRIENDLY_KEY_POWER]?.ToObject<int>() ?? 0,
-				Discriminator = token.Discriminator
-			};
-		}
 	}
 }

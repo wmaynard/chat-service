@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
@@ -53,19 +53,19 @@ namespace Rumble.Platform.ChatService.Models
 		
 		#region MONGO
 		[BsonElement(DB_KEY_CREATED_TIMESTAMP)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_CREATED_TIMESTAMP)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_CREATED_TIMESTAMP)]
 		public long CreatedTimestamp { get; set; }
 		
 		[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_GUILD_ID, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_GUILD_ID)]
 		public string GuildId { get; set; }
 		
 		[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LANGUAGE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string Language { get; set; }
 		
 		[BsonElement(DB_KEY_CAPACITY)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_CAPACITY)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_CAPACITY)]
 		public int MemberCapacity
 		{
 			get => Type == TYPE_GLOBAL 
@@ -75,25 +75,25 @@ namespace Rumble.Platform.ChatService.Models
 		}
 		
 		[BsonElement(DB_KEY_MEMBERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MEMBERS)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MEMBERS)]
 		public HashSet<PlayerInfo> Members { get; set; }
 		
 		[BsonElement(DB_KEY_MESSAGES)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_MESSAGES)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGES)]
 		public List<Message> Messages { get; set; }
 		
 		[BsonElement(DB_KEY_PREVIOUS_MEMBERS)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_PREVIOUS_MEMBERS, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_PREVIOUS_MEMBERS), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public HashSet<PlayerInfo> PreviousMembers { get; set; }
 		
 		[BsonElement(DB_KEY_TYPE)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TYPE)]
 		public string Type { get; set; }
 		#endregion MONGO
 		
 		#region CLIENT
 		[BsonIgnore]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public int? Discriminator
 		{
 			get
@@ -112,11 +112,11 @@ namespace Rumble.Platform.ChatService.Models
 		}
 		
 		[BsonIgnore]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_HAS_STICKY, DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_HAS_STICKY), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public bool HasSticky => Messages.Any(message => message.IsSticky);
 		
 		[BsonIgnore]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_VACANCIES)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_VACANCIES)]
 		public int Vacancies => MemberCapacity - Members.Count;
 		#endregion CLIENT
 		

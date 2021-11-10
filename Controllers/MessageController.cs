@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -38,7 +37,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			// into their own controllers to keep client-facing endpoints consistent in their behavior.
 			string aid = Require<string>("aid");
 			long lastRead = Require<long>("lastRead");
-			Message msg = Message.FromJToken(Require<JToken>("message"), aid).Validate();
+			Message msg = Message.FromJsonElement(Require("message"), aid).Validate();
 			msg.Type = Message.TYPE_BROADCAST;
 			Log.Info(Owner.Will, "New broadcast message", Token, data : new
 			{
@@ -90,13 +89,13 @@ namespace Rumble.Platform.ChatService.Controllers
 			report.Log.First(m => m.Id == messageId).Reported = true;
 
 			if (!added) 
-				return Ok(report.ResponseObject, GetAllUpdates(Token, Body));
+				return Ok(report.ResponseObject, GetAllUpdates());
 			
 			_reportService.UpdateOrCreate(report);
 			Graphite.Track("reports", 1, type: Graphite.Metrics.Type.FLAT);
 			
 			object slack = _reportService.SendToSlack(report);
-			return Ok(report.ResponseObject, GetAllUpdates(Token, Body), slack);
+			return Ok(report.ResponseObject, GetAllUpdates(), slack);
 		}
 		/// <summary>
 		/// Attempts to send a message to a chat room.  All submitted information must be sent as JSON in a request body.
@@ -105,7 +104,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult Send()
 		{
 			string roomId = Require<string>("roomId");
-			Message msg = Message.FromJToken(Body["message"], Token.AccountId).Validate();
+			Message msg = Message.FromJsonElement(Require("message"), Token.AccountId).Validate();
 
 			IEnumerable<Ban> bans = _banService.GetBansForUser(Token.AccountId)
 				.Where(b => !b.IsExpired)
@@ -114,7 +113,7 @@ namespace Rumble.Platform.ChatService.Controllers
 				throw new UserBannedException(Token, msg, bans.FirstOrDefault());
 
 			Graphite.Track("messages", 1, type: Graphite.Metrics.Type.FLAT);
-			object updates = GetAllUpdates(Token, Body, delegate(IEnumerable<Room> rooms)
+			object updates = GetAllUpdates(delegate(IEnumerable<Room> rooms)
 			{
 				Room room = rooms.FirstOrDefault(r => r.Id == roomId);
 				if (room == null)
@@ -129,7 +128,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "unread")]
 		public ActionResult Unread()
 		{
-			return Ok(GetAllUpdates(Token, Body));
+			return Ok(GetAllUpdates());
 		}
 		
 		[HttpPost, Route(template: "sticky")]
@@ -138,7 +137,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			// TODO: Is this ever used?  Or is it time to retire it now that we insert stickies into every room?
 			bool all = Optional<bool>("all");
 
-			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates(Token, Body));
+			return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates());
 		}
 		#endregion CLIENT
 		

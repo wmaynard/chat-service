@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Exceptions;
 
@@ -6,7 +6,7 @@ namespace Rumble.Platform.ChatService.Exceptions
 {
 	public abstract class RoomException : PlatformException
 	{
-		[JsonProperty(NullValueHandling = NullValueHandling.Include)]
+		[JsonInclude]
 		public object Room { get; private set; }
 
 		protected RoomException(Room room, string message) : base(message)

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -44,42 +45,41 @@ namespace Rumble.Platform.ChatService.Models
 
 		#region MONGO
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ACCOUNT_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; set; }
 		
 		[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_DATA, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_DATA), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		
-		// TODO: Giving up on generic objects.  Just use serialized JSON as a string instead.
-		public dynamic Data { get; set; }
+		public GenericData Data { get; set; }
 		
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_EXPIRATION, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_EXPIRATION), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public long? Expiration { get; set; }
 		
-		// Note that because this isn't a collection-level document, it's not a BsonId.
+		// This isn't a collection-level document, it's not a BsonId.
 		[BsonElement(DB_KEY_ID)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_ID)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ID)]
 		public string Id { get; set; }
 		
 		[BsonElement(DB_KEY_TEXT)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TEXT, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TEXT), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string Text { get; set; }
 		
 		[BsonElement(DB_KEY_TIMESTAMP)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TIMESTAMP)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TIMESTAMP)]
 		public long Timestamp { get; set; }
 		
 		[BsonElement(DB_KEY_REPORTED), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_REPORTED, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REPORTED), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public bool? Reported { get; set; } // TODO: Might be worth a ReportedMessage subclass
 		
 		[BsonElement(DB_KEY_TYPE)]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_TYPE)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TYPE)]
 		public string Type { get; set; }
 
 		[BsonElement(DB_KEY_VISIBLE_FROM), BsonIgnoreIfNull]
-		[JsonProperty(PropertyName = FRIENDLY_KEY_VISIBLE_FROM, NullValueHandling = NullValueHandling.Ignore)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_VISIBLE_FROM), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public long? VisibleFrom { get; set; } // TODO: This is probably irrelevant now that stickies are inserted into rooms.
 		#endregion MONGO
 		
@@ -110,19 +110,18 @@ namespace Rumble.Platform.ChatService.Models
 		/// <param name="input">The JToken corresponding to a message object.</param>
 		/// <param name="accountId">The account ID for the author.  This should always come from the TokenInfo object.</param>
 		/// <returns>A new Message object.</returns>
-		internal static Message FromJToken(JToken input, string accountId)
+		internal static Message FromJsonElement(JsonElement input, string accountId)
 		{
-			long? startTime = input[FRIENDLY_KEY_VISIBLE_FROM]?.ToObject<long?>();
-			long? durationInSeconds = input[FRIENDLY_KEY_DURATION_IN_SECONDS]?.ToObject<long?>();
-			long? expiration = durationInSeconds != null
-				? (startTime ?? UnixTime) + durationInSeconds
-				: input[FRIENDLY_KEY_EXPIRATION]?.ToObject<long?>();
-			JToken data = input[FRIENDLY_KEY_DATA];
+			long? startTime = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_VISIBLE_FROM);
+			long? duration = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_DURATION_IN_SECONDS);
+			long? expiration = duration != null
+				? (startTime ?? UnixTime) + duration
+				: JsonHelper.Optional<long?>(input, FRIENDLY_KEY_EXPIRATION);
 			
 			return new Message()
 			{
 				Id = Guid.NewGuid().ToString(),
-				Text = input[FRIENDLY_KEY_TEXT]?.ToObject<string>(),
+				Text = JsonHelper.Optional<string>(input, FRIENDLY_KEY_TEXT),
 				Timestamp = UnixTime,
 				Type = TYPE_CHAT,
 				VisibleFrom = startTime,
