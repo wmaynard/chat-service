@@ -13,19 +13,19 @@ namespace Rumble.Platform.ChatService.Models
 		
 		#region CLIENT
 		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_HAS_STICKY)]
-		private bool HasSticky { get; set; }
+		public bool HasSticky { get; private set; }
 		
 		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_ID)]
-		private string Id { get; set; }
+		public string Id { get; private set; }
 		
 		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_MEMBERS)]
-		private IEnumerable<PlayerInfo> Members { get; set; }
+		public IEnumerable<PlayerInfo> Members { get; private set; }
 		
 		[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
-		private IEnumerable<PlayerInfo> PreviousMembers { get; set; }
+		public IEnumerable<PlayerInfo> PreviousMembers { get; private set; }
 		
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_UNREAD_MESSAGES), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		private Message[] UnreadMessages { get; set; }
+		public Message[] UnreadMessages { get; private set; }
 		#endregion CLIENT
 
 		/// <summary>

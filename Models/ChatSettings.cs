@@ -23,7 +23,7 @@ namespace Rumble.Platform.ChatService.Models
 		
 		[BsonElement(DB_KEY_MUTED_PLAYERS)]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MUTED_PLAYERS)]
-		private List<PlayerInfo> MutedPlayers { get; set; }
+		public List<PlayerInfo> MutedPlayers { get; private set; }
 		#endregion MONGO
 		
 		#region INTERNAL

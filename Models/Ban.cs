@@ -29,19 +29,19 @@ namespace Rumble.Platform.ChatService.Models
 		
 		[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_EXPIRATION), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		private long? Expiration { get; set; }
+		public long? Expiration { get; private set; }
 		
 		[BsonElement(DB_KEY_ISSUED)]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ISSUED)]
-		private long IssuedOn { get; set; }
+		public long IssuedOn { get; private set; }
 		
 		[BsonElement(DB_KEY_REASON), BsonIgnoreIfNull]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_REASON)]
-		private string Reason { get; set; }
+		public string Reason { get; private set; }
 		
 		[BsonElement(DB_KEY_SNAPSHOT)]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_SNAPSHOT), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		private Room[] Snapshot { get; set; }
+		public Room[] Snapshot { get; private set; }
 		#endregion MONGO
 
 		#region CLIENT

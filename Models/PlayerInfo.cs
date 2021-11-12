@@ -42,7 +42,7 @@ namespace Rumble.Platform.ChatService.Models
 		public int Discriminator { get; set; }
 		
 		[BsonElement(DB_KEY_MEMBER_SINCE), BsonIgnoreIfNull]
-		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MEMBER_SINCE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MEMBER_SINCE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public long InRoomSince { get; set; }
 		
 		[BsonElement(DB_KEY_LEVEL)]
