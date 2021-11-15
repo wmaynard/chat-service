@@ -76,7 +76,7 @@ ingress:
   canary:
     weight:
 prometheus:
-  metrics: true
+  metrics: false
 livenessProbe:
   path: "/chat/health"
   initialDelaySeconds: 15
