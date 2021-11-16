@@ -29,7 +29,7 @@ application:
   secretChecksum:
 hpa:
   enabled: false
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 5
   CPUUtilizationPercentage: 60
   MemUtilizationPercentage: 60
@@ -113,8 +113,7 @@ resources:
 #
 podDisruptionBudget:
   enabled: false
-  # minAvailable: 1
-  maxUnavailable: 1
+  minAvailable: 1
 
 ## Configure NetworkPolicy
 ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
