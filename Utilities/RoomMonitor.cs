@@ -8,6 +8,7 @@ using Rumble.Platform.CSharp.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Utilities
 {
+	// TODO: This should be converted to a PlatformTimerService
 	public class RoomMonitor
 	{
 		private const int THRESHOLD = Room.MESSAGE_CAPACITY / 2;

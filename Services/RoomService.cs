@@ -138,9 +138,12 @@ namespace Rumble.Platform.ChatService.Services
 
 		public List<Room> GetGlobals(string language = null)
 		{
-			return language == null
+			List<Room> output = language == null
 				? _collection.Find(filter: room => room.Type == Room.TYPE_GLOBAL).ToList()
 				: _collection.Find(filter: room => room.Type == Room.TYPE_GLOBAL && room.Language == language).ToList();
+
+			OnEmptyRoomsFound?.Invoke(this, new EmptyRoomEventArgs(output)); 
+			return output;
 		}
 
 		public List<Room> GetRoomsForUser(string aid)
@@ -215,6 +218,25 @@ namespace Rumble.Platform.ChatService.Services
 			Graphite.Track("percent-chats", percentChat, type: Graphite.Metrics.Type.AVERAGE);
 
 			return joined;
+		}
+		
+		internal EventHandler<EmptyRoomEventArgs> OnEmptyRoomsFound;
+
+		internal class EmptyRoomEventArgs : EventArgs
+		{
+			internal readonly string[] roomIds;
+			public EmptyRoomEventArgs(IEnumerable<Room> rooms)
+			{
+				// Skip 1 because we don't want to delete the last room.
+				// This generally shouldn't be an issue, though, because this means that no players are logging into the game.
+				// Still, it could happen if for any reason the game couldn't communicate with Chat but the service was still running,
+				// e.g. a change in the routing.
+				
+				roomIds = rooms
+					.Skip(1)
+					.Where(room => !room.Members.Any())
+					.Select(room => room.Id).ToArray();
+			}
 		}
 	}
 }

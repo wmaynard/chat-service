@@ -19,14 +19,17 @@ namespace Rumble.Platform.ChatService.Controllers
 		private readonly RoomService _roomService;
 		private readonly SettingsService _settingsService;
 		private readonly InactiveUserService _inactiveUserService;
+		private readonly RoomDespawnService _despawnService;
 
-		public TopController(BanService bans, ReportService reports, RoomService rooms, SettingsService settings, InactiveUserService inactiveUserService, IConfiguration config) : base(config)
+		public TopController(BanService bans, ReportService reports, RoomService rooms, RoomDespawnService despawner, 
+			SettingsService settings, InactiveUserService inactiveUserService, IConfiguration config) : base(config)
 		{
 			_banService = bans;
 			_reportService = reports;
 			_roomService = rooms;
 			_settingsService = settings;
 			_inactiveUserService = inactiveUserService;
+			_despawnService = despawner;
 		}
 
 		#region CLIENT
@@ -70,7 +73,8 @@ namespace Rumble.Platform.ChatService.Controllers
 				_reportService.HealthCheckResponseObject,
 				_roomService.HealthCheckResponseObject,
 				_settingsService.HealthCheckResponseObject,
-				_inactiveUserService.HealthCheckResponseObject
+				_inactiveUserService.HealthCheckResponseObject,
+				_despawnService.HealthCheckResponseObject
 			);
 		}
 		#endregion LOAD BALANCER
