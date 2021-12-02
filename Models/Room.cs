@@ -47,7 +47,7 @@ namespace Rumble.Platform.ChatService.Models
 		public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(PlatformEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
 
 		public static event EventHandler<RoomEventArgs> OnMessageAdded;
-		private static Dictionary<string, List<string>> IDMap;
+		private static Dictionary<string, List<string>> IDMap; // TODO: This could be a separate service if there's a good way to bring a singleton into models
 		
 		private int _memberCapacity;
 		
