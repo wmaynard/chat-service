@@ -18,13 +18,15 @@ namespace Rumble.Platform.ChatService.Controllers
 		private readonly ReportService _reportService;
 		private readonly RoomService _roomService;
 		private readonly SettingsService _settingsService;
+		private readonly InactiveUserService _inactiveUserService;
 
-		public TopController(BanService bans, ReportService reports, RoomService rooms, SettingsService settings, IConfiguration config) : base(config)
+		public TopController(BanService bans, ReportService reports, RoomService rooms, SettingsService settings, InactiveUserService inactiveUserService, IConfiguration config) : base(config)
 		{
 			_banService = bans;
 			_reportService = reports;
 			_roomService = rooms;
 			_settingsService = settings;
+			_inactiveUserService = inactiveUserService;
 		}
 
 		#region CLIENT
@@ -47,6 +49,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Room global = _roomService.JoinGlobal(player, language);
 			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(Token.AccountId);
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
+			_inactiveUserService.Track(player);
 
 			return Ok(
 				new { Bans = bans },
@@ -66,7 +69,8 @@ namespace Rumble.Platform.ChatService.Controllers
 				_banService.HealthCheckResponseObject,
 				_reportService.HealthCheckResponseObject,
 				_roomService.HealthCheckResponseObject,
-				_settingsService.HealthCheckResponseObject
+				_settingsService.HealthCheckResponseObject,
+				_inactiveUserService.HealthCheckResponseObject
 			);
 		}
 		#endregion LOAD BALANCER

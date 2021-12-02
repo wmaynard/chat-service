@@ -14,8 +14,6 @@ namespace Rumble.Platform.ChatService
 #else
 			base.ConfigureServices(services, defaultOwner: Owner.Will, warnMS: 500, errorMS: 2_000, criticalMS: 30_000);
 #endif
-			
-			// rumble.platform-csharp.{deployment}.{service-name}.{endpoint}.{metric-name} {value} {ts}
 		}
 	}
 }

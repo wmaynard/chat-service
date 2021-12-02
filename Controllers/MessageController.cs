@@ -16,11 +16,13 @@ namespace Rumble.Platform.ChatService.Controllers
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
 		private readonly ReportService _reportService;
 		private readonly BanService _banService;
-		
-		public MessageController(ReportService reports, RoomService rooms, BanService bans, IConfiguration config) : base(rooms, config)
+		private readonly InactiveUserService _inactiveUserService;
+
+		public MessageController(InactiveUserService inactive, ReportService reports, RoomService rooms, BanService bans, IConfiguration config) : base(rooms, config)
 		{
 			_reportService = reports;
 			_banService = bans;
+			_inactiveUserService = inactive;
 		}
 		#region SERVER
 		/// <summary>
@@ -55,6 +57,7 @@ namespace Rumble.Platform.ChatService.Controllers
 			Graphite.Track("broadcasts", 1, type: Graphite.Metrics.Type.FLAT);
 
 			object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
+			_inactiveUserService.Track(aid);
 			return Ok(updates);
 		}
 		#endregion SERVER
@@ -63,6 +66,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "report")]
 		public ActionResult Report()
 		{
+			_inactiveUserService.Track(Token);
+
 			string messageId = Require<string>("messageId");
 			string roomId = Require<string>("roomId");
 
@@ -103,6 +108,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "send")]
 		public ActionResult Send()
 		{
+			_inactiveUserService.Track(Token);
+
 			string roomId = Require<string>("roomId");
 			Message msg = Message.FromJsonElement(Require("message"), Token.AccountId).Validate();
 
@@ -128,12 +135,16 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "unread")]
 		public ActionResult Unread()
 		{
+			_inactiveUserService.Track(Token);
+
 			return Ok(GetAllUpdates());
 		}
 		
 		[HttpPost, Route(template: "sticky")]
 		public ActionResult StickyList()
 		{
+			_inactiveUserService.Track(Token);
+
 			// TODO: Is this ever used?  Or is it time to retire it now that we insert stickies into every room?
 			bool all = Optional<bool>("all");
 

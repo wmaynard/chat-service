@@ -15,9 +15,13 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		// TODO: Inconsistency: Either clean these out or convert other controllers to use constants as well.
 		public const string KEY_ROOM_ID = "roomId";
+		private readonly InactiveUserService _inactiveUserService;
 		
 		// TODO: Destroy empty global rooms
-		public RoomController(RoomService service, IConfiguration config) : base(service, config){}
+		public RoomController(InactiveUserService inactive, RoomService service, IConfiguration config) : base(service, config)
+		{
+			_inactiveUserService = inactive;
+		}
 		
 		#region GLOBAL
 		// Adds or assigns a user to a global room.  Also removes a user from any global rooms they were already in
@@ -25,6 +29,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "global/join")]
 		public ActionResult JoinGlobal()
 		{
+			_inactiveUserService.Track(Token);
+
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			string roomId = Optional<string>(KEY_ROOM_ID);
 			PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
@@ -38,6 +44,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("global/leave")]
 		public ActionResult LeaveGlobal()
 		{
+			_inactiveUserService.Track(Token);
+			
 			object updates = GetAllUpdates(preUpdateAction: rooms =>
 			{
 				foreach (Room room in rooms.Where(r => r.Type == Room.TYPE_GLOBAL))
@@ -55,10 +63,11 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "available")]
 		public ActionResult Available()
 		{
+			_inactiveUserService.Track(Token);
+
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			
 			object updates = GetAllUpdates();
-
 			IEnumerable<Room> rooms = _roomService.GetGlobals(language); // TODO: Only return IDs with this instead of the entire room objects.
 			return Ok(updates, CollectionResponseObject(rooms));
 		}
@@ -67,6 +76,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "leave")]
 		public ActionResult Leave()
 		{
+			_inactiveUserService.Track(Token);
+			
 			string roomId = Require<string>(KEY_ROOM_ID);
 
 			object updates = GetAllUpdates(preUpdateAction: rooms =>
@@ -85,6 +96,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "list")]
 		public ActionResult List()
 		{
+			_inactiveUserService.Track(Token);
+			
 			object roomResponse = null;
 			// Since the RoomUpdates needs to get all of the rooms anyway, grab the room response object from them.
 			object updates = GetAllUpdates(preUpdateAction: rooms =>
@@ -98,6 +111,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route("update")]
 		public ActionResult UpdatePlayerInfo()
 		{
+			_inactiveUserService.Track(Token);
+			
 			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"), Token);
 
 			IEnumerable<Room> rooms = _roomService.GetPastAndPresentRoomsForUser(Token.AccountId);

@@ -11,10 +11,12 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat/settings"), RequireAuth]
 	public class SettingsController : PlatformController
 	{
+		private readonly InactiveUserService _inactiveUserService;
 		private readonly SettingsService _settingsService;
 
-		public SettingsController(SettingsService preferences, IConfiguration config) : base(config)
+		public SettingsController(InactiveUserService inactive, SettingsService preferences, IConfiguration config) : base(config)
 		{
+			_inactiveUserService = inactive;
 			_settingsService = preferences;
 		}
 		
@@ -22,6 +24,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet]
 		public ActionResult Get()
 		{
+			_inactiveUserService.Track(Token);
+
 			ChatSettings prefs = _settingsService.Get(Token.AccountId);
 
 			return Ok(prefs.ResponseObject);
@@ -30,6 +34,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "mute")]
 		public ActionResult Mute()
 		{
+			_inactiveUserService.Track(Token);
+
 			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
 			if (info.AccountId == Token.AccountId)
 				throw new InvalidPlayerInfoException(info, "AccountId", "You can't mute yourself!");
@@ -44,6 +50,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "unmute")]
 		public ActionResult Unmute()
 		{
+			_inactiveUserService.Track(Token);
+
 			// TODO: Switch to aid to unmute
 			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
 
