@@ -19,7 +19,7 @@ namespace Rumble.Platform.ChatService.Services
 
 		private int _forceLogouts;
 
-		public InactiveUserService(RoomService roomService) : base(intervalMS: 5_000)
+		public InactiveUserService(RoomService roomService) : base(intervalMS: 60_000)
 		{
 			_roomService = roomService;
 			_forceLogouts = 0;
@@ -55,18 +55,29 @@ namespace Rumble.Platform.ChatService.Services
 			HashSet<string> affectedAccounts = new HashSet<string>();
 			foreach (string aid in inactiveAccountIDs)
 			{
-				Room global = _roomService.GetRoomsForUser(aid).FirstOrDefault(room => room.Type == Room.TYPE_GLOBAL);
-				if (global == null)
-					continue;
-				
-				global.RemoveMember(aid);
-				_roomService.Update(global);
+				// This *should* only have one result, if any at all, but just in case...
+				Room[] globals = _roomService
+					.GetRoomsForUser(aid)
+					.Where(room => room.Type == Room.TYPE_GLOBAL)
+					.ToArray();
 				_activity.Remove(aid);
+				
+				if (!globals.Any()) 
+					continue;
 
+				foreach (Room global in globals)
+				{
+					global.RemoveMember(aid);
+					_roomService.Update(global);
+					
+					if (!affectedRooms.TryAdd(global.Id, 1))
+						affectedRooms[global.Id]++;
+				}
 				affectedAccounts.Add(aid);
-				if (!affectedRooms.TryAdd(global.Id, 1))
-					affectedRooms[global.Id]++;
 			}
+
+			if (!affectedAccounts.Any())
+				return;
 
 			_forceLogouts += affectedAccounts.Count;
 			Graphite.Track("force-logouts", affectedAccounts.Count, type: Graphite.Metrics.Type.FLAT);
@@ -78,13 +89,15 @@ namespace Rumble.Platform.ChatService.Services
 			});
 		}
 
-		public void UpdateSlack(IEnumerable<string> aids, Dictionary<string, int> affectedRooms)
+		public void UpdateSlack(HashSet<string> aids, Dictionary<string, int> affectedRooms)
 		{
+			if (!aids.Any() && !affectedRooms.Any())
+				return;
 			string[] messages = affectedRooms.Select(pair => $"{pair.Key}: {pair.Value} users removed.").ToArray();
 
 			List<SlackBlock> content = new List<SlackBlock>()
 			{
-				SlackBlock.Header("Inactive Users Removed"),
+				SlackBlock.Header($"chat-service-{PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT")} | Inactive Users Removed"),
 				SlackBlock.Divider(),
 				SlackBlock.Markdown("*Affected Rooms*")
 			};
@@ -92,12 +105,17 @@ namespace Rumble.Platform.ChatService.Services
 				content.AddRange(affectedRooms
 					.Select(pair => SlackBlock.Markdown($"*{pair.Key}*: `{pair.Value}` users removed."))
 				);
-			content.AddRange(new List<SlackBlock>()
+
+			if (aids.Any())
 			{
-				SlackBlock.Divider(),
-				SlackBlock.Markdown($"*Offline Account IDs (more than {(int)(FORCED_LOGOUT_THRESHOLD_S / 60)} minutes idle)*")
-			});
-			content.Add(SlackBlock.Markdown("```" + string.Join('\n', aids) + "```"));
+				content.AddRange(new List<SlackBlock>()
+				{
+					SlackBlock.Divider(),
+					SlackBlock.Markdown($"*Offline Account IDs (more than {(int)(FORCED_LOGOUT_THRESHOLD_S / 60)} minutes idle)*")
+				});
+				content.Add(SlackBlock.Markdown("```" + string.Join('\n', aids) + "```"));
+			}
+			
 			_slack.Send(content);
 		}
 

@@ -10,7 +10,6 @@ namespace Rumble.Platform.ChatService.Utilities
 {
 	public class RoomMonitor
 	{
-		private const string ENVIRONMENT_LAST_READ = "CHAT_MONITOR_LAST_READ";
 		private const int THRESHOLD = Room.MESSAGE_CAPACITY / 2;
 		private long LastRead { get; set; }
 		private Dictionary<string, int> MessageCount { get; set; }
@@ -19,7 +18,7 @@ namespace Rumble.Platform.ChatService.Utilities
 		public event EventHandler<MonitorEventArgs> OnFlush;
 		public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
 		{
-			LastRead = int.Parse(PlatformEnvironment.Variable(ENVIRONMENT_LAST_READ) ?? "0"); // TODO: SetEnvironmentVariable to store timestamp so that the monitor can persist past restarts?
+			LastRead = 0;
 			MessageCount = new Dictionary<string, int>();
 			Timer = new Timer(FREQUENCY_IN_MS) { AutoReset = true};
 			Timer.Elapsed += Flush;
