@@ -81,7 +81,7 @@ namespace Rumble.Platform.ChatService.Services
 
 			_forceLogouts += affectedAccounts.Count;
 			Graphite.Track("force-logouts", affectedAccounts.Count, type: Graphite.Metrics.Type.FLAT);
-			UpdateSlack(affectedAccounts, affectedRooms);
+			// UpdateSlack(affectedAccounts, affectedRooms);
 			
 			Log.Info(Owner.Default, "Inactive accountIDs purged from chat rooms.", data: new
 			{
