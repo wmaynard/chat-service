@@ -154,11 +154,12 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpPost, Route(template: "messages/sticky")]
 		public ActionResult Sticky()
 		{
-			Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
+			Message message = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId);
+			// Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
 			message.Type = Message.TYPE_STICKY;
 			string language = Optional<string>("language");
 
-			Log.Info(Owner.Will, "New sticky message issued.", Token, data: message);
+			Log.Info(Owner.Will, "New sticky message issued.", data: message);
 			Room stickies = _roomService.StickyRoom;
 			
 			if (string.IsNullOrEmpty(message.Text))

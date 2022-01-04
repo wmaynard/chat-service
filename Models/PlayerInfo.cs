@@ -70,6 +70,16 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonIgnore]
 		public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 		#endregion INTERNAL
+
+		public static PlayerInfo FromRequest(GenericData body, TokenInfo token)
+		{
+			PlayerInfo output = body.Require<PlayerInfo>(FRIENDLY_KEY_SELF);
+			output.AccountId = token.AccountId;
+			output.Discriminator = token.Discriminator;
+			output.ScreenName = token.ScreenName;
+			
+			return output;
+		}
 		
 		public static PlayerInfo FromJsonElement(JsonElement input)
 		{
@@ -98,7 +108,14 @@ namespace Rumble.Platform.ChatService.Models
 				Discriminator = token.Discriminator
 			};
 		}
-		
+
+		public void AddTokenInfo(TokenInfo token)
+		{
+			AccountId = token.AccountId;
+			ScreenName = token.ScreenName;
+			Discriminator = token.Discriminator;
+		}
+
 		public void Validate()
 		{
 			if (AccountId == null)

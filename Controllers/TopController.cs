@@ -39,7 +39,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			long lastRead = Require<long>("lastRead");
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
-			PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
+			
+			PlayerInfo player = PlayerInfo.FromRequest(Body, Token);
+			// PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			IEnumerable<Message> stickies = _roomService.GetStickyMessages();
 			Ban[] bans = _banService.GetBansForUser(Token.AccountId).ToArray();

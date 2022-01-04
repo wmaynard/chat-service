@@ -104,6 +104,26 @@ namespace Rumble.Platform.ChatService.Models
 			Timestamp = UnixTime;
 		}
 
+		internal static Message FromGeneric(GenericData input, string accountId)
+		{
+			long? startTime = input.Optional<long?>(FRIENDLY_KEY_VISIBLE_FROM);
+			long? duration = input.Optional<long?>(FRIENDLY_KEY_DURATION_IN_SECONDS);
+			long? expiration = duration != null
+				? (startTime ?? UnixTime) + duration
+				: input.Optional<long?>(FRIENDLY_KEY_EXPIRATION);
+
+			return new Message()
+			{
+				Id = Guid.NewGuid().ToString(),
+				Text = input.Optional<string>(FRIENDLY_KEY_TEXT),
+				Timestamp = UnixTime,
+				Type = TYPE_CHAT,
+				VisibleFrom = startTime,
+				Expiration = expiration,
+				AccountId = accountId
+			};
+		}
+
 		/// <summary>
 		/// Parses a JToken coming from a request to instantiate a new Message.
 		/// </summary>

@@ -39,9 +39,10 @@ namespace Rumble.Platform.ChatService.Controllers
 			// into their own controllers to keep client-facing endpoints consistent in their behavior.
 			string aid = Require<string>("aid");
 			long lastRead = Require<long>("lastRead");
-			Message msg = Message.FromJsonElement(Require("message"), aid).Validate();
+			Message msg = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId).Validate();
+			// Message msg = Message.FromJsonElement(Require("message"), aid).Validate();
 			msg.Type = Message.TYPE_BROADCAST;
-			Log.Info(Owner.Will, "New broadcast message", Token, data : new
+			Log.Info(Owner.Will, "New broadcast message", data : new
 			{
 				AccountId = aid,
 				Broadcast = msg
@@ -111,7 +112,11 @@ namespace Rumble.Platform.ChatService.Controllers
 			_inactiveUserService.Track(Token);
 
 			string roomId = Require<string>("roomId");
-			Message msg = Message.FromJsonElement(Require("message"), Token.AccountId).Validate();
+			Message msg = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId).Validate();
+			// Message msg = Require<Message>("message");
+			// msg.AccountId = Token.AccountId;
+			// msg.Validate();
+			// Message msg = Message.FromJsonElement(Require("message"), Token.AccountId).Validate();
 
 			IEnumerable<Ban> bans = _banService.GetBansForUser(Token.AccountId)
 				.Where(b => !b.IsExpired)

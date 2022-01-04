@@ -33,7 +33,9 @@ namespace Rumble.Platform.ChatService.Controllers
 
 			string language = Require<string>(Room.FRIENDLY_KEY_LANGUAGE);
 			string roomId = Optional<string>(KEY_ROOM_ID);
-			PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
+			PlayerInfo player = PlayerInfo.FromRequest(Body, Token);
+			// PlayerInfo player = Require<PlayerInfo>(PlayerInfo.FRIENDLY_KEY_SELF);
+			// PlayerInfo player = PlayerInfo.FromJsonElement(Require(PlayerInfo.FRIENDLY_KEY_SELF), Token);
 
 			Room joined = _roomService.JoinGlobal(player, language, roomId);
 			
@@ -112,8 +114,9 @@ namespace Rumble.Platform.ChatService.Controllers
 		public ActionResult UpdatePlayerInfo()
 		{
 			_inactiveUserService.Track(Token);
-			
-			PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"), Token);
+
+			PlayerInfo info = PlayerInfo.FromRequest(Body, Token);
+			// PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"), Token);
 
 			IEnumerable<Room> rooms = _roomService.GetPastAndPresentRoomsForUser(Token.AccountId);
 			foreach (Room room in rooms)
