@@ -28,7 +28,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		/// <summary>
 		/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
 		/// </summary>
-		[HttpPost, Route(template: "broadcast")]
+		[HttpPost, Route(template: "broadcast"), RequireAuth(TokenType.ADMIN)]
 		public ActionResult Broadcast()
 		{
 			// Unlike other endpoints, broadcast is called from the game server.
@@ -39,8 +39,8 @@ namespace Rumble.Platform.ChatService.Controllers
 			// into their own controllers to keep client-facing endpoints consistent in their behavior.
 			string aid = Require<string>("aid");
 			long lastRead = Require<long>("lastRead");
-			Message msg = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId).Validate();
-			// Message msg = Message.FromJsonElement(Require("message"), aid).Validate();
+			Message msg = Message.FromGeneric(Require<GenericData>("message"), aid).Validate();
+			
 			msg.Type = Message.TYPE_BROADCAST;
 			Log.Info(Owner.Will, "New broadcast message", data : new
 			{
