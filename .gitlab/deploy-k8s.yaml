@@ -22,7 +22,7 @@ dev:
       when: never
     - if: '$DEV_ENABLED'
     - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: always
+      when: manual
 
 stage-a:
   extends: .auto-deploy
@@ -44,7 +44,7 @@ stage-a:
       when: never
     - if: '$STAGING_ENABLED'
     - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: always
+      when: manual
 
 stage-b:
   extends: .auto-deploy
@@ -66,4 +66,25 @@ stage-b:
       when: never
     - if: '$STAGING_ENABLED'
     - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: always
+      when: manual
+
+production:
+  extends: .auto-deploy
+  stage: production
+  script:
+    - auto-deploy check_kube_domain
+    - auto-deploy download_chart
+    - auto-deploy ensure_namespace
+    - auto-deploy initialize_tiller
+    - auto-deploy create_secret
+    - auto-deploy deploy
+  environment:
+    name: production
+    url: https://platform.prod.tower.rumblegames.com/
+  rules:
+    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
+      when: never
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: never
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
+      when: manual
