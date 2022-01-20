@@ -68,6 +68,8 @@ stage-b:
 production:
   extends: .auto-deploy
   stage: production
+  tags:
+    - production
   script:
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
