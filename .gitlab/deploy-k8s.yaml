@@ -78,7 +78,7 @@ production:
     - auto-deploy create_secret
     - auto-deploy deploy
   environment:
-    name: production
+    name: production/platform
     url: https://platform.prod.tower.rumblegames.com/
   rules:
     - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
