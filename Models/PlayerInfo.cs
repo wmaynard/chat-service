@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
-using Rumble.Platform.CSharp.Common.Interop;
+using Rumble.Platform.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Models
 {

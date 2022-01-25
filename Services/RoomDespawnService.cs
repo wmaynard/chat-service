@@ -3,7 +3,7 @@ using System.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
-using Rumble.Platform.CSharp.Common.Interop;
+using Rumble.Platform.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Services
 {

@@ -9,7 +9,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
-using Rumble.Platform.CSharp.Common.Interop;
+using Rumble.Platform.Common.Interop;
 using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services

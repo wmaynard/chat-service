@@ -5,8 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
-using Rumble.Platform.CSharp.Common.Interop;
+using Rumble.Platform.Common.Interop;
 
 namespace Rumble.Platform.ChatService.Controllers
 {
