@@ -69,7 +69,7 @@ namespace Rumble.Platform.ChatService.Models
 		{
 			return new
 			{
-				RoomUpdates = rooms.Select(r => FromRoom(r, lastRead))
+				RoomUpdates = rooms?.Where(room => room != null).Select(room => FromRoom(room, lastRead))
 			};
 		}
 	}
