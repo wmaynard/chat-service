@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Exceptions;
+using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
@@ -60,6 +61,7 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_GUILD_ID)]
 		public string GuildId { get; set; }
 		
+		[SimpleIndex(DB_KEY_LANGUAGE, FRIENDLY_KEY_LANGUAGE)]
 		[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LANGUAGE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string Language { get; set; }

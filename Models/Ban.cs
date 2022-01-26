@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Models
@@ -23,6 +24,7 @@ namespace Rumble.Platform.ChatService.Models
 		public const string FRIENDLY_KEY_TIME_REMAINING = "timeRemaining";
 		
 		#region MONGO
+		[SimpleIndex(DB_KEY_ACCOUNT_ID, FRIENDLY_KEY_ACCOUNT_ID)]
 		[BsonElement(DB_KEY_ACCOUNT_ID)]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 		public string AccountId { get; private set; }

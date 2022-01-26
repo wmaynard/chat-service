@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 
@@ -40,6 +41,7 @@ namespace Rumble.Platform.ChatService.Models
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_LOG)]
 		public IEnumerable<Message> Log { get; set; }
 		
+		[SimpleIndex(DB_KEY_MESSAGE_ID, FRIENDLY_KEY_MESSAGE_ID)]
 		[BsonElement(DB_KEY_MESSAGE_ID)]
 		[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_ID)]
 		public string MessageId { get; set; }
