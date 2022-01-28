@@ -12,14 +12,10 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat/settings"), RequireAuth]
 	public class SettingsController : PlatformController
 	{
+#pragma warning disable CS0649
 		private readonly InactiveUserService _inactiveUserService;
 		private readonly SettingsService _settingsService;
-
-		public SettingsController(InactiveUserService inactive, SettingsService preferences, IConfiguration config) : base(config)
-		{
-			_inactiveUserService = inactive;
-			_settingsService = preferences;
-		}
+#pragma warning restore CS0649
 		
 		#region CLIENT
 		[HttpGet]

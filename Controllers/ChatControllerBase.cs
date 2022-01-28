@@ -14,12 +14,9 @@ namespace Rumble.Platform.ChatService.Controllers
 	/// </summary>
 	public abstract class ChatControllerBase : PlatformController
 	{
+#pragma warning disable CS0649
 		protected readonly RoomService _roomService;
-		
-		protected ChatControllerBase(RoomService rooms, IConfiguration config) : base(config)
-		{
-			_roomService = rooms;
-		}
+#pragma warning restore CS0649
 
 		/// <summary>
 		/// Gets all RoomUpdates for a user.

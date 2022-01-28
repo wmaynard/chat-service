@@ -18,14 +18,10 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(TokenType.ADMIN)]
 	public class AdminController : ChatControllerBase
 	{
+#pragma warning disable CS0649
 		private readonly BanService _banService;
 		private readonly ReportService _reportService;
-
-		public AdminController(BanService bans, ReportService reports, RoomService rooms, IConfiguration config) : base(rooms, config)
-		{
-			_banService = bans;
-			_reportService = reports;
-		}
+#pragma warning restore CS0649
 
 		[HttpPost, Route("playerDetails")]
 		public ActionResult PlayerDetails()

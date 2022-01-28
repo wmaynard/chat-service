@@ -15,23 +15,14 @@ namespace Rumble.Platform.ChatService.Controllers
 	[ApiController, Route("chat"), RequireAuth]
 	public class TopController : PlatformController
 	{
+#pragma warning disable CS0649
 		private readonly BanService _banService;
 		private readonly ReportService _reportService;
 		private readonly RoomService _roomService;
 		private readonly SettingsService _settingsService;
 		private readonly InactiveUserService _inactiveUserService;
 		private readonly RoomDespawnService _despawnService;
-
-		public TopController(BanService bans, ReportService reports, RoomService rooms, RoomDespawnService despawner, 
-			SettingsService settings, InactiveUserService inactiveUserService, IConfiguration config) : base(config)
-		{
-			_banService = bans;
-			_reportService = reports;
-			_roomService = rooms;
-			_settingsService = settings;
-			_inactiveUserService = inactiveUserService;
-			_despawnService = despawner;
-		}
+#pragma warning restore CS0649
 
 		#region CLIENT
 		// Called when an account is logging in to chat.  Returns sticky messages, bans applied, and user settings.
@@ -71,6 +62,7 @@ namespace Rumble.Platform.ChatService.Controllers
 		[HttpGet, Route(template: "health"), NoAuth]
 		public override ActionResult HealthCheck()
 		{
+			RoomService svc = Require<RoomService>();
 			return Ok(
 				_banService.HealthCheckResponseObject,
 				_reportService.HealthCheckResponseObject,

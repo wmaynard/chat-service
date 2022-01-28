@@ -16,14 +16,10 @@ namespace Rumble.Platform.ChatService.Controllers
 	{
 		// TODO: Inconsistency: Either clean these out or convert other controllers to use constants as well.
 		public const string KEY_ROOM_ID = "roomId";
+#pragma warning disable CS0649
 		private readonly InactiveUserService _inactiveUserService;
-		
-		// TODO: Destroy empty global rooms
-		public RoomController(InactiveUserService inactive, RoomService service, IConfiguration config) : base(service, config)
-		{
-			_inactiveUserService = inactive;
-		}
-		
+#pragma warning restore CS0649
+
 		#region GLOBAL
 		// Adds or assigns a user to a global room.  Also removes a user from any global rooms they were already in
 		// if it's not the same room.

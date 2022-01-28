@@ -15,16 +15,12 @@ namespace Rumble.Platform.ChatService.Controllers
 	public class MessageController : ChatControllerBase
 	{
 		// TODO: insert into mongo doc (as opposed to update, which could overwrite other messages)
+#pragma warning disable CS0649
 		private readonly ReportService _reportService;
 		private readonly BanService _banService;
 		private readonly InactiveUserService _inactiveUserService;
-
-		public MessageController(InactiveUserService inactive, ReportService reports, RoomService rooms, BanService bans, IConfiguration config) : base(rooms, config)
-		{
-			_reportService = reports;
-			_banService = bans;
-			_inactiveUserService = inactive;
-		}
+#pragma warning restore CS0649
+		
 		#region SERVER
 		/// <summary>
 		/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
