@@ -48,9 +48,9 @@ service:
   annotations: {}
   name: cs-stage-b # 15 character limit..
   type: NodePort
-  url: https://platform.prod.tower.rumblegames.com
+  url: https://platform-a.prod.tower.rumblegames.com
   additionalHosts:
-  commonName: platform.prod.tower.rumblegames.com
+  commonName: 
   externalPort: 5000
   internalPort: 80
 ingress:
