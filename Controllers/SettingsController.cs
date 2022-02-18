@@ -33,7 +33,8 @@ namespace Rumble.Platform.ChatService.Controllers
 		{
 			_inactiveUserService.Track(Token);
 
-			PlayerInfo info = PlayerInfo.FromRequest(Body, Token);
+			// PlayerInfo info = PlayerInfo.FromRequest(Body, Token);
+			PlayerInfo info = Require<PlayerInfo>(PlayerInfo.FRIENDLY_KEY_SELF);
 			// PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
 			if (info.AccountId == Token.AccountId)
 				throw new InvalidPlayerInfoException(info, "AccountId", "You can't mute yourself!");
