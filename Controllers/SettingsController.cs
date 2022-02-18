@@ -52,8 +52,9 @@ namespace Rumble.Platform.ChatService.Controllers
 			_inactiveUserService.Track(Token);
 
 			// TODO: Switch to aid to unmute
-			PlayerInfo info = PlayerInfo.FromRequest(Body, Token);
+			// PlayerInfo info = PlayerInfo.FromRequest(Body, Token);
 			// PlayerInfo info = PlayerInfo.FromJsonElement(Require("playerInfo"));
+			PlayerInfo info = Require<PlayerInfo>(PlayerInfo.FRIENDLY_KEY_SELF);
 
 			ChatSettings prefs = _settingsService.Get(Token.AccountId);
 			prefs.RemoveMutedPlayer(info);
