@@ -1,110 +1,63 @@
 .auto-deploy:
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
   dependencies: []
+  script:
+    - auto-deploy check_kube_domain
+    - auto-deploy download_chart
+    - auto-deploy ensure_namespace
+    - auto-deploy create_secret
+    - auto-deploy deploy
+  rules:
+    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
+      when: never
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: never
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
+      when: manual
+  
 
 dev:
   extends: .auto-deploy
   stage: dev
-  script:
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy initialize_tiller
-    - auto-deploy create_secret
-    - auto-deploy deploy
   environment:
     name: dev
     url: https://dev.nonprod.tower.cdrentertainment.com/
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
 
 stage-a:
   extends: .auto-deploy
   stage: staging
-  script:
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy initialize_tiller
-    - auto-deploy create_secret
-    - auto-deploy deploy
   environment:
     name: stage-a
     url: https://stage-a.nonprod.tower.cdrentertainment.com/
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
 
 stage-b:
   extends: .auto-deploy
   stage: staging
-  script:
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy initialize_tiller
-    - auto-deploy create_secret
-    - auto-deploy deploy
   environment:
     name: stage-b
     url: https://stage-b.nonprod.tower.cdrentertainment.com/
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
 
 stage-c:
   extends: .auto-deploy
   stage: staging
-  script:
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy initialize_tiller
-    - auto-deploy create_secret
-    - auto-deploy deploy
   environment:
     name: stage-c
     url: https://stage-c.nonprod.tower.cdrentertainment.com/
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
 
 production:
   extends: .auto-deploy
   stage: production
   tags:
     - production
-  script:
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy initialize_tiller
-    - auto-deploy create_secret
-    - auto-deploy deploy
   environment:
     name: production/platform
     url: https://platform-a.prod.tower.rumblegames.com/
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
+
+production-b:
+  extends: .auto-deploy
+  stage: production
+  tags:
+    - production
+  environment:
+    name: production/-b
+    url: https://platform-b.prod.tower.rumblegames.com/

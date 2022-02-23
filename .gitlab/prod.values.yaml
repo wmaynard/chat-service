@@ -35,7 +35,7 @@ hpa:
   MemUtilizationPercentage: 60
   keda:
     enabled: true
-    requestsPerSecond: "500"
+    requestsPerSecond: "100"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
 gitlab:
   app:
@@ -46,9 +46,9 @@ gitlab:
 service:
   enabled: true
   annotations: {}
-  name: cs-stage-b # 15 character limit..
+  name: cs-prod # 15 character limit..
   type: NodePort
-  url: https://platform-a.prod.tower.rumblegames.com
+  url: 
   additionalHosts:
   commonName: 
   externalPort: 5000
