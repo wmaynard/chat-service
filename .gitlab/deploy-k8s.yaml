@@ -59,5 +59,5 @@ production-b:
   tags:
     - production
   environment:
-    name: production/-b
+    name: production/platform-b
     url: https://platform-b.prod.tower.rumblegames.com/
