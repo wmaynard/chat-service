@@ -101,10 +101,8 @@ postgresql:
 
 resources:
   limits:
-    cpu: 256m
     memory: 256Mi
   requests:
-    cpu: 256m
     memory: 256Mi
 
 ## Configure PodDisruptionBudget
