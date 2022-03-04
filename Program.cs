@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Rumble.Platform.ChatService
 {
@@ -13,6 +10,12 @@ namespace Rumble.Platform.ChatService
 	{
 		public static void Main(string[] args)
 		{
+			if (args.Contains("-version"))
+			{
+				AssemblyName assembly = Assembly.GetExecutingAssembly().GetName();
+				Console.WriteLine($"{assembly.Name}:{assembly.Version}");
+				return;
+			}
 			CreateHostBuilder(args).Build().Run();
 		}
 
