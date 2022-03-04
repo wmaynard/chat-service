@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
@@ -28,17 +27,14 @@ public class RoomDespawnService : PlatformTimerService
 		);
 	}
 
-	internal void TrackEmptyRooms(object sender, RoomService.EmptyRoomEventArgs args)
-	{
-		// Keep the previous timestamps, but forget about rooms that now have users in them.
-		// This way, we only clear rooms that have been empty for the duration of the timestamp
-		// and seeing no activity.
-		_lifeSupport = args.roomIds
-			.ToDictionary(
-				keySelector: id => id,
-				elementSelector: id => _lifeSupport.TryGetValue(id, out long idleSince) ? idleSince : UnixTime
+	// Keep the previous timestamps, but forget about rooms that now have users in them.
+	// This way, we only clear rooms that have been empty for the duration of the timestamp
+	// and seeing no activity.
+	internal void TrackEmptyRooms(object sender, RoomService.EmptyRoomEventArgs args) => _lifeSupport = args.roomIds
+		.ToDictionary(
+			keySelector: id => id,
+			elementSelector: id => _lifeSupport.TryGetValue(id, out long idleSince) ? idleSince : UnixTime
 		);
-	}
 
 	protected override void OnElapsed()
 	{

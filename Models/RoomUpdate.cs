@@ -52,24 +52,18 @@ public class RoomUpdate // TODO: Inherit from PlatformDataModel?
 	/// <param name="room">The Room to retrieve updates from.</param>
 	/// <param name="lastRead">The timestamp from the last read message.</param>
 	/// <returns>A new Object with a RoomUpdates property.</returns>
-	public static object GenerateResponseFrom(Room room, long lastRead)
+	public static object GenerateResponseFrom(Room room, long lastRead) => new
 	{
-		return new
-		{
-			RoomUpdates = new RoomUpdate[] { FromRoom(room, lastRead) }
-		};
-	}
+		RoomUpdates = new RoomUpdate[] { FromRoom(room, lastRead) }
+	};
 	/// <summary>
 	/// Standardizes the RoomUpdates for JSON output by returning a new Object with property RoomUpdates.
 	/// </summary>
 	/// <param name="rooms">The Rooms to retrieve updates from.</param>
 	/// <param name="lastRead">The timestamp from the last read message.</param>
 	/// <returns>A new Object with a RoomUpdates property.</returns>
-	public static object GenerateResponseFrom(IEnumerable<Room> rooms, long lastRead)
+	public static object GenerateResponseFrom(IEnumerable<Room> rooms, long lastRead) => new
 	{
-		return new
-		{
-			RoomUpdates = rooms?.Where(room => room != null).Select(room => FromRoom(room, lastRead))
-		};
-	}
+		RoomUpdates = rooms?.Where(room => room != null).Select(room => FromRoom(room, lastRead))
+	};
 }

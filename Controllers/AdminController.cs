@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -97,18 +95,12 @@ public class AdminController : ChatControllerBase
 	}
 
 	[HttpGet, Route(template: "ban/list")]
-	public ActionResult ListBans()
-	{
-		return Ok(CollectionResponseObject(_banService.List()));
-	}
+	public ActionResult ListBans() => Ok(CollectionResponseObject(_banService.List()));
 	#endregion BANS
 	
 	#region ROOMS
 	[HttpGet, Route(template: "rooms/list")]
-	public ActionResult ListAllRooms()
-	{
-		return Ok(CollectionResponseObject(_roomService.List()));
-	}
+	public ActionResult ListAllRooms() => Ok(CollectionResponseObject(_roomService.List()));
 
 	[HttpPost, Route(template: "rooms/removePlayers")]
 	public ActionResult RemovePlayers()
@@ -141,12 +133,7 @@ public class AdminController : ChatControllerBase
 	}
 
 	[HttpGet, Route(template: "messages/sticky")]
-	public ActionResult StickyList()
-	{
-		IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
-
-		return Ok(new { Stickies = stickies });
-	}
+	public ActionResult StickyList() => Ok(new { Stickies = _roomService.GetStickyMessages(all: true) });
 
 	[HttpPost, Route(template: "messages/sticky")]
 	public ActionResult Sticky()
@@ -214,21 +201,15 @@ public class AdminController : ChatControllerBase
 	
 	#region LOAD BALANCER
 	[HttpGet, Route(template: "health"), NoAuth]
-	public override ActionResult HealthCheck()
-	{
-		return Ok(
-			_banService.HealthCheckResponseObject,
-			_roomService.HealthCheckResponseObject
-		);
-	}
+	public override ActionResult HealthCheck() => Ok(
+		_banService.HealthCheckResponseObject,
+		_roomService.HealthCheckResponseObject
+	);
 
+	// TODO: Send slack interactions here (e.g. button presses)
+	// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
+	// And deserialize it to accomplish admin things in a secure way
 	[HttpPost, Route("slackHandler"), NoAuth]
-	public ActionResult SlackHandler()
-	{
-		// TODO: Send slack interactions here (e.g. button presses)
-		// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
-		// And deserialize it to accomplish admin things in a secure way
-		return Ok();
-	}
+	public ActionResult SlackHandler() => Ok();
 	#endregion LOAD BALANCER
 }

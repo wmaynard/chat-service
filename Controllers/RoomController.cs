@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
-using Rumble.Platform.Common.Utilities;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -128,9 +126,6 @@ public class RoomController : ChatControllerBase
 	
 	#region LOAD BALANCER
 	[HttpGet, Route("health"), NoAuth]
-	public override ActionResult HealthCheck()
-	{
-		return Ok(_roomService.HealthCheckResponseObject);
-	}
+	public override ActionResult HealthCheck() => Ok(_roomService.HealthCheckResponseObject);
 	#endregion
 }

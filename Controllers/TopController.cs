@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
-using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers;
@@ -60,17 +56,13 @@ public class TopController : PlatformController
 	
 	#region LOAD BALANCER
 	[HttpGet, Route(template: "health"), NoAuth]
-	public override ActionResult HealthCheck()
-	{
-		RoomService svc = Require<RoomService>();
-		return Ok(
-			_banService.HealthCheckResponseObject,
-			_reportService.HealthCheckResponseObject,
-			_roomService.HealthCheckResponseObject,
-			_settingsService.HealthCheckResponseObject,
-			_inactiveUserService.HealthCheckResponseObject,
-			_despawnService.HealthCheckResponseObject
-		);
-	}
+	public override ActionResult HealthCheck() => Ok(
+		_banService.HealthCheckResponseObject,
+		_reportService.HealthCheckResponseObject,
+		_roomService.HealthCheckResponseObject,
+		_settingsService.HealthCheckResponseObject,
+		_inactiveUserService.HealthCheckResponseObject,
+		_despawnService.HealthCheckResponseObject
+	);
 	#endregion LOAD BALANCER
 }

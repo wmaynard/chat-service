@@ -225,7 +225,6 @@ public class Room : PlatformCollectionDocument
 		Members.Remove(ciao);
 		if (Messages.Any(m => m.AccountId == ciao.AccountId))
 			PreviousMembers.Add(ciao);
-		// Members = Members.Where(m => m.AccountId != accountId).ToHashSet();
 	}
 
 	public void RemoveMembers(params string[] accountIds)
@@ -239,20 +238,9 @@ public class Room : PlatformCollectionDocument
 	/// </summary>
 	/// <param name="accountId">The account ID to look for.</param>
 	/// <returns>True if the account is found, otherwise false.</returns>
-	public bool HasMember(string accountId)
-	{
-		return Members.Any(m => m.AccountId == accountId);
-	}
-
-	public bool HasPreviousMember(string accountId)
-	{
-		return PreviousMembers.Any(m => m.AccountId == accountId);
-	}
-
-	public bool HasMember(IEnumerable<string> accountIds)
-	{
-		return Members.Any(m => accountIds.Contains(m.AccountId));
-	}
+	public bool HasMember(string accountId) => Members.Any(m => m.AccountId == accountId);
+	public bool HasMember(IEnumerable<string> accountIds) => Members.Any(m => accountIds.Contains(m.AccountId));
+	public bool HasPreviousMember(string accountId) => PreviousMembers.Any(m => m.AccountId == accountId);
 
 	/// <summary>
 	/// Checks to make sure an account exists as a Member.  If the account ID isn't found, a NotInRoomException
@@ -271,10 +259,7 @@ public class Room : PlatformCollectionDocument
 	/// </summary>
 	/// <param name="timestamp">A Unix timestamp.</param>
 	/// <returns>An IEnumerable of all Messages after the timestamp.</returns>
-	public IEnumerable<Message> MessagesSince(long timestamp)
-	{
-		return Messages.Where(m => m.Timestamp > timestamp);
-	}
+	public IEnumerable<Message> MessagesSince(long timestamp) => Messages.Where(m => m.Timestamp > timestamp);
 
 	public IEnumerable<Message> Snapshot(string messageId, int before, int after)
 	{
@@ -375,9 +360,6 @@ public class Room : PlatformCollectionDocument
 	{
 		public Message Message { get; private set; }
 
-		public RoomEventArgs(Message msg)
-		{
-			Message = msg;
-		}
+		public RoomEventArgs(Message msg) => Message = msg;
 	}
 }

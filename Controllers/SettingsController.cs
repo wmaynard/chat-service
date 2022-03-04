@@ -66,9 +66,6 @@ public class SettingsController : PlatformController
 
 	#region LOAD BALANCER
 	[HttpGet, Route("health"), NoAuth]
-	public override ActionResult HealthCheck()
-	{
-		return Ok(_settingsService.HealthCheckResponseObject);
-	}
+	public override ActionResult HealthCheck() => Ok(_settingsService.HealthCheckResponseObject);
 	#endregion LOAD BALANCER
 }

@@ -87,8 +87,5 @@ public class Ban : PlatformCollectionDocument
 		Snapshot = rooms.ToArray();
 	}
 
-	public void PurgeSnapshot()
-	{
-		Snapshot = null;
-	}
+	public void PurgeSnapshot() => Snapshot = null;
 }

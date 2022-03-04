@@ -56,15 +56,12 @@ public class ReportMetrics
 		IgnoredReportCount = _ignored.Length;
 	}
 	
-	public static ReportMetrics[] Generate(ref List<Report> reports)
-	{
-		return reports
-			.GroupBy(report => report.ReportedPlayer.AccountId)
-			.Select(grouping => new ReportMetrics(grouping))
-			.OrderByDescending(metrics => metrics.Severity)
-			.ToArray();
-	}
-	
+	public static ReportMetrics[] Generate(ref List<Report> reports) => reports
+		.GroupBy(report => report.ReportedPlayer.AccountId)
+		.Select(grouping => new ReportMetrics(grouping))
+		.OrderByDescending(metrics => metrics.Severity)
+		.ToArray();
+
 	public bool Equals(ReportMetrics other)
 	{
 		try
@@ -83,8 +80,5 @@ public class ReportMetrics
 		}
 	}
 
-	public override int GetHashCode()
-	{
-		return HashCode.Combine(RepeatedMessageCount, ReportedPlayer, NewReportCount, UniqueReporterCount, IgnoredReportCount, MostReportedMessages);
-	}
+	public override int GetHashCode() => HashCode.Combine(RepeatedMessageCount, ReportedPlayer, NewReportCount, UniqueReporterCount, IgnoredReportCount, MostReportedMessages);
 }

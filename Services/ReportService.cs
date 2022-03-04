@@ -37,11 +37,12 @@ public class ReportService : PlatformMongoService<Report>
 
 	public Report[] GetReportsForPlayer(string aid) => _collection.Find(report => report.ReportedPlayer.AccountId == aid).ToList().ToArray();
 	
-	public Report FindByPlayerAndMessage(string aid, string messageId)
-	{
-		return _collection.Find(filter: report => report.ReportedPlayer.AccountId == aid && report.MessageId == messageId).FirstOrDefault();
-	}
-	public void UpdateOrCreate(Report report) // TODO: Worth adding to PlatformMongoService
+	public Report FindByPlayerAndMessage(string aid, string messageId) => _collection
+		.Find(filter: report => report.ReportedPlayer.AccountId == aid && report.MessageId == messageId)
+		.FirstOrDefault();
+	
+	// TODO: Worth adding to PlatformMongoService
+	public void UpdateOrCreate(Report report)
 	{
 		if (report.Id == null)
 			Create(report);
