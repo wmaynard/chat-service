@@ -29,7 +29,7 @@ variables:
 
 
   DOCKER_DRIVER: overlay2
-  DEPLOY_TYPE: "both" # "kubernetes", "beanstalk", "both"
+  DEPLOY_TYPE: "kubernetes" # "kubernetes", "beanstalk", "both"
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
