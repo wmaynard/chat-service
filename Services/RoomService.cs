@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Timers;
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Exceptions;
@@ -157,10 +156,10 @@ public class RoomService : PlatformMongoService<Room>
 		return output;
 	}
 
-	public Room[] GetSnapshotRooms(string aid)
-	{
-		return _collection.Find(room => room.Members.Any(p => p.AccountId == aid) || room.PreviousMembers.Any(p => p.AccountId == aid)).ToList().ToArray();
-	}
+	public Room[] GetSnapshotRooms(string aid) =>_collection
+		.Find(room => room.Members.Any(p => p.AccountId == aid) || room.PreviousMembers.Any(p => p.AccountId == aid))
+		.ToList()
+		.ToArray();
 
 	public List<Room> GetPastAndPresentRoomsForUser(string aid)
 	{
