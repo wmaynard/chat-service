@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="platform-csharp-common" Version="1.0.86" />
+		<PackageReference Include="platform-csharp-common" Version="1.0.107" />
 		<PackageReference Include="System.Json" Version="4.7.1" />
 	</ItemGroup>
 
