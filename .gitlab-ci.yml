@@ -57,7 +57,7 @@ build_app:
     - dotnet build --no-restore --configuration Release
   artifacts:
     paths:
-      - bin/Release/net5.0/*
+      - bin/Release/net6.0/*
 
 build_image:
   stage: build
