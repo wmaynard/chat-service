@@ -12,224 +12,223 @@ using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
-namespace Rumble.Platform.ChatService.Controllers
+namespace Rumble.Platform.ChatService.Controllers;
+
+[EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
+[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(TokenType.ADMIN)]
+public class AdminController : ChatControllerBase
 {
-	[EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
-	[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(TokenType.ADMIN)]
-	public class AdminController : ChatControllerBase
-	{
 #pragma warning disable CS0649
-		private readonly BanService _banService;
-		private readonly ReportService _reportService;
+	private readonly BanService _banService;
+	private readonly ReportService _reportService;
 #pragma warning restore CS0649
 
-		[HttpPost, Route("playerDetails")]
-		public ActionResult PlayerDetails()
-		{
-			string aid = Require<string>("aid");
-			Ban[] bans = _banService.GetBansForUser(aid, true).ToArray();
-			Report[] reports = _reportService.GetReportsForPlayer(aid);
+	[HttpPost, Route("playerDetails")]
+	public ActionResult PlayerDetails()
+	{
+		string aid = Require<string>("aid");
+		Ban[] bans = _banService.GetBansForUser(aid, true).ToArray();
+		Report[] reports = _reportService.GetReportsForPlayer(aid);
 
-			return Ok(new
+		return Ok(new
+		{
+			Bans = bans,
+			Reports = reports
+		});
+	}
+
+	#region BANS
+	[HttpPost, Route(template: "ban/player")]
+	public ActionResult Ban()
+	{
+		string accountId = Require<string>("aid");
+		string reason = Require<string>("reason");
+		string reportId = Optional<string>("reportId"); // TODO: ReportId not used in player bans
+		long? duration = Optional<long?>("durationInSeconds");
+		long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
+
+		Room[] rooms = _roomService.GetSnapshotRooms(accountId);
+		Ban ban = new Ban(accountId, reason, expiration, rooms);
+		_banService.Create(ban);
+
+		
+		foreach (Room r in rooms)
+		{
+			r.AddMessage(new Message()
 			{
-				Bans = bans,
-				Reports = reports
-			});
+				AccountId = accountId,
+				Text = $"Player {accountId} was banned by an administrator.",
+				Type = Message.TYPE_BAN_ANNOUNCEMENT
+			}, allowPreviousMemberPost: true);
+			_roomService.Update(r);
 		}
 
-		#region BANS
-		[HttpPost, Route(template: "ban/player")]
-		public ActionResult Ban()
+		return Ok(ban.ResponseObject);
+	}
+
+	[HttpPost, Route(template: "ban/lift")]
+	public ActionResult Unban()
+	{
+		string banId = Require<string>("banId");
+
+		Ban ban = _banService.Get(banId);
+		if (ban == null)
+			return Ok(new {}); // TODO: Should probably throw a BanNotFound exception instead
+		IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
+		foreach (Room r in rooms)
 		{
-			string accountId = Require<string>("aid");
-			string reason = Require<string>("reason");
-			string reportId = Optional<string>("reportId"); // TODO: ReportId not used in player bans
-			long? duration = Optional<long?>("durationInSeconds");
-			long? expiration = duration == null ? null : DateTimeOffset.Now.AddSeconds((double)duration).ToUnixTimeSeconds();
-
-			Room[] rooms = _roomService.GetSnapshotRooms(accountId);
-			Ban ban = new Ban(accountId, reason, expiration, rooms);
-			_banService.Create(ban);
-
-			
-			foreach (Room r in rooms)
+			try
 			{
 				r.AddMessage(new Message()
 				{
-					AccountId = accountId,
-					Text = $"Player {accountId} was banned by an administrator.",
-					Type = Message.TYPE_BAN_ANNOUNCEMENT
+					AccountId = ban.AccountId,
+					Text = $"Ban {ban.Id} was lifted by an administrator.",
+					Type = Message.TYPE_UNBAN_ANNOUNCEMENT
 				}, allowPreviousMemberPost: true);
 				_roomService.Update(r);
 			}
-
-			return Ok(ban.ResponseObject);
-		}
-
-		[HttpPost, Route(template: "ban/lift")]
-		public ActionResult Unban()
-		{
-			string banId = Require<string>("banId");
-
-			Ban ban = _banService.Get(banId);
-			if (ban == null)
-				return Ok(new {}); // TODO: Should probably throw a BanNotFound exception instead
-			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
-			foreach (Room r in rooms)
-			{
-				try
-				{
-					r.AddMessage(new Message()
-					{
-						AccountId = ban.AccountId,
-						Text = $"Ban {ban.Id} was lifted by an administrator.",
-						Type = Message.TYPE_UNBAN_ANNOUNCEMENT
-					}, allowPreviousMemberPost: true);
-					_roomService.Update(r);
-				}
-				catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
-				
-			}
+			catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
 			
-			_banService.Delete(banId);
-
-			return Ok(ban.ResponseObject);
 		}
-
-		[HttpGet, Route(template: "ban/list")]
-		public ActionResult ListBans()
-		{
-			return Ok(CollectionResponseObject(_banService.List()));
-		}
-		#endregion BANS
 		
-		#region ROOMS
-		[HttpGet, Route(template: "rooms/list")]
-		public ActionResult ListAllRooms()
-		{
-			return Ok(CollectionResponseObject(_roomService.List()));
-		}
+		_banService.Delete(banId);
 
-		[HttpPost, Route(template: "rooms/removePlayers")]
-		public ActionResult RemovePlayers()
-		{
-			string[] aids = Require<string[]>("aids");
+		return Ok(ban.ResponseObject);
+	}
 
-			Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
-			foreach (Room room in rooms)
-			{
-				room.RemoveMembers(aids);
-				_roomService.Update(room);
-			}
-			
-			return Ok(new { Message = $"Removed {aids.Length} players from {rooms.Length} unique rooms."});
-		}
-		#endregion ROOMS
-		
-		#region MESSAGES
-		[HttpPost, Route(template: "messages/delete")]
-		public ActionResult DeleteMessage()
-		{
-			string[] messageIds = Require<string[]>("messageIds");
-			string roomId = Require<string>("roomId");
+	[HttpGet, Route(template: "ban/list")]
+	public ActionResult ListBans()
+	{
+		return Ok(CollectionResponseObject(_banService.List()));
+	}
+	#endregion BANS
+	
+	#region ROOMS
+	[HttpGet, Route(template: "rooms/list")]
+	public ActionResult ListAllRooms()
+	{
+		return Ok(CollectionResponseObject(_roomService.List()));
+	}
 
-			Room room = _roomService.Get(roomId);
-			room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
+	[HttpPost, Route(template: "rooms/removePlayers")]
+	public ActionResult RemovePlayers()
+	{
+		string[] aids = Require<string[]>("aids");
+
+		Room[] rooms = _roomService.GetGlobals().Where(room => room.HasMember(aids)).ToArray();
+		foreach (Room room in rooms)
+		{
+			room.RemoveMembers(aids);
 			_roomService.Update(room);
-
-			return Ok(room.ResponseObject);
-		}
-
-		[HttpGet, Route(template: "messages/sticky")]
-		public ActionResult StickyList()
-		{
-			IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
-
-			return Ok(new { Stickies = stickies });
-		}
-
-		[HttpPost, Route(template: "messages/sticky")]
-		public ActionResult Sticky()
-		{
-			Message message = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId);
-			// Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
-			message.Type = Message.TYPE_STICKY;
-			string language = Optional<string>("language");
-
-			Log.Info(Owner.Will, "New sticky message issued.", data: message);
-			Room stickies = _roomService.StickyRoom;
-			
-			if (string.IsNullOrEmpty(message.Text))
-			{
-				_roomService.DeleteStickies();
-				return Ok();
-			}
-			stickies.AddMessage(message);
-			foreach (Room r in _roomService.GetGlobals())
-			{
-				r.AddMessage(message);
-				_roomService.Update(r);
-			}
-			_roomService.Update(stickies);
-			return Ok(stickies.ResponseObject);
-		}
-
-		[HttpPost, Route(template: "messages/unsticky")]
-		public ActionResult Unsticky()
-		{
-			string messageId = Require<string>("messageId");
-
-			Room room = _roomService.StickyRoom;
-			room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
-			_roomService.Update(room);
-			
-			return Ok(room.ResponseObject);
-		}
-		#endregion MESSAGES
-		
-		#region REPORTS
-		[HttpPost, Route("reports/delete")]
-		public ActionResult DeleteReport()
-		{
-			string reportId = Require<string>("reportId");
-
-			Report report = _reportService.Get(reportId);
-			_reportService.Delete(report);
-			return Ok(report.ResponseObject);
 		}
 		
-		[HttpPost, Route("reports/ignore")]
-		public ActionResult IgnoreReport()
-		{
-			string reportId = Require<string>("reportId");
-			
-			Report report = _reportService.Get(reportId);
-			report.Status = Report.STATUS_BENIGN;
-			_reportService.Update(report);
-			return Ok(report.ResponseObject);
-		}
+		return Ok(new { Message = $"Removed {aids.Length} players from {rooms.Length} unique rooms."});
+	}
+	#endregion ROOMS
+	
+	#region MESSAGES
+	[HttpPost, Route(template: "messages/delete")]
+	public ActionResult DeleteMessage()
+	{
+		string[] messageIds = Require<string[]>("messageIds");
+		string roomId = Require<string>("roomId");
 
-		
-		#endregion REPORTS
-		
-		#region LOAD BALANCER
-		[HttpGet, Route(template: "health"), NoAuth]
-		public override ActionResult HealthCheck()
-		{
-			return Ok(
-				_banService.HealthCheckResponseObject,
-				_roomService.HealthCheckResponseObject
-			);
-		}
+		Room room = _roomService.Get(roomId);
+		room.Messages = room.Messages.Where(m => !messageIds.Contains(m.Id)).ToList();
+		_roomService.Update(room);
 
-		[HttpPost, Route("slackHandler"), NoAuth]
-		public ActionResult SlackHandler()
+		return Ok(room.ResponseObject);
+	}
+
+	[HttpGet, Route(template: "messages/sticky")]
+	public ActionResult StickyList()
+	{
+		IEnumerable<Message> stickies = _roomService.GetStickyMessages(all: true);
+
+		return Ok(new { Stickies = stickies });
+	}
+
+	[HttpPost, Route(template: "messages/sticky")]
+	public ActionResult Sticky()
+	{
+		Message message = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId);
+		// Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
+		message.Type = Message.TYPE_STICKY;
+		string language = Optional<string>("language");
+
+		Log.Info(Owner.Will, "New sticky message issued.", data: message);
+		Room stickies = _roomService.StickyRoom;
+		
+		if (string.IsNullOrEmpty(message.Text))
 		{
-			// TODO: Send slack interactions here (e.g. button presses)
-			// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
-			// And deserialize it to accomplish admin things in a secure way
+			_roomService.DeleteStickies();
 			return Ok();
 		}
-		#endregion LOAD BALANCER
+		stickies.AddMessage(message);
+		foreach (Room r in _roomService.GetGlobals())
+		{
+			r.AddMessage(message);
+			_roomService.Update(r);
+		}
+		_roomService.Update(stickies);
+		return Ok(stickies.ResponseObject);
 	}
+
+	[HttpPost, Route(template: "messages/unsticky")]
+	public ActionResult Unsticky()
+	{
+		string messageId = Require<string>("messageId");
+
+		Room room = _roomService.StickyRoom;
+		room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
+		_roomService.Update(room);
+		
+		return Ok(room.ResponseObject);
+	}
+	#endregion MESSAGES
+	
+	#region REPORTS
+	[HttpPost, Route("reports/delete")]
+	public ActionResult DeleteReport()
+	{
+		string reportId = Require<string>("reportId");
+
+		Report report = _reportService.Get(reportId);
+		_reportService.Delete(report);
+		return Ok(report.ResponseObject);
+	}
+	
+	[HttpPost, Route("reports/ignore")]
+	public ActionResult IgnoreReport()
+	{
+		string reportId = Require<string>("reportId");
+		
+		Report report = _reportService.Get(reportId);
+		report.Status = Report.STATUS_BENIGN;
+		_reportService.Update(report);
+		return Ok(report.ResponseObject);
+	}
+
+	
+	#endregion REPORTS
+	
+	#region LOAD BALANCER
+	[HttpGet, Route(template: "health"), NoAuth]
+	public override ActionResult HealthCheck()
+	{
+		return Ok(
+			_banService.HealthCheckResponseObject,
+			_roomService.HealthCheckResponseObject
+		);
+	}
+
+	[HttpPost, Route("slackHandler"), NoAuth]
+	public ActionResult SlackHandler()
+	{
+		// TODO: Send slack interactions here (e.g. button presses)
+		// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
+		// And deserialize it to accomplish admin things in a secure way
+		return Ok();
+	}
+	#endregion LOAD BALANCER
 }

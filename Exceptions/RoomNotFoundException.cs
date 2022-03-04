@@ -1,19 +1,18 @@
 using System.Text.Json.Serialization;
 using Rumble.Platform.Common.Exceptions;
 
-namespace Rumble.Platform.ChatService.Exceptions
-{
-	public class RoomNotFoundException : PlatformException
-	{
-		[JsonInclude, JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-		public string Language { get; private set; }
-		[JsonInclude]
-		public string RoomId { get; private set; }
+namespace Rumble.Platform.ChatService.Exceptions;
 
-		public RoomNotFoundException(string roomId, string language = null) : base("Room not found")
-		{
-			Language = language;
-			RoomId = roomId;
-		}
+public class RoomNotFoundException : PlatformException
+{
+	[JsonInclude, JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string Language { get; private set; }
+	[JsonInclude]
+	public string RoomId { get; private set; }
+
+	public RoomNotFoundException(string roomId, string language = null) : base("Room not found")
+	{
+		Language = language;
+		RoomId = roomId;
 	}
 }
