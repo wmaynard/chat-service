@@ -48,9 +48,9 @@ service:
   annotations: {}
   name: cs-stage-a # 15 character limit..
   type: NodePort
-  url: https://stage-a.nonprod.tower.cdrentertainment.com/
+  url: 
   additionalHosts:
-  commonName: stage-a.nonprod.tower.cdrentertainment.com
+  commonName: 
   externalPort: 5000
   internalPort: 80
 ingress:
@@ -58,8 +58,8 @@ ingress:
   paths: 
     - "/chat"
   tls:
-    enabled: true
-    acme: true
+    enabled: false
+    acme: false
     secretName: "chat-service-stage-a"
     useDefaultSecret: false
   annotations:
