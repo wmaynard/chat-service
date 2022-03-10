@@ -37,6 +37,7 @@ hpa:
     enabled: true
     requestsPerSecond: "100"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
+    filter: "exported_service"
 gitlab:
   app:
   env:
