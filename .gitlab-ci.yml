@@ -56,7 +56,7 @@ build_app:
     - dotnet restore
     - dotnet build --no-restore --configuration Release
     - CURRENTVERSION="$(dotnet ./bin/Release/net5.0/chat-service.dll -version | cut -d':' -f2)"
-    - git tag $CURRENTVERSION; git push https://$BOT_USER:${$BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
+    - git tag $CURRENTVERSION; git push https://${BOT_USER}:${BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
   artifacts:
     paths:
       - bin/Release/net5.0/*
