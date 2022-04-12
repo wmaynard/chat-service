@@ -52,11 +52,11 @@ build_app:
   tags:
     - kubernetes
   script:
-    - dotnet nuget add source --username eric.sheris --password $NUGET_PAT --store-password-in-clear-text --name github "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
+    - dotnet nuget add source --username $BOT_USER --password $$BOT_PAT --store-password-in-clear-text --name github "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
     - dotnet restore
     - dotnet build --no-restore --configuration Release
     - CURRENTVERSION="$(dotnet ./bin/Release/net5.0/chat-service.dll -version | cut -d':' -f2)"
-    - git tag $CURRENTVERSION; git push https://eric.sheris:${NUGET_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
+    - git tag $CURRENTVERSION; git push https://$BOT_USER:${$BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
   artifacts:
     paths:
       - bin/Release/net5.0/*
@@ -112,7 +112,7 @@ commit_scan_results:
   script:
     - apt update
     - apt install -y git
-    - git clone https://eric.sheris:${NUGET_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.wiki.git
+    - git clone https://$BOT_USER:${$BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.wiki.git
     - mkdir -p $CI_PROJECT_DIR/$CI_PROJECT_NAME.wiki/securityscans/
     - cp $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html $CI_PROJECT_NAME.wiki/securityscans/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.md
     - cd $CI_PROJECT_NAME.wiki
