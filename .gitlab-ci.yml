@@ -104,33 +104,5 @@ build_image:
       - $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html
     expire_in: 1 week
 
-commit_scan_results:
-  stage: scan
-  allow_failure: false
-  image:
-    name: ubuntu
-  script:
-    - apt update
-    - apt install -y git
-    - git clone https://$BOT_USER:${$BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.wiki.git
-    - mkdir -p $CI_PROJECT_DIR/$CI_PROJECT_NAME.wiki/securityscans/
-    - cp $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html $CI_PROJECT_NAME.wiki/securityscans/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.md
-    - cd $CI_PROJECT_NAME.wiki
-    - export TZ=":America/Los_Angeles"
-    - export OUTPUT="[`date +\"%m-%d-%y %r\"`]\(securityscans/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA\)\n\n"
-    - echo "$(echo -e $OUTPUT; cat securityscans/SecurityScans.md)" > securityscans/SecurityScans.md
-    - git config --global user.email "platform-ops@rumbleentertainment.com"
-    - git config --global user.name "Gitlab"
-    - git add .; git commit -m "securityscan for image $CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA"; git push
-  needs:
-    - job: build_image
-      artifacts: true
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - when: on_success
-
-
 include: 
-  - '/.gitlab/deploy-eb.yaml'
   - '/.gitlab/deploy-k8s.yaml'
