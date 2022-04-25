@@ -16,9 +16,9 @@ public class ReportService : PlatformMongoService<Report>
 	private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 	
 	private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
-		channel: PlatformEnvironment.Variable("SLACK_REPORTS_CHANNEL"), 
-		token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN"
-		));
+		channel: PlatformEnvironment.Require<string>("SLACK_REPORTS_CHANNEL"), 
+		token: PlatformEnvironment.Require<string>("SLACK_CHAT_TOKEN")
+	);
 	
 	private Timer SummaryTimer { get; set; }
 	

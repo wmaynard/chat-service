@@ -43,9 +43,9 @@ public class Room : PlatformCollectionDocument
 	public const string TYPE_UNKNOWN = "unknown";
 
 	public const int MESSAGE_CAPACITY = 200;
-	
-	public static readonly string ENVIRONMENT = PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT");
-	public static readonly int GLOBAL_PLAYER_CAPACITY = int.Parse(PlatformEnvironment.Variable("GLOBAL_PLAYER_CAPACITY"));
+
+	public static readonly string ENVIRONMENT = PlatformEnvironment.Deployment;
+	public static readonly int GLOBAL_PLAYER_CAPACITY = PlatformEnvironment.Require<int>("GLOBAL_PLAYER_CAPACITY");
 
 	public static event EventHandler<RoomEventArgs> OnMessageAdded;
 	private static Dictionary<string, List<string>> IDMap; // TODO: This could be a separate service if there's a good way to bring a singleton into models

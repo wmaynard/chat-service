@@ -13,7 +13,7 @@ using Rumble.Platform.Common.Web;
 namespace Rumble.Platform.ChatService.Controllers;
 
 [EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
-[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(TokenType.ADMIN)]
+[ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(AuthType.ADMIN_TOKEN)]
 public class AdminController : ChatControllerBase
 {
 #pragma warning disable CS0649

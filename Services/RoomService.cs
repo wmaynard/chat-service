@@ -19,8 +19,8 @@ public class RoomService : PlatformMongoService<Room>
 	internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 	private readonly RoomMonitor _monitor;
 	private readonly SlackMessageClient SlackMonitorChannel = new SlackMessageClient(
-		channel: PlatformEnvironment.Variable("SLACK_MONITOR_CHANNEL"), 
-		token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN")
+		channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"), 
+		token: PlatformEnvironment.Require<string>("SLACK_CHAT_TOKEN")
 	);
 
 	private readonly Timer _stickyTimer;

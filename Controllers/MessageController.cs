@@ -24,7 +24,7 @@ public class MessageController : ChatControllerBase
 	/// <summary>
 	/// Attempts to send a message to the user's global chat room.  All submitted information must be sent as JSON in a request body.
 	/// </summary>
-	[HttpPost, Route(template: "broadcast"), RequireAuth(TokenType.ADMIN)]
+	[HttpPost, Route(template: "broadcast"), RequireAuth(AuthType.ADMIN_TOKEN)]
 	public ActionResult Broadcast()
 	{
 		// Unlike other endpoints, broadcast is called from the game server.

@@ -22,8 +22,8 @@ public class RoomDespawnService : PlatformTimerService
 
 		_roomService.OnEmptyRoomsFound += TrackEmptyRooms;
 		_slack = new SlackMessageClient(
-			channel: PlatformEnvironment.Variable("SLACK_MONITOR_CHANNEL"),
-			token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN")
+			channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
+			token: PlatformEnvironment.Require<string>("SLACK_CHAT_TOKEN")
 		);
 	}
 
