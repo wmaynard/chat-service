@@ -37,6 +37,7 @@ hpa:
     enabled: true
     requestsPerSecond: "100"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
+    filter: "exported_service"
 gitlab:
   app:
   env:
@@ -58,8 +59,8 @@ ingress:
   paths: 
     - "/chat"
   tls:
-    enabled: true
-    acme: true
+    enabled: false
+    acme: false
     secretName: "chat-service-prod"
     useDefaultSecret: false
   annotations:
@@ -103,6 +104,7 @@ resources:
   limits:
     memory: 256Mi
   requests:
+    cpu: 128m
     memory: 256Mi
 
 ## Configure PodDisruptionBudget

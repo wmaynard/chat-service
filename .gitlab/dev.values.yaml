@@ -35,8 +35,9 @@ hpa:
   MemUtilizationPercentage: 60
   keda:
     enabled: true
-    requestsPerSecond: "500"
+    requestsPerSecond: "100"
     serverAddress: http://prometheus-prometheus-server.gitlab-managed-apps.svc:80
+    filter: "service"
 gitlab:
   app:
   env:
@@ -48,9 +49,9 @@ service:
   annotations: {}
   name: cs-dev # 15 character limit..
   type: NodePort
-  url: https://dev.nonprod.tower.cdrentertainment.com/
+  url: 
   additionalHosts:
-  commonName: dev.nonprod.tower.cdrentertainment.com
+  commonName: 
   externalPort: 5000
   internalPort: 80
 ingress:
@@ -58,8 +59,8 @@ ingress:
   paths: 
     - "/chat"
   tls:
-    enabled: true
-    acme: true
+    enabled: false
+    acme: false
     secretName: "chat-service-dev"
     useDefaultSecret: false
   annotations:
