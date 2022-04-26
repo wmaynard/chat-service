@@ -46,6 +46,13 @@ stages:
   - performance
   - cleanup
 
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
+
 build_app:
   stage: app_build
   image: mcr.microsoft.com/dotnet/sdk:6.0
@@ -60,6 +67,11 @@ build_app:
   artifacts:
     paths:
       - bin/Release/net6.0/*
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
 
 build_image:
   stage: build
