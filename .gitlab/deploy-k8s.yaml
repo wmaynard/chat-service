@@ -21,9 +21,9 @@
 dev:
   extends: .auto-deploy
   stage: dev
-  environment:
-    name: dev
-    url: https://dev.nonprod.tower.cdrentertainment.com/
+  variables:
+    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
+    KUBE_NAMESPACE: chat-dev
 
 stage-a:
   extends: .auto-deploy
