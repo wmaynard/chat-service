@@ -23,7 +23,8 @@ dev:
   stage: dev
   variables:
     KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
-    KUBE_NAMESPACE: chat-dev
+    KUBE_NAMESPACE: "chat-dev"
+    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   environment:
     name: dev
     url: https://dev.nonprod.tower.cdrentertainment.com/
