@@ -1,6 +1,10 @@
 .auto-deploy:
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
   dependencies: []
+  variables:
+    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
+    KUBE_NAMESPACE: "chat-service-8-dev"
+    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
