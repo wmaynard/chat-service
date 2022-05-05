@@ -36,8 +36,8 @@ gitlab-test:
     - kubectl config get-contexts
     - echo "$KUBECONFIG"
     - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
-    - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
-    - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
+    - kubectl config set-cluster nonprod.us-east-1.eksctl.io --server="${K8S_PROXY_URL}"
+    - kubectl config set-context "$KUBE_CONTEXT" --cluster=nonprod.us-east-1.eksctl.io --user="agent:${AGENT_ID}"
     - kubectl config use-context "$KUBE_CONTEXT"
     - kubectl get pods -n gitlab-kubernetes-agent
   script:
