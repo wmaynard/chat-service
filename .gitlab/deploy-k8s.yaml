@@ -2,8 +2,8 @@
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
   dependencies: []
   script:
-    - kubectl config get-contexts
-    - kubectl config use-context $KUBE_CONTEXT
+    - kubectl config get-contexts # this only shows gitlab-deploy
+    - kubectl config use-context $KUBE_CONTEXT #this is failing here trying to use the KUBE_CONTEXT from dev
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
     - auto-deploy ensure_namespace
@@ -19,7 +19,16 @@
     - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
       when: manual
   
-
+gitlab-test:
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [""]
+  stage: deploy
+  script:
+  - kubectl config get-contexts
+  - kubectl config use-context platform-services/platform-services-agent:platform-services
+  - kubectl get pods -n gitlab-kubernetes-agent
+  
 dev:
   extends: .auto-deploy
   stage: dev
