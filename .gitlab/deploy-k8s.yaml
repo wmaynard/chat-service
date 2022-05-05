@@ -28,11 +28,12 @@ gitlab-test:
   stage: deploy
   variables:
     AGENT_ID: 2
-    K8S_PROXY_URL: "wss://gitlab.cdrentertainment.com/-/kubernetes-agent/"
+    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/"
     KUBE_INGRESS_BASE_DOMAIN: "https://dev.nonprod.tower.cdrentertainment.com/"
     KUBE_NAMESPACE: "chat-service-8-dev"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   before_script:
+    - kubectl config get-contexts
     - echo "$KUBECONFIG"
     - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
     - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
