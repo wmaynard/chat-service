@@ -2,8 +2,6 @@
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
   dependencies: []
   script:
-    - kubectl config get-contexts # this only shows gitlab-deploy
-    - kubectl config use-context $KUBE_CONTEXT #this is failing here trying to use the KUBE_CONTEXT from dev
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
     - auto-deploy ensure_namespace
@@ -27,8 +25,20 @@ gitlab-test:
   script:
   - kubectl config get-contexts
   - kubectl config use-context platform-services/platform-services-agent:platform-services
-  - kubectl get pods -n gitlab-kubernetes-agent
-  
+  - kubectl get pods -n gitlab-kubernetes-
+  rules:
+    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
+      when: never
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
+      when: 
+  environment:
+    name: dev
+    url: https://dev.nonprod.tower.cdrentertainment.com/
+
 dev:
   extends: .auto-deploy
   stage: dev
