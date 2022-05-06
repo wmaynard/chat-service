@@ -2,9 +2,13 @@
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
   dependencies: []
   variables:
-    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
-    KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
+    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/k8s-proxy/"
+    KUBE_CONTEXT: "manual-context"
+  before_script:
+    - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
+    - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
+    - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
+    - kubectl config use-context "$KUBE_CONTEXT"
   script:
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
@@ -20,47 +24,14 @@
       when: never
     - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
       when: manual
-  
-gitlab-test:
-  image:
-    name: bitnami/kubectl:latest
-    entrypoint: [""]
-  stage: deploy
-  variables:
-    AGENT_ID: 2
-    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/k8s-proxy/"
-    KUBE_INGRESS_BASE_DOMAIN: "https://dev.nonprod.tower.cdrentertainment.com/"
-    KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "nonprod-context"
-  before_script:
-    - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
-    - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
-    - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
-    - kubectl config use-context "$KUBE_CONTEXT"
-  script:
-    - kubectl config get-contexts
-    - kubectl config view
-    - kubectl get po -A
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
-  environment:
-    name: dev
-    url: https://dev.nonprod.tower.cdrentertainment.com/
 
 dev:
   extends: .auto-deploy
   stage: dev
   variables:
+    AGENT_ID: 2
     KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
-    KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
+    KUBE_NAMESPACE: "chat-service-8dev"
   environment:
     name: dev
     url: https://dev.nonprod.tower.cdrentertainment.com/
