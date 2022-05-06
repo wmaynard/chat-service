@@ -28,23 +28,19 @@ gitlab-test:
   stage: deploy
   variables:
     AGENT_ID: 2
-    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/"
+    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/k8s-proxy/"
     KUBE_INGRESS_BASE_DOMAIN: "https://dev.nonprod.tower.cdrentertainment.com/"
     KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
+    KUBE_CONTEXT: "nonprod-context"
   before_script:
-    - kubectl config get-contexts
-    - cat $KUBECONFIG
     - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
-    - kubectl config set-cluster nonprod.us-east-1.eksctl.io --server="${K8S_PROXY_URL}"
-    - kubectl config set-context "$KUBE_CONTEXT" --cluster=nonprod.us-east-1.eksctl.io --user="agent:${AGENT_ID}"
+    - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
+    - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
     - kubectl config use-context "$KUBE_CONTEXT"
-    - kubectl config view
-    - kubectl get pods -n gitlab-kubernetes-agent
   script:
-  - kubectl config get-contexts
-  - kubectl config use-context platform-services/platform-services-agent:platform-services
-  - kubectl get pods -n gitlab-kubernetes-agent
+    - kubectl config get-contexts
+    - kubectl config view
+    - kubectl get pods -n manifest
   rules:
     - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
       when: never
