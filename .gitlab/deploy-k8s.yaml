@@ -30,7 +30,7 @@ dev:
   stage: dev
   variables:
     AGENT_ID: 2
-    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
+    KUBE_INGRESS_BASE_DOMAIN: dev.nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8dev"
   environment:
     name: dev
