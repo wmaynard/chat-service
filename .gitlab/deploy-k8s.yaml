@@ -40,7 +40,7 @@ gitlab-test:
   script:
     - kubectl config get-contexts
     - kubectl config view
-    - kubectl get pods -n manifest
+    - kubectl get po
   rules:
     - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
       when: never
