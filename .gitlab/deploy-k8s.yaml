@@ -22,9 +22,9 @@
   dependencies: []
   variables:
     K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/k8s-proxy/"
-    KUBE_CONTEXT: "manual-context"
+    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   before_script:
-    - kubectl config get-contexts
+    - kubectl config use-context "$KUBE_CONTEXT"
     # - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
     # - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
     # - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
