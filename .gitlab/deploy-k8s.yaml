@@ -1,6 +1,8 @@
 .auto-deploy-prod:
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.26.0"
   dependencies: []
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-platform-services"
   script:
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
@@ -21,15 +23,9 @@
   image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.26.0"
   dependencies: []
   variables:
-    K8S_PROXY_URL: "https://gitlab.cdrentertainment.com/-/kubernetes-agent/k8s-proxy/"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
-  before_script:
-    - kubectl config use-context "$KUBE_CONTEXT"
-    # - kubectl config set-credentials agent:$AGENT_ID --token="ci:${AGENT_ID}:${CI_JOB_TOKEN}"
-    # - kubectl config set-cluster gitlab --server="${K8S_PROXY_URL}"
-    # - kubectl config set-context "$KUBE_CONTEXT" --cluster=gitlab --user="agent:${AGENT_ID}"
-    # - kubectl config use-context "$KUBE_CONTEXT"
   script:
+    - kubectl config use-context $KUBE_CONTEXT
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
     - auto-deploy ensure_namespace
@@ -49,7 +45,6 @@ dev:
   extends: .auto-deploy
   stage: dev
   variables:
-    AGENT_ID: 2
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-dev"
   environment:
@@ -60,7 +55,6 @@ stage-a:
   extends: .auto-deploy
   stage: staging
   variables:
-    AGENT_ID: 2
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-stage-a"
   environment:
@@ -71,7 +65,6 @@ stage-b:
   extends: .auto-deploy
   stage: staging
   variables:
-    AGENT_ID: 2
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-stage-b"
   environment:
@@ -82,7 +75,6 @@ stage-c:
   extends: .auto-deploy
   stage: staging
   variables:
-    AGENT_ID: 2
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-stage-c"
   environment:
