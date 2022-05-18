@@ -76,10 +76,6 @@ build_app:
 build_image:
   stage: build
   allow_failure: false
-  cache:
-    key: $CI_PROJECT_NAME-scan
-    paths:
-      - ./.trivycache
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
