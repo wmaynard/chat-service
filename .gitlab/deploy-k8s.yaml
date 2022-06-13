@@ -96,7 +96,7 @@ production-b:
   variables:
     KUBE_CONTEXT: "platform-services/platform-services-agent:prod-b-platform-services"
     KUBE_INGRESS_BASE_DOMAIN: platform-b.prod.tower.rumblegames.com
-    KUBE_NAMESPACE: "chat-service-b"
+    KUBE_NAMESPACE: "chat-service"
   tags:
     - production-b
   environment:
