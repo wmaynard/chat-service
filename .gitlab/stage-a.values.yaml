@@ -35,7 +35,7 @@ hpa:
   MemUtilizationPercentage: 60
   keda:
     enabled: true
-    requestsPerSecond: "100"
+    requestsPerSecond: "10"
     serverAddress: http://prometheus-prometheus-server.gitlab-managed-apps.svc:80
     filter: "service"
 gitlab:
@@ -56,8 +56,7 @@ service:
   internalPort: 80
 ingress:
   enabled: true
-  paths: 
-    - "/chat"
+  path: "/chat"
   tls:
     enabled: false
     acme: false
