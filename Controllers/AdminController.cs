@@ -98,7 +98,7 @@ public class AdminController : ChatControllerBase
 				catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
 			}
 		
-			_banService.Delete(banId);
+			_banService.Delete(ban.Id);
 		}
 
 		return Ok();
