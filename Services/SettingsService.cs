@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Services;

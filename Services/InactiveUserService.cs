@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Models;
+using Rumble.Platform.Common.Services;
 
 namespace Rumble.Platform.ChatService.Services;
 
@@ -24,8 +27,8 @@ public class InactiveUserService : PlatformTimerService
 		_forceLogouts = 0;
 		
 		_slack = new SlackMessageClient(
-			channel: PlatformEnvironment.Variable("SLACK_MONITOR_CHANNEL"),
-			token: PlatformEnvironment.Variable("SLACK_CHAT_TOKEN")
+			channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
+			token: PlatformEnvironment.SlackLogBotToken
 		);
 		_activity = _roomService.GetGlobals()
 			.SelectMany(room => room.Members)
@@ -96,7 +99,7 @@ public class InactiveUserService : PlatformTimerService
 
 		List<SlackBlock> content = new List<SlackBlock>()
 		{
-			SlackBlock.Header($"chat-service-{PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT")} | Inactive Users Removed"),
+			SlackBlock.Header($"chat-service-{PlatformEnvironment.Deployment} | Inactive Users Removed"),
 			SlackBlock.Divider(),
 			SlackBlock.Markdown("*Affected Rooms*")
 		};
@@ -138,15 +141,15 @@ public class InactiveUserService : PlatformTimerService
 	public void Track(PlayerInfo info) => Track(info?.AccountId);
 	public void Track(TokenInfo token) => Track(token?.AccountId);
 
-	public override object HealthCheckResponseObject
-	{
-		get
-		{
-			GenericData output = new GenericData();
-			output["trackedUsers"] = _activity.Count;
-			output["forcedLogouts"] = _forceLogouts;
-			
-			return GenerateHealthCheck(output);
-		}
-	}
+	// public override object HealthCheckResponseObject
+	// {
+	// 	get
+	// 	{
+	// 		GenericData output = new GenericData();
+	// 		output["trackedUsers"] = _activity.Count;
+	// 		output["forcedLogouts"] = _forceLogouts;
+	// 		
+	// 		return GenerateHealthCheck(output);
+	// 	}
+	// }
 }

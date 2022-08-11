@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -152,15 +153,4 @@ public class MessageController : ChatControllerBase
 		return Ok(new { Stickies = _roomService.GetStickyMessages(all) }, GetAllUpdates());
 	}
 	#endregion CLIENT
-	
-	#region LOAD BALANCER
-	[HttpGet, Route("health"), NoAuth]
-	public override ActionResult HealthCheck()
-	{
-		return Ok(
-			_reportService.HealthCheckResponseObject,
-			_roomService.HealthCheckResponseObject
-		);
-	}
-	#endregion LOAD BALANCER
 }

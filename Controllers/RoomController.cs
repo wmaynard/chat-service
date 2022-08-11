@@ -123,9 +123,4 @@ public class RoomController : ChatControllerBase
 		return Ok(GetAllUpdates());
 	}
 	#endregion GENERAL
-	
-	#region LOAD BALANCER
-	[HttpGet, Route("health"), NoAuth]
-	public override ActionResult HealthCheck() => Ok(_roomService.HealthCheckResponseObject);
-	#endregion
 }

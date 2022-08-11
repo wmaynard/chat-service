@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using RCL.Logging;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Services;
 
 namespace Rumble.Platform.ChatService.Services;
 
@@ -65,7 +67,7 @@ public class RoomDespawnService : PlatformTimerService
 		
 		List<SlackBlock> content = new List<SlackBlock>()
 		{
-			SlackBlock.Header($"chat-service-{PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT")} | Global Rooms Despawned"),
+			SlackBlock.Header($"chat-service-{PlatformEnvironment.Deployment} | Global Rooms Despawned"),
 			SlackBlock.Markdown($"The following rooms have had no active users for at least {(int)(DESPAWN_THRESHOLD_SECONDS / 60)} minutes."),
 			SlackBlock.Divider(),
 			SlackBlock.Markdown("*Affected Rooms*"),
@@ -78,9 +80,9 @@ public class RoomDespawnService : PlatformTimerService
 		_slack.Send(content);
 	}
 
-	public override object HealthCheckResponseObject => GenerateHealthCheck(new GenericData()
-	{
-		["roomsTracked"] = _lifeSupport.Count,
-		["roomsDestroyed"] = _roomsDestroyed
-	});
+	// public override object HealthCheckResponseObject => GenerateHealthCheck(new GenericData()
+	// {
+	// 	["roomsTracked"] = _lifeSupport.Count,
+	// 	["roomsDestroyed"] = _roomsDestroyed
+	// });
 }

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Models;
 
 namespace Rumble.Platform.ChatService.Models;
 

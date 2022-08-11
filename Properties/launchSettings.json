@@ -19,7 +19,7 @@
     },
     "chat_service": {
       "commandName": "Project",
-      "dotnetRunMessages": "true",
+      "dotnetRunMessages": "false",
       "launchBrowser": false,
       "launchUrl": "swagger",
       "applicationUrl": "http://localhost:5011",

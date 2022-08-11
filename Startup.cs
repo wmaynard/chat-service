@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using RCL.Logging;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -6,12 +7,7 @@ namespace Rumble.Platform.ChatService;
 
 public class Startup : PlatformStartup
 {
-	public void ConfigureServices(IServiceCollection services)
-	{
-#if DEBUG
-		base.ConfigureServices(services, defaultOwner: Owner.Will, warnMS: 5_000, errorMS: 20_000, criticalMS: 300_000);
-#else
-		base.ConfigureServices(services, defaultOwner: Owner.Will, warnMS: 500, errorMS: 2_000, criticalMS: 30_000);
-#endif
-	}
+	protected override PlatformOptions Configure(PlatformOptions options) => options
+		.SetProjectOwner(Owner.Will)
+		.SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000);
 }

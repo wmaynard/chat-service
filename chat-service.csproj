@@ -6,15 +6,27 @@
 		<AssemblyVersion>1.0.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>10</LangVersion>
+		<Configurations>Debug;Release</Configurations>
+		<Platforms>AnyCPU</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="platform-csharp-common" Version="1.0.136" />
+		<PackageReference Include="platform-csharp-common" Version="1.1.52" />
 		<PackageReference Include="System.Json" Version="4.7.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <None Remove="StaticFiles\demo.html" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include=".gitlab\deploy-k8s.yaml" />
+	  <Content Include=".gitlab\dev.values.yaml" />
+	  <Content Include=".gitlab\prod-b.values.yaml" />
+	  <Content Include=".gitlab\prod.values.yaml" />
+	  <Content Include=".gitlab\stage-a.values.yaml" />
+	  <Content Include=".gitlab\stage-b.values.yaml" />
+	  <Content Include=".gitlab\stage-c.values.yaml" />
 	</ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -50,7 +51,6 @@ public class Message : PlatformDataModel
 	
 	[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_DATA), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	
 	public GenericData Data { get; set; }
 	
 	[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
@@ -120,7 +120,8 @@ public class Message : PlatformDataModel
 			Type = TYPE_CHAT,
 			VisibleFrom = startTime,
 			Expiration = expiration,
-			AccountId = accountId
+			AccountId = accountId,
+			Data = input.Optional<GenericData>(FRIENDLY_KEY_DATA)
 		};
 	}
 

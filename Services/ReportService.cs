@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
 using MongoDB.Driver;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Services;
 
 namespace Rumble.Platform.ChatService.Services;
 
@@ -77,7 +79,7 @@ public class ReportService : PlatformMongoService<Report>
 			}
 			PreviousMetrics = metrics;
 
-			string title = $"{PlatformEnvironment.Variable("RUMBLE_DEPLOYMENT")} Reports Summary";
+			string title = $"{PlatformEnvironment.Deployment} Reports Summary";
 
 			int pad1 = 19; // The length of a default name like "Playerc8bc9805#4223"
 			try

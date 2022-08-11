@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
@@ -12,7 +14,7 @@ using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
-// [EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
+[EnableCors(PlatformStartup.CORS_SETTINGS_NAME)]
 [ApiController, Route(template: "chat/admin"), Produces(contentType: "application/json"), RequireAuth(AuthType.ADMIN_TOKEN)]
 public class AdminController : ChatControllerBase
 {
@@ -67,31 +69,39 @@ public class AdminController : ChatControllerBase
 	[HttpPost, Route(template: "ban/lift")]
 	public ActionResult Unban()
 	{
-		string banId = Require<string>("banId");
+		string accountId = Optional<string>("accountId");
+		string banId = Optional<string>("banId");
+		// string banId = Require<string>("banId");
 
-		Ban ban = _banService.Get(banId);
-		if (ban == null)
-			return Ok(new {}); // TODO: Should probably throw a BanNotFound exception instead
-		IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
-		foreach (Room r in rooms)
+		Ban[] bans = banId != null
+			? _banService.Find(filter: ban => ban.Id == banId)
+			: _banService.Find(filter: ban => ban.AccountId == accountId);
+
+		if (!bans.Any())
+			return Ok();
+
+		foreach (Ban ban in bans.Where(b => b != null && !b.IsExpired))
 		{
-			try
+			IEnumerable<Room> rooms = _roomService.GetRoomsForUser(ban.AccountId);
+			foreach (Room r in rooms)
 			{
-				r.AddMessage(new Message()
+				try
 				{
-					AccountId = ban.AccountId,
-					Text = $"Ban {ban.Id} was lifted by an administrator.",
-					Type = Message.TYPE_UNBAN_ANNOUNCEMENT
-				}, allowPreviousMemberPost: true);
-				_roomService.Update(r);
+					r.AddMessage(new Message()
+					{
+						AccountId = ban.AccountId,
+						Text = $"Ban {ban.Id} was lifted by an administrator.",
+						Type = Message.TYPE_UNBAN_ANNOUNCEMENT
+					}, allowPreviousMemberPost: true);
+					_roomService.Update(r);
+				}
+				catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
 			}
-			catch (NotInRoomException) { } // Not actually an error; just banned for long enough that user fell out of the room.
-			
-		}
 		
-		_banService.Delete(banId);
+			_banService.Delete(banId);
+		}
 
-		return Ok(ban.ResponseObject);
+		return Ok();
 	}
 
 	[HttpGet, Route(template: "ban/list")]
@@ -196,20 +206,15 @@ public class AdminController : ChatControllerBase
 		return Ok(report.ResponseObject);
 	}
 
+	[HttpGet, Route("reports/list")]
+	public ActionResult ListReports() => Ok(CollectionResponseObject(_reportService.List()));
+
 	
 	#endregion REPORTS
 	
-	#region LOAD BALANCER
-	[HttpGet, Route(template: "health"), NoAuth]
-	public override ActionResult HealthCheck() => Ok(
-		_banService.HealthCheckResponseObject,
-		_roomService.HealthCheckResponseObject
-	);
-
 	// TODO: Send slack interactions here (e.g. button presses)
 	// Can serialize necessary information (e.g. tokens) in the value field when creating buttons
 	// And deserialize it to accomplish admin things in a secure way
 	[HttpPost, Route("slackHandler"), NoAuth]
 	public ActionResult SlackHandler() => Ok();
-	#endregion LOAD BALANCER
 }

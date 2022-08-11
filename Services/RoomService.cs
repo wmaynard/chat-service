@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
 using MongoDB.Driver;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Services;
 using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services;
@@ -51,7 +53,7 @@ public class RoomService : PlatformMongoService<Room>
 	public RoomService() : base("rooms")
 	{
 		_monitor = new RoomMonitor(SendToSlack);
-		_stickyTimer = new Timer(int.Parse(PlatformEnvironment.Variable("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
+		_stickyTimer = new Timer(int.Parse(PlatformEnvironment.Optional<string>("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
 		{
 			AutoReset = true
 		};
@@ -84,7 +86,6 @@ public class RoomService : PlatformMongoService<Room>
 		_stickyTimer.Start();
 		try
 		{
-			Log.Local(Owner.Will, "Attempting to delete expired sticky messages");
 			DeleteStickies(true);
 		}
 		catch (Exception e)

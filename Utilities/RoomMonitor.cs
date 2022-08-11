@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Interop;
@@ -15,7 +16,7 @@ public class RoomMonitor
 	private long LastRead { get; set; }
 	private Dictionary<string, int> MessageCount { get; set; }
 	
-	private readonly int FREQUENCY_IN_MS = int.Parse(PlatformEnvironment.Variable("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
+	private readonly int FREQUENCY_IN_MS = int.Parse(PlatformEnvironment.Optional<string>("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
 	private readonly Timer Timer;
 	public event EventHandler<MonitorEventArgs> OnFlush;
 	public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)
@@ -51,11 +52,12 @@ public class RoomMonitor
 		try
 		{
 			Log.Local(Owner.Will, "Flushing the room monitor");
-			OnFlush?.Invoke(this, new MonitorEventArgs(
-				roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
-				lastRead: LastRead,
-				restarted: args is MonitorEventArgs eventArgs && eventArgs.Restarted
-			));
+			if (MessageCount.Any())
+				OnFlush?.Invoke(this, new MonitorEventArgs(
+					roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
+					lastRead: LastRead,
+					restarted: args is MonitorEventArgs eventArgs && eventArgs.Restarted
+				));
 			LastRead = DateTimeOffset.Now.ToUnixTimeSeconds();
 			MessageCount = new Dictionary<string, int>();
 		}
