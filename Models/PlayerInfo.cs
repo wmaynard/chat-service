@@ -60,10 +60,12 @@ public class PlayerInfo : PlatformDataModel
 	#endregion MONGO
 
 	#region INTERNAL
+	// TODO: Needs to be changed to PORTAL URL
 	[BsonIgnore]
 	[JsonIgnore]
 	public string SlackLink => SlackFormatter.Link(
-		url: $"{PlatformEnvironment.Require<string>("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}", 
+		// url: $"{PlatformEnvironment.Require<string>("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}",
+		url: PlatformEnvironment.Url($"/player/details?id={AccountId}"),
 		text: UniqueScreenname
 	);
 	
