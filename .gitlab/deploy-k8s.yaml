@@ -1,55 +1,31 @@
 .auto-deploy:
-  image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.12.0"
+  image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.26.0"
   dependencies: []
   variables:
-    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
-    KUBE_NAMESPACE: "chat-service-8-dev"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
+    - kubectl config use-context $KUBE_CONTEXT
     - auto-deploy check_kube_domain
     - auto-deploy download_chart
     - auto-deploy ensure_namespace
     - auto-deploy create_secret
     - auto-deploy deploy
   rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: manual
-  
-gitlab-test:
-  image:
-    name: bitnami/kubectl:latest
-    entrypoint: [""]
-  stage: deploy
-  script:
-  - kubectl config get-contexts
-  - kubectl config use-context platform-services/platform-services-agent:platform-services
-  - kubectl get pods -n gitlab-kubernetes-
-  rules:
-    - if: '$CI_KUBERNETES_ACTIVE == null || $CI_KUBERNETES_ACTIVE == ""'
-      when: never
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $DEPLOY_TYPE == "kubernetes" || $DEPLOY_TYPE == "both"
-      when: 
-  environment:
-    name: dev
-    url: https://dev.nonprod.tower.cdrentertainment.com/
+    - when: manual
+
 
 dev:
   extends: .auto-deploy
   stage: dev
   variables:
-    KUBE_INGRESS_BASE_DOMAIN: https://dev.nonprod.tower.cdrentertainment.com/
+    KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
+  tags:
+    - cluster
   environment:
     name: dev
     url: https://dev.nonprod.tower.cdrentertainment.com/
@@ -57,6 +33,11 @@ dev:
 stage-a:
   extends: .auto-deploy
   stage: staging
+  variables:
+    KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
+    KUBE_NAMESPACE: "chat-service-8-stage-a"
+  tags:
+    - cluster
   environment:
     name: stage-a
     url: https://stage-a.nonprod.tower.cdrentertainment.com/
@@ -64,6 +45,11 @@ stage-a:
 stage-b:
   extends: .auto-deploy
   stage: staging
+  variables:
+    KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
+    KUBE_NAMESPACE: "chat-service-8-stage-b"
+  tags:
+    - cluster
   environment:
     name: stage-b
     url: https://stage-b.nonprod.tower.cdrentertainment.com/
@@ -71,6 +57,11 @@ stage-b:
 stage-c:
   extends: .auto-deploy
   stage: staging
+  variables:
+    KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
+    KUBE_NAMESPACE: "chat-service-8-stage-c"
+  tags:
+    - cluster
   environment:
     name: stage-c
     url: https://stage-c.nonprod.tower.cdrentertainment.com/
@@ -78,6 +69,10 @@ stage-c:
 production:
   extends: .auto-deploy
   stage: production
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
   tags:
     - production
   environment:
@@ -87,8 +82,38 @@ production:
 production-b:
   extends: .auto-deploy
   stage: production
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-b-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
   tags:
-    - production
+    - production-b
   environment:
     name: production/platform-b
     url: https://platform-b.prod.tower.rumblegames.com/
+
+production-c:
+  extends: .auto-deploy
+  stage: production
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-c-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
+  tags:
+    - production-c
+  environment:
+    name: production/platform-c
+    url: https://platform-c.prod.tower.rumblegames.com/
+
+production-d:
+  extends: .auto-deploy
+  stage: production
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-d-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
+  tags:
+    - production-d
+  environment:
+    name: production/platform-d
+    url: https://platform-d.prod.tower.rumblegames.com/

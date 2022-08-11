@@ -35,7 +35,7 @@ hpa:
   MemUtilizationPercentage: 60
   keda:
     enabled: true
-    requestsPerSecond: "100"
+    requestsPerSecond: "10"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
     filter: "exported_service"
 gitlab:
@@ -56,8 +56,7 @@ service:
   internalPort: 80
 ingress:
   enabled: true
-  paths: 
-    - "/chat"
+  path: "/chat"
   tls:
     enabled: false
     acme: false
@@ -145,6 +144,22 @@ serviceAccount:
   name:
   annotations: {}
   createNew: false
+
+persistence:
+  enabled: false
+  volumes:
+    - name: data
+      mount:
+        path: "/pvc-mount"
+        # subPath: "/pvc-mount/config.txt"
+      claim:
+        accessMode: ReadWriteOnce
+        size: 8Gi
+        # If you want to use a custom storage class, you can specify `storageClass`. In this case, you need to create a storage class at first.
+        # If `storageClass` is not specified, the behavior will vary per Kubernetes provider.
+        # For example, GKE automatically chooses a default storage class and allocate a physical storage.
+        # See https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes for more information.
+        # storageClass: "myStorage"
 
 workers: {}
   # worker:
