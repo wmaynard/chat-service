@@ -25,17 +25,25 @@ public class InactiveUserService : PlatformTimerService
 	{
 		_roomService = roomService;
 		_forceLogouts = 0;
-		
-		_slack = new SlackMessageClient(
-			channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
-			token: PlatformEnvironment.SlackLogBotToken
-		);
-		_activity = _roomService.GetGlobals()
-			.SelectMany(room => room.Members)
-			.ToDictionary(
-				keySelector: player => player.AccountId,
-				elementSelector: player => UnixTime
+
+		try
+		{
+			_slack = new SlackMessageClient(
+				channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
+				token: PlatformEnvironment.SlackLogBotToken
 			);
+			_activity = _roomService.GetGlobals()
+				.SelectMany(room => room.Members)
+				.ToDictionary(
+					keySelector: player => player.AccountId,
+					elementSelector: player => UnixTime
+				);
+
+		}
+		catch (Exception e)
+		{
+			Log.Error(Owner.Will, $"Could not instantiate {this.GetType().Name}.", exception: e);
+		}
 	}
 
 	protected override void OnElapsed()

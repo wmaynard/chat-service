@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
 namespace Rumble.Platform.ChatService.Controllers;
@@ -42,6 +44,8 @@ public class TopController : PlatformController
 		Room global = _roomService.JoinGlobal(player, language);
 		IEnumerable<Room> rooms = _roomService.GetRoomsForUser(Token.AccountId);
 		object updates = RoomUpdate.GenerateResponseFrom(rooms, lastRead);
+		if (_inactiveUserService == null)
+			Log.Error(Owner.Will, "Inactive user service is null; this should be impossible.");
 		_inactiveUserService.Track(player);
 
 		return Ok(
