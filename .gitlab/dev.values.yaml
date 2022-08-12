@@ -64,6 +64,7 @@ ingress:
     useDefaultSecret: false
   annotations:
     nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+    kubernetes.io/ingress.class: "nginx"
   modSecurity:
     enabled: false
     secRuleEngine: "DetectionOnly"
