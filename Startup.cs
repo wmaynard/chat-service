@@ -10,6 +10,7 @@ public class Startup : PlatformStartup
 {
 	protected override PlatformOptions Configure(PlatformOptions options) => options
 		.SetProjectOwner(Owner.Will)
+		.SetRegistrationName("Chat")
 		.SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)
 		.DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting);
 }
