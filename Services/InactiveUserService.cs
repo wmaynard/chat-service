@@ -32,7 +32,8 @@ public class InactiveUserService : PlatformTimerService
 				channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
 				token: PlatformEnvironment.SlackLogBotToken
 			);
-			_activity = _roomService.GetGlobals()
+			_activity = _roomService
+				.GetGlobals()
 				.SelectMany(room => room.Members)
 				.ToDictionary(
 					keySelector: player => player.AccountId,
@@ -48,6 +49,8 @@ public class InactiveUserService : PlatformTimerService
 
 	protected override void OnElapsed()
 	{
+		if (_activity == null || !_activity.Any())
+			return;
 		string[] inactiveAccountIDs = _activity
 			.Where(kvp => UnixTime - kvp.Value > FORCED_LOGOUT_THRESHOLD_S)
 			.Select(kvp => kvp.Key)
