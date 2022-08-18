@@ -73,7 +73,7 @@ public class ReportService : PlatformMongoService<Report>
 				.Select(m => m.Equals(PreviousMetrics[Array.IndexOf(metrics, m)]))
 				.Any(b => b == false))
 			{
-				Log.Info(Owner.Will, "Report metrics have been calculated, but are unchanged from last time.  No Slack message will be sent.");
+				Log.Verbose(Owner.Will, "Report metrics have been calculated, but are unchanged from last time.  No Slack message will be sent.");
 				SummaryTimer.Start();
 				return;
 			}
@@ -128,7 +128,7 @@ public class ReportService : PlatformMongoService<Report>
 				string c5 = string.Join(", ", rm.MostReportedMessages);
 				blocks.Add(new SlackBlock($"```{c1} | {c2} | {c3} | {c4} | {c5}```"));
 			}
-			Log.Info(Owner.Will, "ReportMetrics calculated.", data: new
+			Log.Verbose(Owner.Will, "ReportMetrics calculated.", data: new
 			{
 				ReportMetrics = metrics
 			});

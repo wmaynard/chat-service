@@ -52,13 +52,13 @@ public class InactiveUserService : PlatformTimerService
 		if (_activity == null || !_activity.Any())
 			return;
 		string[] inactiveAccountIDs = _activity
-			.Where(kvp => UnixTime - kvp.Value > FORCED_LOGOUT_THRESHOLD_S)
-			.Select(kvp => kvp.Key)
+			.Where(pair => UnixTime - pair.Value > FORCED_LOGOUT_THRESHOLD_S)
+			.Select(pair => pair.Key)
 			.ToArray();
 		if (!inactiveAccountIDs.Any())
 			return;
 		
-		Log.Info(Owner.Default, "Inactive AccountIDs Found", data: new
+		Log.Verbose(Owner.Default, "Inactive AccountIDs Found", data: new
 		{
 			AccountIDs = inactiveAccountIDs,
 			InactiveCount = inactiveAccountIDs.Length
@@ -96,7 +96,7 @@ public class InactiveUserService : PlatformTimerService
 		Graphite.Track("force-logouts", affectedAccounts.Count, type: Graphite.Metrics.Type.FLAT);
 		// UpdateSlack(affectedAccounts, affectedRooms);
 		
-		Log.Info(Owner.Default, "Inactive accountIDs purged from chat rooms.", data: new
+		Log.Verbose(Owner.Default, "Inactive accountIDs purged from chat rooms.", data: new
 		{
 			AffectedRooms = affectedRooms
 		});

@@ -39,7 +39,7 @@ public class MessageController : ChatControllerBase
 		Message msg = Message.FromGeneric(Require<GenericData>("message"), aid).Validate();
 		
 		msg.Type = Message.TYPE_BROADCAST;
-		Log.Info(Owner.Will, "New broadcast message", data : new
+		Log.Verbose(Owner.Will, "New broadcast message", data : new
 		{
 			AccountId = aid,
 			Broadcast = msg

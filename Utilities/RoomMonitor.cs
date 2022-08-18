@@ -54,7 +54,7 @@ public class RoomMonitor
 			Log.Local(Owner.Will, "Flushing the room monitor");
 			if (MessageCount.Any())
 				OnFlush?.Invoke(this, new MonitorEventArgs(
-					roomIds: MessageCount.Select(kvp => kvp.Key).ToArray(),
+					roomIds: MessageCount.Select(pair => pair.Key).ToArray(),
 					lastRead: LastRead,
 					restarted: args is MonitorEventArgs eventArgs && eventArgs.Restarted
 				));
@@ -63,7 +63,7 @@ public class RoomMonitor
 		}
 		catch (Exception e)
 		{
-			Log.Error(Owner.Will, message: "Couldn't flush the room monitor.", exception: e);
+			Log.Verbose(Owner.Will, message: "Couldn't flush the room monitor.", exception: e);
 		}
 		Timer.Start();
 	}

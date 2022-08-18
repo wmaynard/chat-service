@@ -41,10 +41,10 @@ public class ReportMetrics
 			.ToDictionary(
 				keySelector: report => report.ReportedMessage.Text, 
 				elementSelector: report => report.Reporters.Count + messages.Count(m => m.Text == report.ReportedMessage.Text)
-			).Where(kvp => kvp.Value >= MENTION_THRESHOLD)
-			.OrderByDescending(kvp => kvp.Value)
-			.ThenBy(kvp => kvp.Key)
-			.Select(kvp => $"({kvp.Value}) {kvp.Key}")
+			).Where(pair => pair.Value >= MENTION_THRESHOLD)
+			.OrderByDescending(pair => pair.Value)
+			.ThenBy(pair => pair.Key)
+			.Select(pair => $"({pair.Value}) {pair.Key}")
 			.ToArray();
 		
 		UniqueReporterCount = group
