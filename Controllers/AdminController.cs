@@ -179,6 +179,14 @@ public class AdminController : ChatControllerBase
 		Room room = _roomService.StickyRoom;
 		room.Messages.Remove(room.Messages.First(m => m.Id == messageId));
 		_roomService.Update(room);
+
+		foreach (Room r in _roomService.GetGlobals())
+		{
+			if (!r.Messages.Any(message => message.Id == messageId))
+				continue;
+			r.Messages = r.Messages.Where(message => message.Id != messageId).ToList();
+			_roomService.Update(r);
+		}
 		
 		return Ok(room.ResponseObject);
 	}

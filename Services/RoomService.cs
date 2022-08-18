@@ -77,7 +77,12 @@ public class RoomService : PlatformMongoService<Room>
 
 		Room sticky = StickyRoom;
 		foreach (Message m in sticky.Messages.Where(m => m.Type == Message.TYPE_STICKY))
+		{
+			if (expiredOnly && !m.IsExpired)
+				continue;
 			m.Type = Message.TYPE_STICKY_ARCHIVED;
+		}
+
 		Update(sticky);
 	}
 
