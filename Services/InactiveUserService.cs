@@ -68,13 +68,20 @@ public class InactiveUserService : PlatformTimerService
 		HashSet<string> affectedAccounts = new HashSet<string>();
 		foreach (string aid in inactiveAccountIDs)
 		{
-			// This *should* only have one result, if any at all, but just in case...
-			Room[] globals = _roomService
-				.GetRoomsForUser(aid)
-				.Where(room => room.Type == Room.TYPE_GLOBAL)
-				.ToArray();
-			_activity.Remove(aid);
+			Room[] globals = Array.Empty<Room>();
 			
+			// [PLATF-6076]: Where is sometimes receiving null inputs, throwing runtime exceptions in 308 exclusively.
+			try
+			{
+				globals = _roomService
+					.GetRoomsForUser(aid)
+					.Where(room => room.Type == Room.TYPE_GLOBAL)
+					.ToArray();
+			}
+			catch { }
+			
+			_activity.Remove(aid);
+
 			if (!globals.Any()) 
 				continue;
 
