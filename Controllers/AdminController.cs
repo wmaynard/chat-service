@@ -23,7 +23,7 @@ public class AdminController : ChatControllerBase
 	private readonly ReportService _reportService;
 #pragma warning restore CS0649
 
-	[HttpPost, Route("playerDetails")]
+	[HttpGet, Route("playerDetails")]
 	public ActionResult PlayerDetails()
 	{
 		string aid = Require<string>("aid");
