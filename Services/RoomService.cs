@@ -61,6 +61,31 @@ public class RoomService : PlatformMongoService<Room>
 		_stickyTimer.Start();
 	}
 
+	public long DeletePvpChallenge(string password, string issuerAccountId) => password != null
+		? _collection.UpdateMany(
+			filter: Builders<Room>.Filter.ElemMatch(
+				field: room => room.Messages,
+				filter: message => message.Data != null && message.Data.Optional<string>("password") == password
+			),
+			update: Builders<Room>.Update.PullFilter(
+				field: room => room.Messages, 
+				filter: Builders<Message>.Filter.Where(message => message.Data != null 
+					&& message.Data.Optional<string>("password") == password 
+					&& message.Type == Message.TYPE_CHALLENGE
+				)
+			)
+		).ModifiedCount
+		: _collection.UpdateMany(
+			filter: Builders<Room>.Filter.ElemMatch(
+				field: room => room.Messages,
+				filter: message => message.AccountId == issuerAccountId
+			),
+			update: Builders<Room>.Update.PullFilter(
+				field: room => room.Messages, 
+				filter: Builders<Message>.Filter.Where(message => message.AccountId == issuerAccountId && message.Type == Message.TYPE_CHALLENGE)
+			)
+		).ModifiedCount;
+
 	public void DeleteStickies(bool expiredOnly = false)
 	{
 		List<Room> rooms = GetGlobals();

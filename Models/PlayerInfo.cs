@@ -119,7 +119,10 @@ public class PlayerInfo : PlatformDataModel
 		Discriminator = token.Discriminator;
 	}
 
-	public void Validate()
+	// As of common-1.1.61, Validate() gets called whenever GenericData deserializes a model.
+	// Chat is older than common and wasn't using Validate() the same way; consequently
+	// this is kluged to just be renamed.
+	public void CustomValidate()
 	{
 		if (AccountId == null)
 			throw new InvalidPlayerInfoException(this, "AccountId");

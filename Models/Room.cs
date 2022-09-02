@@ -159,7 +159,7 @@ public class Room : PlatformCollectionDocument
 	/// <exception cref="RoomFullException">Indicates the Room is already full, or became full as the account was joining.</exception>
 	public void AddMember(PlayerInfo playerInfo)
 	{
-		playerInfo.Validate();
+		playerInfo.CustomValidate();
 		if (playerInfo.ScreenName == null)
 			throw new InvalidPlayerInfoException(playerInfo, "ScreenName");
 		if (HasMember(playerInfo.AccountId))

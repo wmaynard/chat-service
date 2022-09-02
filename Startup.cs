@@ -8,7 +8,7 @@ namespace Rumble.Platform.ChatService;
 
 public class Startup : PlatformStartup
 {
-	protected override PlatformOptions Configure(PlatformOptions options) => options
+	protected override PlatformOptions ConfigureOptions(PlatformOptions options) => options
 		.SetProjectOwner(Owner.Will)
 		.SetRegistrationName("Chat")
 		.SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)

@@ -17,6 +17,7 @@ public class Message : PlatformDataModel
 	public const string TYPE_BAN_ANNOUNCEMENT = "banAnnouncement";
 	public const string TYPE_BROADCAST = "broadcast";
 	public const string TYPE_CHAT = "chat";
+	public const string TYPE_CHALLENGE = "pvp_challenge";
 	public const string TYPE_NOTIFICATION = "notification";
 	public const string TYPE_STICKY = "sticky";
 	public const string TYPE_STICKY_ARCHIVED = "archived";
@@ -112,7 +113,7 @@ public class Message : PlatformDataModel
 			? (startTime ?? UnixTime) + duration
 			: input.Optional<long?>(FRIENDLY_KEY_EXPIRATION);
 
-		return new Message()
+		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = input.Optional<string>(FRIENDLY_KEY_TEXT),
@@ -139,7 +140,7 @@ public class Message : PlatformDataModel
 			? (startTime ?? UnixTime) + duration
 			: JsonHelper.Optional<long?>(input, FRIENDLY_KEY_EXPIRATION);
 		
-		return new Message()
+		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = JsonHelper.Optional<string>(input, FRIENDLY_KEY_TEXT),

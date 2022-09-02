@@ -9,6 +9,8 @@ using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
+using Rumble.Platform.Common.Enums;
+using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -34,6 +36,70 @@ public class AdminController : ChatControllerBase
 		{
 			Bans = bans,
 			Reports = reports
+		});
+	}
+
+	[HttpPost, Route("challenge")]
+	public ActionResult IssueChallenge()
+	{
+		string id = Require<string>("aid");
+		string password = Require<string>("password");
+
+		_roomService.DeletePvpChallenge(null, id);
+		Room global = _roomService.GetRoomsForUser(id).FirstOrDefault(room => room.Type == Room.TYPE_GLOBAL);
+
+		if (global == null)
+			throw new PlatformException("Unable to find global room for user.", code: ErrorCode.MongoRecordNotFound);
+
+		// global.Members.RemoveWhere(info => info.AccountId != id);
+		// global.Members.Add(new PlayerInfo
+		// {
+		// 	Avatar = "human_infantryman",
+		// 	Level = 99,
+		// 	Power = 5000,
+		// 	ScreenName = "foobar",
+		// 	InRoomSince = Timestamp.UnixTime,
+		// 	Discriminator = 1234,
+		// 	AccountId = "deadbeefdeadbeefdeadbeef"
+		// });
+		// for (int i = 0; i < 5; i++)
+		// 	global.AddMessage(new Message
+		// 	{
+		// 		AccountId = "deadbeefdeadbeefdeadbeef",
+		// 		Text = $"Test message {i}",
+		// 		Type = Message.TYPE_CHAT
+		// 	});
+
+		Message message = new Message
+		{
+			AccountId = id,
+			Text = $"I'm looking for a PvP match!",
+			Type = Message.TYPE_CHALLENGE,
+			Data = new GenericData
+			{
+				{ "password", password }
+			}
+		};
+		global.AddMessage(message);
+		_roomService.Update(global);
+		return Ok(new GenericData
+		{
+			{ "message", message }
+		});
+	}
+
+	[HttpDelete, Route("claimChallenge")]
+	public ActionResult DeleteChallenge()
+	{
+		string password = Optional<string>("password");
+		string issuer = Optional<string>("issuer");
+
+		if (password == null && issuer == null)
+			throw new PlatformException("Either password or issuer must be supplied.", code: ErrorCode.RequiredFieldMissing);
+		
+		return Ok(new GenericData
+		{
+			{ "messagesDeleted", _roomService.DeletePvpChallenge(password, issuer) }
 		});
 	}
 
