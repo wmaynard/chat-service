@@ -138,21 +138,23 @@ Mentioned first because of `/launch`: this endpoint is intended to be the first 
 
 All `Admin` endpoints other than `/admin/health` require a valid **admin token**.  For publishing app, this can be found in the dynamic config, using the `chatToken` value.  The `AdminController` class is responsible for anything requiring elevated privileges.
 
-| Method | Endpoint                     | Description                                                                                                                                           | Required                   | Optional                            | Internal Consumers | External Consumers |
-|-------:|:-----------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------|:------------------------------------|:-------------------|:-------------------|
-|    GET | `/admin/health`              | Health check; returns the status of the `BanService` and `RoomService`.                                                                               |                            |                                     |                    |                    |
-|    GET | `/admin/ban/list`            | Lists all **bans** for all users, including expired **bans**.                                                                                         |                            |                                     | Portal             |                    |
-|    GET | `/admin/messages/sticky`     | Gets a list of all **stickies**, both archived and active.                                                                                            |                            |                                     | Portal             |                    |
-|    GET | `/admin/rooms/list`          | Lists all **rooms** and all data associated with the **rooms**.  Once live, this will probably need to be trimmed to just room IDs and basic metrics. |                            |                                     | Portal             |                    |
-|   POST | `/admin/rooms/removePlayers` | Removes an array of players from global rooms.  Used by the server to remove inactive players who didn't log out properly.                            | `aids`                     |                                     | Portal             |                    |
-|   POST | `/admin/ban/lift`            | Removes a specific **ban**, provided its ID.                                                                                                          | `banId`                    |                                     | Portal             |                    |
-|   POST | `/admin/ban/player`          | Issues a **ban** against a player.  Can be temporary (timed) or indefinite.                                                                           | `aid`<br />`reason`        | `durationInSeconds`<br />`reportId` | Portal             |                    |
-|   POST | `/admin/messages/delete`     | Deletes a **message**.  It would be ideal to never use this.                                                                                          | `messageIds`<br />`roomId` |                                     | Portal             |                    |
-|   POST | `/admin/messages/sticky`     | Creates a **sticky message**.                                                                                                                         | `message`                  | `language`                          | Portal             |                    |
-|   POST | `/admin/messages/unsticky`   | Deletes a **sticky message**.                                                                                                                         | `messageId`                |                                     | Portal             |                    |
-|   POST | `/admin/reports/ignore`      | Marks a **report** as *benign*.  This does not delete the **report**, but is an indicator that it should be kept for archival purposes.               | `reportId`                 |                                     | Portal             |                    |
-|   POST | `/admin/reports/delete`      | Deletes a **report**.  For clearly harmless **reports** that serve no useful purpose.                                                                 | `reportId`                 |                                     | Portal             |                    |
-|   POST | `/admin/slackHandler`        | Placeholder for processing Slack API requests.                                                                                                        |                            |                                     |                    |                    |
+| Method | Endpoint                     | Description                                                                                                                                              | Required                             | Optional                            | Internal Consumers | External Consumers |
+|-------:|:-----------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------|:------------------------------------|:-------------------|:-------------------|
+| DELETE | `/admin/claimChallenge`      | Clears the challenge message that was used to start a PvP match.                                                                                         | `issuer` (safer)<br>OR<br>`password` |
+|    GET | `/admin/health`              | Health check; returns the status of the `BanService` and `RoomService`.                                                                                  |                                      |                                     |                    |                    |
+|    GET | `/admin/ban/list`            | Lists all **bans** for all users, including expired **bans**.                                                                                            |                                      |                                     | Portal             |                    |
+|    GET | `/admin/messages/sticky`     | Gets a list of all **stickies**, both archived and active.                                                                                               |                                      |                                     | Portal             |                    |
+|    GET | `/admin/rooms/list`          | Lists all **rooms** and all data associated with the **rooms**.  Once live, this will probably need to be trimmed to just room IDs and basic metrics.    |                                      |                                     | Portal             |                    |
+|   POST | `/admin/challenge`           | Sends a message to a user's global room of type `pvp_challenge`.  This message can be claimed by another user upon starting a PvP match with the sender. | `aid`<br>`password`                  |
+|   POST | `/admin/rooms/removePlayers` | Removes an array of players from global rooms.  Used by the server to remove inactive players who didn't log out properly.                               | `aids`                               |                                     | Portal             |                    |
+|   POST | `/admin/ban/lift`            | Removes a specific **ban**, provided its ID.                                                                                                             | `banId`                              |                                     | Portal             |                    |
+|   POST | `/admin/ban/player`          | Issues a **ban** against a player.  Can be temporary (timed) or indefinite.                                                                              | `aid`<br />`reason`                  | `durationInSeconds`<br />`reportId` | Portal             |                    |
+|   POST | `/admin/messages/delete`     | Deletes a **message**.  It would be ideal to never use this.                                                                                             | `messageIds`<br />`roomId`           |                                     | Portal             |                    |
+|   POST | `/admin/messages/sticky`     | Creates a **sticky message**.                                                                                                                            | `message`                            | `language`                          | Portal             |                    |
+|   POST | `/admin/messages/unsticky`   | Deletes a **sticky message**.                                                                                                                            | `messageId`                          |                                     | Portal             |                    |
+|   POST | `/admin/reports/ignore`      | Marks a **report** as *benign*.  This does not delete the **report**, but is an indicator that it should be kept for archival purposes.                  | `reportId`                           |                                     | Portal             |                    |
+|   POST | `/admin/reports/delete`      | Deletes a **report**.  For clearly harmless **reports** that serve no useful purpose.                                                                    | `reportId`                           |                                     | Portal             |                    |
+|   POST | `/admin/slackHandler`        | Placeholder for processing Slack API requests.                                                                                                           |                                      |                                     |                    |                    |
 
 ## Messages
 
@@ -241,6 +243,58 @@ Helpful resources for working with Slack:
   * These can be set for each property separately, with the `DB_KEY` specified in `[BsonElement]` attributes and the `FRIENDLY_KEY` specified in `[JsonProperty]` attributes.
 * Any data sent back to a client should be contained in a **response object**.  Unless overridden, any `PlatformDataModel` has a `ResponseObject` that can be used.  This uses reflection to generate a JSON key / value pair of the class name and object data, and helps keep responses standardized.
     * When sending collections of models back (such as a List of messages), use the `PlatformController`'s `CollectionResponseObject(IEnumerable<T> objects)` method instead.
+
+## Issuing and Accepting PvP Challenges
+
+Chat now supports messaging ability to issue and accept "private" PvP challenges.  The ability to issue a challenge to a chat room can be found in other games, such as Clash Royale.  Player can coordinate with each other in chat if they want to challenge specific players, but these are effectively public - anyone who sees the message can accept the challenge.  The flow for the challenge feature is as follows:
+
+1. A player taps a button to start a challenge / practice PvP match.
+2. The match-making-service (or related) hits the new chat endpoint:
+
+```
+POST /chat/admin/challenge
+{
+    "aid": "{the player's accountId}",
+    "password": "{a new GUID}"
+}
+```
+
+3. Chat looks up that player's current global room and sends a message of type `pvp_challenge` to it.  The message data appears as:
+
+```
+{
+    "aid": "{Issuer AccountId}",
+    "data": {
+        "password": "{GUID}"
+    },
+    "id": "d2100695-7f39-43c9-8127-7f7405826750",
+    "text": "I'm looking for a PvP match!",  // This will probably be entirely ignored by the client
+    "timestamp": 1662145121,
+    "type": "pvp_challenge"
+}
+```
+
+4. The client, upon seeing a message type of `pvp_challenge`, glues the message to the bottom of the chat window (normal chat messages, including new messages, appear above challenges).  The message should show the issuer's avatar, screenname, and a button that can be clicked by anyone else in the room.
+5. A second user accepts the challenge by clicking on the button, which kicks them into matchmaking.
+7. As the PvP match starts (or gets cancelled), the match-making-service (or related) hits a second chat endpoint to clear the message:
+
+```
+DELETE /chat/admin/claimChallenge?issuer=deadbeefdeadbeefdeadbeef
+```
+
+7. Chat removes any `pvp_challenge` messages from the specified account, since that player is now in the requested game.
+
+### Considerations
+
+* `pvp_challenge` messages should be viewable only from non-CGP screens.  Otherwise challengers will leave their current game.
+* Multiple `pvp_challenge` messages may be present, giving players in the same room options of who to challenge.
+* Players might want to challenge a specific user and may even coordinate with them in chat to challenge this way, but because the challenge is public, they may end up playing against an unwanted player.
+  * Chat can easily support direct messaging between two users, which could be used in a V2 of this feature to eliminate this problem.  However, we don't have UI for DMs at this time.
+  * Other games face this same issue, but often don't address it; there's greater weight given to just getting people to play as opposed to waiting for a specific person to accept a match.  They can always try again a few minutes later.
+* As part of labs day on 9/2/22, private matches are made using Soulslike private matchmaking; users must use text entry to filter their match pool.
+  * Guaranteed, we will have users who do, no matter how prominently we display their password, will still forget they have one on, and consequently think PvP is broken.
+  * Text entry and elements changing on the screen with branching UI flows can be complicated and unpleasant.
+* This will be a great feature to include in guild chat rooms for internal PvP practice.
 
 ## Future Updates, Optimizations, and Nice-to-Haves
 
