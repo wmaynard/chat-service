@@ -163,7 +163,7 @@ public class InactiveUserService : PlatformTimerService
 	// {
 	// 	get
 	// 	{
-	// 		GenericData output = new GenericData();
+	// 		RumbleJson output = new RumbleJson();
 	// 		output["trackedUsers"] = _activity.Count;
 	// 		output["forcedLogouts"] = _forceLogouts;
 	// 		

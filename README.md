@@ -276,7 +276,7 @@ POST /chat/admin/challenge
 
 4. The client, upon seeing a message type of `pvp_challenge`, glues the message to the bottom of the chat window (normal chat messages, including new messages, appear above challenges).  The message should show the issuer's avatar, screenname, and a button that can be clicked by anyone else in the room.
 5. A second user accepts the challenge by clicking on the button, which kicks them into matchmaking.
-7. As the PvP match starts (or gets cancelled), the match-making-service (or related) hits a second chat endpoint to clear the message:
+6As the PvP match starts (or gets cancelled), the match-making-service (or related) hits a second chat endpoint to clear the message:
 
 ```
 DELETE /chat/admin/claimChallenge?issuer=deadbeefdeadbeefdeadbeef

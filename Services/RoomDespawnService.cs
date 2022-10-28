@@ -80,7 +80,7 @@ public class RoomDespawnService : PlatformTimerService
 		_slack.Send(content);
 	}
 
-	// public override object HealthCheckResponseObject => GenerateHealthCheck(new GenericData()
+	// public override object HealthCheckResponseObject => GenerateHealthCheck(new RumbleJson()
 	// {
 	// 	["roomsTracked"] = _lifeSupport.Count,
 	// 	["roomsDestroyed"] = _roomsDestroyed

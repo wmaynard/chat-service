@@ -57,6 +57,10 @@ public class PlayerInfo : PlatformDataModel
 	[BsonElement(DB_KEY_SCREENNAME)]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_SCREENNAME)]
 	public string ScreenName { get; set; }
+	
+	[BsonElement("title")]
+	[JsonInclude, JsonPropertyName("title")]
+	public string Title { get; set; }
 	#endregion MONGO
 
 	#region INTERNAL
@@ -119,7 +123,7 @@ public class PlayerInfo : PlatformDataModel
 		Discriminator = token.Discriminator;
 	}
 
-	// As of common-1.1.61, Validate() gets called whenever GenericData deserializes a model.
+	// As of common-1.1.61, Validate() gets called whenever RumbleJson deserializes a model.
 	// Chat is older than common and wasn't using Validate() the same way; consequently
 	// this is kluged to just be renamed.
 	public void CustomValidate()
