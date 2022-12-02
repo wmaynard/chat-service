@@ -10,6 +10,7 @@ using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -63,7 +64,7 @@ public class Room : PlatformCollectionDocument
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_GUILD_ID)]
 	public string GuildId { get; set; }
 	
-	[SimpleIndex(DB_KEY_LANGUAGE, FRIENDLY_KEY_LANGUAGE)]
+	[SimpleIndex]
 	[BsonElement(DB_KEY_LANGUAGE), BsonIgnoreIfNull]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LANGUAGE), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string Language { get; set; }
@@ -144,7 +145,7 @@ public class Room : PlatformCollectionDocument
 	
 	public Room ()
 	{
-		CreatedTimestamp = UnixTime;
+		CreatedTimestamp = Timestamp.UnixTime;
 		Messages = new List<Message>();
 		Members = new HashSet<PlayerInfo>();
 		PreviousMembers = new HashSet<PlayerInfo>();

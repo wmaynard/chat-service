@@ -6,6 +6,8 @@ using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.Data;
+using Rumble.Platform.Data.Utilities;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -52,7 +54,7 @@ public class Message : PlatformDataModel
 	
 	[BsonElement(DB_KEY_DATA), BsonIgnoreIfNull]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_DATA), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public GenericData Data { get; set; }
+	public RumbleJson Data { get; set; }
 	
 	[BsonElement(DB_KEY_EXPIRATION), BsonIgnoreIfNull]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_EXPIRATION), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -91,7 +93,7 @@ public class Message : PlatformDataModel
 
 	[BsonIgnore]
 	[JsonIgnore]
-	public bool IsExpired => Expiration != null && UnixTime > Expiration;
+	public bool IsExpired => Expiration != null && Rumble.Platform.Common.Utilities.Timestamp.UnixTime > Expiration;
 	
 	[BsonIgnore]
 	[JsonIgnore]
@@ -102,27 +104,27 @@ public class Message : PlatformDataModel
 	{
 		Id = Guid.NewGuid().ToString();
 		Type = TYPE_CHAT;
-		Timestamp = UnixTime;
+		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime;
 	}
 
-	internal static Message FromGeneric(GenericData input, string accountId)
+	internal static Message FromGeneric(RumbleJson input, string accountId)
 	{
 		long? startTime = input.Optional<long?>(FRIENDLY_KEY_VISIBLE_FROM);
 		long? duration = input.Optional<long?>(FRIENDLY_KEY_DURATION_IN_SECONDS);
 		long? expiration = duration != null
-			? (startTime ?? UnixTime) + duration
+			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.UnixTime) + duration
 			: input.Optional<long?>(FRIENDLY_KEY_EXPIRATION);
 
 		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = input.Optional<string>(FRIENDLY_KEY_TEXT),
-			Timestamp = UnixTime,
+			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime,
 			Type = TYPE_CHAT,
 			VisibleFrom = startTime,
 			Expiration = expiration,
 			AccountId = accountId,
-			Data = input.Optional<GenericData>(FRIENDLY_KEY_DATA)
+			Data = input.Optional<RumbleJson>(FRIENDLY_KEY_DATA)
 		};
 	}
 
@@ -137,14 +139,14 @@ public class Message : PlatformDataModel
 		long? startTime = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_VISIBLE_FROM);
 		long? duration = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_DURATION_IN_SECONDS);
 		long? expiration = duration != null
-			? (startTime ?? UnixTime) + duration
+			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.UnixTime) + duration
 			: JsonHelper.Optional<long?>(input, FRIENDLY_KEY_EXPIRATION);
 		
 		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = JsonHelper.Optional<string>(input, FRIENDLY_KEY_TEXT),
-			Timestamp = UnixTime,
+			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime,
 			Type = TYPE_CHAT,
 			VisibleFrom = startTime,
 			Expiration = expiration,

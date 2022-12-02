@@ -6,6 +6,8 @@ using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Data;
+using Rumble.Platform.Data.Utilities;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -78,7 +80,7 @@ public class PlayerInfo : PlatformDataModel
 	public string UniqueScreenname => $"{ScreenName}#{Discriminator.ToString().PadLeft(4, '0')}";
 	#endregion INTERNAL
 
-	public static PlayerInfo FromRequest(GenericData body, TokenInfo token)
+	public static PlayerInfo FromRequest(RumbleJson body, TokenInfo token)
 	{
 		PlayerInfo output = body.Require<PlayerInfo>(FRIENDLY_KEY_SELF);
 		output.AccountId = token.AccountId;
@@ -96,7 +98,7 @@ public class PlayerInfo : PlatformDataModel
 			AccountId = JsonHelper.Optional<string>(input, FRIENDLY_KEY_ACCOUNT_ID),
 			Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
 			ScreenName = JsonHelper.Optional<string>(input, FRIENDLY_KEY_SCREENNAME),
-			InRoomSince = UnixTime,
+			InRoomSince = Timestamp.UnixTime,
 			Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
 			Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
 			Discriminator = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_DISCRIMINATOR) ?? 0
@@ -109,7 +111,7 @@ public class PlayerInfo : PlatformDataModel
 			AccountId = token.AccountId,
 			Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
 			ScreenName = token.ScreenName,
-			InRoomSince = UnixTime,
+			InRoomSince = Timestamp.UnixTime,
 			Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
 			Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
 			Discriminator = token.Discriminator

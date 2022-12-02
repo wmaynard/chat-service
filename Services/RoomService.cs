@@ -155,7 +155,7 @@ public class RoomService : PlatformMongoService<Room>
 	{
 		try
 		{
-			long timestamp = Room.UnixTime;
+			long timestamp = Timestamp.UnixTime;
 			return all
 				? StickyRoom.Messages.Where(m => m.Type is Message.TYPE_STICKY or Message.TYPE_STICKY_ARCHIVED)
 				: StickyRoom.Messages.Where(m => m.Type == Message.TYPE_STICKY && m.VisibleFrom < timestamp && m.Expiration > timestamp);

@@ -6,6 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -19,7 +20,7 @@ public class ChatSettings : PlatformCollectionDocument
 	public const string FRIENDLY_KEY_MUTED_PLAYERS = "mutedPlayers";
 	
 	#region MONGO
-	[SimpleIndex(DB_KEY_ACCOUNT_ID, FRIENDLY_KEY_ACCOUNT_ID)]
+	[SimpleIndex]
 	[BsonElement(DB_KEY_ACCOUNT_ID)]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 	public string AccountId { get; set; }
@@ -31,9 +32,9 @@ public class ChatSettings : PlatformCollectionDocument
 	
 	#region INTERNAL
 	// Since the class can't be named "Settings", we'll override it in the ResponseObject.
-	[BsonIgnore]
-	[JsonIgnore]
-	public override object ResponseObject => new { Settings = this };
+	// [BsonIgnore]
+	// [JsonIgnore]
+	// public override object ResponseObject => new { Settings = this };
 	#endregion INTERNAL
 
 	public ChatSettings(string accountId)

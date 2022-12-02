@@ -5,7 +5,9 @@ using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -25,7 +27,7 @@ public class Ban : PlatformCollectionDocument
 	public const string FRIENDLY_KEY_TIME_REMAINING = "timeRemaining";
 	
 	#region MONGO
-	[SimpleIndex(DB_KEY_ACCOUNT_ID, FRIENDLY_KEY_ACCOUNT_ID)]
+	[SimpleIndex]
 	[BsonElement(DB_KEY_ACCOUNT_ID)]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ACCOUNT_ID)]
 	public string AccountId { get; private set; }
@@ -83,7 +85,7 @@ public class Ban : PlatformCollectionDocument
 	{
 		AccountId = accountId;
 		Reason = reason;
-		IssuedOn = UnixTime;
+		IssuedOn = Timestamp.UnixTime;
 		Expiration = expiration;
 		Snapshot = rooms.ToArray();
 	}

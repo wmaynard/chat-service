@@ -13,6 +13,7 @@ using Rumble.Platform.Common.Enums;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -75,14 +76,14 @@ public class AdminController : ChatControllerBase
 			AccountId = id,
 			Text = $"I'm looking for a PvP match!",
 			Type = Message.TYPE_CHALLENGE,
-			Data = new GenericData
+			Data = new RumbleJson
 			{
 				{ "password", password }
 			}
 		};
 		global.AddMessage(message);
 		_roomService.Update(global);
-		return Ok(new GenericData
+		return Ok(new RumbleJson
 		{
 			{ "message", message }
 		});
@@ -97,7 +98,7 @@ public class AdminController : ChatControllerBase
 		if (password == null && issuer == null)
 			throw new PlatformException("Either password or issuer must be supplied.", code: ErrorCode.RequiredFieldMissing);
 		
-		return Ok(new GenericData
+		return Ok(new RumbleJson
 		{
 			{ "messagesDeleted", _roomService.DeletePvpChallenge(password, issuer) }
 		});
@@ -129,7 +130,7 @@ public class AdminController : ChatControllerBase
 			_roomService.Update(r);
 		}
 
-		return Ok(ban.ResponseObject);
+		return Ok(ban);
 	}
 
 	[HttpPost, Route(template: "ban/lift")]
@@ -214,7 +215,7 @@ public class AdminController : ChatControllerBase
 	[HttpPost, Route(template: "messages/sticky")]
 	public ActionResult Sticky()
 	{
-		Message message = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId);
+		Message message = Message.FromGeneric(Require<RumbleJson>("message"), Token.AccountId);
 		// Message message = Message.FromJsonElement(Require("message"), Token.AccountId);
 		message.Type = Message.TYPE_STICKY;
 		string language = Optional<string>("language");

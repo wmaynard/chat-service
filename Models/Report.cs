@@ -7,6 +7,7 @@ using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -42,7 +43,7 @@ public class Report : PlatformCollectionDocument
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_LOG)]
 	public IEnumerable<Message> Log { get; set; }
 	
-	[SimpleIndex(DB_KEY_MESSAGE_ID, FRIENDLY_KEY_MESSAGE_ID)]
+	[SimpleIndex]
 	[BsonElement(DB_KEY_MESSAGE_ID)]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_MESSAGE_ID)]
 	public string MessageId { get; set; }
@@ -128,7 +129,7 @@ public class Report : PlatformCollectionDocument
 
 	public Report()
 	{
-		Timestamp = UnixTime;
+		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime;
 		Status = STATUS_UNADDRESSED;
 		Reporters = new HashSet<PlayerInfo>();
 	}

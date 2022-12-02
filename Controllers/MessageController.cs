@@ -8,6 +8,7 @@ using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -36,7 +37,7 @@ public class MessageController : ChatControllerBase
 		// into their own controllers to keep client-facing endpoints consistent in their behavior.
 		string aid = Require<string>("aid");
 		long lastRead = Require<long>("lastRead");
-		Message msg = Message.FromGeneric(Require<GenericData>("message"), aid).Validate();
+		Message msg = Message.FromGeneric(Require<RumbleJson>("message"), aid).Validate();
 		
 		msg.Type = Message.TYPE_BROADCAST;
 		Log.Verbose(Owner.Will, "New broadcast message", data : new
@@ -109,7 +110,7 @@ public class MessageController : ChatControllerBase
 		_inactiveUserService.Track(Token);
 
 		string roomId = Require<string>("roomId");
-		Message msg = Message.FromGeneric(Require<GenericData>("message"), Token.AccountId).Validate();
+		Message msg = Message.FromGeneric(Require<RumbleJson>("message"), Token.AccountId).Validate();
 		// Message msg = Require<Message>("message");
 		// msg.AccountId = Token.AccountId;
 		// msg.Validate();
