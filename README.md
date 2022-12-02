@@ -208,11 +208,6 @@ The `SettingsController` is responsible for storing a user's chat-specific setti
 * The following **environment variables** must exist on the server where the service is running:
   * `MONGODB_URI`: A connection string to the environment's respective MongoDB.
   * `MONGODB_NAME`: The specific Mongo database to connect to.  While Mongo connection strings can contain this information in them, it must be explicitly specified in this variable for the service.
-  * `SLACK_CHAT_TOKEN`: A token provided by Slack to connect with the Slack Chat App.  It looks like `xoxb-....`
-  * `SLACK_ENDPOINT_POST_MESSAGE`: The Slack API endpoint for posting messages.
-  * `SLACK_MONITOR_CHANNEL`: The Slack channel ID to post chat message logs to.  Click on the channel name while viewing it and scroll to the bottom of the popup to find this value.
-  * `SLACK_REPORTS_CHANNEL`: The Slack channel ID to post **reports** to.  Click on the channel name while viewing it and scroll to the bottom of the popup to find this value.
-  * `RUMBLE_PUBLISHING_PLAYER_URL`: The link to the publishing app to show player details.  This is used in building Slack messages that link directly to publishing app.
 * Mongo collections **do not need to exist** before the service runs.  The service will create any collection it needs.  The database, however, must exist.
 
 ## Slack Integration
@@ -310,10 +305,6 @@ DELETE /chat/admin/claimChallenge?issuer=deadbeefdeadbeefdeadbeef
     {
       "MONGODB_URI": "mongodb+srv://{...}",
       "MONGODB_NAME": "{db name}",
-      "SLACK_MONITOR_CHANNEL": "{slack channel id}",
-      "SLACK_REPORTS_CHANNEL": "{slack channel id}",
-      "SLACK_CHAT_TOKEN": "{slack app token}",
-      "SLACK_ENDPOINT_POST_MESSAGE": "/chat.postMessage",
       "LOGGLY_URL": "https://logs-01.loggly.com/bulk/{...}/tag/chat-service/",
       "RUMBLE_ENDPOINT_TOKEN_VERIFICATION": "https://dev.services.tower.cdrentertainment.com/player/verify"
     }

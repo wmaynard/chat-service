@@ -22,7 +22,7 @@ public struct SlackReport // TODO: PlatformDataModel?
 
 	public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)
 	{
-		DestinationChannel = PlatformEnvironment.Require<string>("SLACK_REPORTS_CHANNEL");
+		DestinationChannel = PlatformEnvironment.Require<string>("reportsChannel");
 		Blocks = blocks;
 		Attachments = new object[]{ new
 		{

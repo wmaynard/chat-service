@@ -29,7 +29,7 @@ public class InactiveUserService : PlatformTimerService
 		try
 		{
 			_slack = new SlackMessageClient(
-				channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"),
+				channel: PlatformEnvironment.Require<string>("monitorChannel"),
 				token: PlatformEnvironment.SlackLogBotToken
 			);
 			_activity = _roomService

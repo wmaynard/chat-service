@@ -70,7 +70,6 @@ public class PlayerInfo : PlatformDataModel
 	[BsonIgnore]
 	[JsonIgnore]
 	public string SlackLink => SlackFormatter.Link(
-		// url: $"{PlatformEnvironment.Require<string>("RUMBLE_PUBLISHING_PLAYER_URL")}?gukey={AccountId}",
 		url: PlatformEnvironment.Url($"/portal/player/details?id={AccountId}"),
 		text: UniqueScreenname
 	);

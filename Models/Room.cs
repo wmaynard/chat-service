@@ -10,6 +10,7 @@ using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Common.Services;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
@@ -48,7 +49,7 @@ public class Room : PlatformCollectionDocument
 	public const int MESSAGE_CAPACITY = 200;
 
 	public static readonly string ENVIRONMENT = PlatformEnvironment.Deployment;
-	public static readonly int GLOBAL_PLAYER_CAPACITY = PlatformEnvironment.Require<int>("GLOBAL_PLAYER_CAPACITY");
+	public static int GlobalPlayerCapacity => DynamicConfig.Instance?.Optional<int?>("roomCapacity") ?? 200;
 
 	public static event EventHandler<RoomEventArgs> OnMessageAdded;
 	private static Dictionary<string, List<string>> IDMap; // TODO: This could be a separate service if there's a good way to bring a singleton into models
@@ -74,7 +75,7 @@ public class Room : PlatformCollectionDocument
 	public int MemberCapacity
 	{
 		get => Type == TYPE_GLOBAL 
-			? GLOBAL_PLAYER_CAPACITY 
+			? GlobalPlayerCapacity 
 			: _memberCapacity;
 		set => _memberCapacity = value;
 	}

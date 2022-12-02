@@ -16,7 +16,7 @@ public class RoomMonitor
 	private long LastRead { get; set; }
 	private Dictionary<string, int> MessageCount { get; set; }
 	
-	private readonly int FREQUENCY_IN_MS = int.Parse(PlatformEnvironment.Optional<string>("SLACK_MONITOR_FREQUENCY_SECONDS") ?? "300") * 1_000;
+	private const int FREQUENCY_IN_MS = 300_000;
 	private readonly Timer Timer;
 	public event EventHandler<MonitorEventArgs> OnFlush;
 	public RoomMonitor(EventHandler<MonitorEventArgs> onFlush)

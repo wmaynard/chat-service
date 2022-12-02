@@ -20,10 +20,7 @@ public class RoomService : PlatformMongoService<Room>
 	internal const string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 	internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 	private readonly RoomMonitor _monitor;
-	private readonly SlackMessageClient SlackMonitorChannel = new SlackMessageClient(
-		channel: PlatformEnvironment.Require<string>("SLACK_MONITOR_CHANNEL"), 
-		token: PlatformEnvironment.Require<string>("SLACK_CHAT_TOKEN")
-	);
+	private SlackMessageClient SlackMonitorChannel { get; set; }
 
 	private readonly Timer _stickyTimer;
 
@@ -53,10 +50,11 @@ public class RoomService : PlatformMongoService<Room>
 	public RoomService() : base("rooms")
 	{
 		_monitor = new RoomMonitor(SendToSlack);
-		_stickyTimer = new Timer(int.Parse(PlatformEnvironment.Optional<string>("STICKY_CHECK_FREQUENCY_SECONDS") ?? "3000") * 1_000)
+		_stickyTimer = new Timer((PlatformEnvironment.Optional<int?>("stickyCheck") ?? 3_000) * 1_000)
 		{
 			AutoReset = true
 		};
+
 		_stickyTimer.Elapsed += CheckExpiredStickies;
 		_stickyTimer.Start();
 	}
@@ -146,7 +144,11 @@ public class RoomService : PlatformMongoService<Room>
 			attachments: rooms.Select(r => r.ToSlackAttachment(args.LastRead)).ToArray()
 		);
 		
-		SlackMonitorChannel.Send(m);
+		SlackMonitorChannel ??= new SlackMessageClient(
+			channel: PlatformEnvironment.Require<string>("monitorChannel"), 
+			token: PlatformEnvironment.SlackLogBotToken
+		);
+		SlackMonitorChannel.Send(m).Wait();
 	}
 
 	public override Room Get(string id) => base.Get(id) ?? throw new RoomNotFoundException(id);
@@ -228,7 +230,7 @@ public class RoomService : PlatformMongoService<Room>
 			Log.Info(Owner.Will, $"Creating new global ({language}) room");
 			joined = new Room()
 			{
-				MemberCapacity = Room.GLOBAL_PLAYER_CAPACITY,
+				MemberCapacity = Room.GlobalPlayerCapacity,
 				Language = language,
 				Type = Room.TYPE_GLOBAL
 			};

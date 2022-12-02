@@ -16,18 +16,21 @@ namespace Rumble.Platform.ChatService.Services;
 public class ReportService : PlatformMongoService<Report>
 {
 	private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
-	
-	private readonly SlackMessageClient SlackReportChannel = new SlackMessageClient(
-		channel: PlatformEnvironment.Require<string>("SLACK_REPORTS_CHANNEL"), 
-		token: PlatformEnvironment.Require<string>("SLACK_CHAT_TOKEN")
-	);
+	private readonly DynamicConfig _config;
+
+	private readonly SlackMessageClient SlackReportChannel;
 	
 	private Timer SummaryTimer { get; set; }
 	
 	private ReportMetrics[] PreviousMetrics { get; set; }
 
-	public ReportService() : base("reports")
+	public ReportService(DynamicConfig dynamicConfig) : base("reports")
 	{
+		_config = dynamicConfig;
+		SlackReportChannel = new SlackMessageClient(
+			channel: _config.Require<string>("reportsChannel") ?? PlatformEnvironment.SlackLogChannel,
+			token: PlatformEnvironment.SlackLogBotToken
+		);
 		SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
 		SummaryTimer.Elapsed += SendSummaryReport;
 		SummaryTimer.Start();
