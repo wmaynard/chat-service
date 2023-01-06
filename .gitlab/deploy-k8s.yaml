@@ -66,32 +66,6 @@ stage-c:
     name: stage-c
     url: https://stage-c.nonprod.tower.cdrentertainment.com/
 
-TH-production-a:
-  extends: .auto-deploy
-  stage: production
-  variables:
-    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-platform-services"
-    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
-    KUBE_NAMESPACE: "chat-service"
-  tags:
-    - production
-  environment:
-    name: production/platform
-    url: https://platform-a.prod.tower.rumblegames.com/
-
-TH-production-b:
-  extends: .auto-deploy
-  stage: production
-  variables:
-    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-b-platform-services"
-    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
-    KUBE_NAMESPACE: "chat-service"
-  tags:
-    - production-b
-  environment:
-    name: production/platform-b
-    url: https://platform-b.prod.tower.rumblegames.com/
-
 TT-production-a1:
   extends: .auto-deploy
   stage: production
