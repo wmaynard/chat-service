@@ -24,7 +24,7 @@ public class TopController : PlatformController
 
 	#region CLIENT
 	// Called when an account is logging in to chat.  Returns sticky messages, bans applied, and user settings.
-	[HttpPost, Route(template: "launch")]
+	[HttpPost, Route(template: "launch"), HealthMonitor(weight: 3)]
 	public ActionResult Launch()
 	{
 		long lastRead = Require<long>("lastRead");
