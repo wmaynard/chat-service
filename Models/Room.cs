@@ -121,7 +121,7 @@ public class Room : PlatformCollectionDocument
 	// TODO: Refactor out Members, AllMembers, and PreviousMembers.  The client should use player-service's lookup to find and cache account information.
 	[BsonIgnore]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ALL_MEMBERS)]
-	public string[] Participants => Members.Union(PreviousMembers).Append(PlayerInfo.Admin).Select(info => info.AccountId).Distinct().ToArray();
+	public string[] Participants => Members.Union(PreviousMembers).Select(info => info.AccountId).Distinct().ToArray();
 
 	[BsonIgnore]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_HAS_STICKY), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
