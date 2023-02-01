@@ -34,6 +34,7 @@ public class Room : PlatformCollectionDocument
 	public const string FRIENDLY_KEY_HAS_STICKY = "hasSticky";
 	public const string FRIENDLY_KEY_LANGUAGE = "language";
 	public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "listingId";
+	public const string FRIENDLY_KEY_ALL_MEMBERS = "participants";
 	public const string FRIENDLY_KEY_MEMBERS = "members";
 	public const string FRIENDLY_KEY_MESSAGES = "messages";
 	public const string FRIENDLY_KEY_PREVIOUS_MEMBERS = "previousMembers";
@@ -116,7 +117,12 @@ public class Room : PlatformCollectionDocument
 			return IDMap[Language].IndexOf(Id) + 1;
 		}
 	}
-	
+
+	// TODO: Refactor out Members, AllMembers, and PreviousMembers.  The client should use player-service's lookup to find and cache account information.
+	[BsonIgnore]
+	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_ALL_MEMBERS)]
+	public string[] Participants => Members.Union(PreviousMembers).Append(PlayerInfo.Admin).Select(info => info.AccountId).Distinct().ToArray();
+
 	[BsonIgnore]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_HAS_STICKY), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public bool HasSticky => Messages.Any(message => message.IsSticky);
