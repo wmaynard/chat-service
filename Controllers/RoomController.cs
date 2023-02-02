@@ -6,6 +6,8 @@ using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
+using Rumble.Platform.Common.Exceptions;
+using Rumble.Platform.Common.Extensions;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -123,4 +125,15 @@ public class RoomController : ChatControllerBase
 		return Ok(GetAllUpdates());
 	}
 	#endregion GENERAL
+
+	[HttpGet, Route("guild")]
+	public ActionResult GetGuildChat()
+	{
+		string guildId = Require<string>("guildId");
+
+		if (!guildId.CanBeMongoId())
+			throw new PlatformException("Invalid Guild ID.");
+		
+		return Ok(_roomService.GetGuildChat(guildId));
+	}
 }

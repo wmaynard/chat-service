@@ -24,6 +24,9 @@ public class RoomUpdate // TODO: Inherit from PlatformDataModel?
 	[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_PREVIOUS_MEMBERS)]
 	public IEnumerable<PlayerInfo> PreviousMembers { get; private set; }
 	
+	[JsonInclude, JsonPropertyName(Room.FRIENDLY_KEY_ALL_MEMBERS)]
+	public string[] Participants { get; private set; }
+	
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_UNREAD_MESSAGES), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public Message[] UnreadMessages { get; private set; }
 	#endregion CLIENT
@@ -36,13 +39,16 @@ public class RoomUpdate // TODO: Inherit from PlatformDataModel?
 	/// <returns>A new RoomUpdate object.</returns>
 	private static RoomUpdate FromRoom(Room room, long lastRead = 0)
 	{
-		return new RoomUpdate()
+		Message[] unread = room.MessagesSince(lastRead).ToArray();
+		
+		return new RoomUpdate
 		{
 			HasSticky = room.HasSticky,
 			Id = room.Id,
-			UnreadMessages = room.MessagesSince(lastRead).ToArray(),
+			UnreadMessages = unread,
 			Members = room.Members,
-			PreviousMembers = room.PreviousMembers
+			PreviousMembers = room.PreviousMembers,
+			Participants = unread.Select(message => message.AccountId).ToArray()
 		};
 	}
 	/// <summary>

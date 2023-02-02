@@ -270,4 +270,25 @@ public class RoomService : PlatformMongoService<Room>
 				.Select(room => room.Id).ToArray();
 		}
 	}
+
+	public Room GetGuildChat(string id)
+	{
+		Room output = _collection
+			.Find(Builders<Room>.Filter.Eq(room => room.GuildId, id))
+			.Limit(1)
+			.FirstOrDefault();
+
+		if (output != null)
+			return output;
+		
+		output = new Room
+		{
+			GuildId = id,
+			MemberCapacity = Room.GlobalPlayerCapacity,
+			Type = Room.TYPE_GUILD
+		};
+		
+		_collection.InsertOne(output);
+		return output;
+	}
 }
