@@ -12,7 +12,7 @@ using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
-public class MonitorService : QueueService<MonitorData>
+public class MonitorService : QueueService<MonitorService.Data>
 {
     private const string KEY_TIMESTAMP = "lastRead";
     private SlackMessageClient _slack;
@@ -26,12 +26,14 @@ public class MonitorService : QueueService<MonitorData>
         _api = api;
     }
 
-    protected override void OnTasksCompleted(MonitorData[] data) => Log.Local(Owner.Will, "All monitor messages sent.");
+    protected override void OnTasksCompleted(Data[] data) => Log.Local(Owner.Will, "All monitor messages sent.");
 
     protected override void PrimaryNodeWork()
     {
         string channel = PlatformEnvironment.Optional<string>("monitorChannel");
 
+        // QueueService can be initialized before DynamicConfig is ready.
+        // If we're missing DC values, exit early, and wait for the next cycle.
         if (string.IsNullOrWhiteSpace(channel))
         {
             Log.Warn(Owner.Will, "Chat monitor channel not yet available; this could be a lack of dynamic config values or the service is starting up");
@@ -41,27 +43,35 @@ public class MonitorService : QueueService<MonitorData>
             channel: channel,
             token: PlatformEnvironment.SlackLogBotToken
         );
+        
+        // Get all new messages sent after the previous max timestamp.
         long ts = Get<long>(KEY_TIMESTAMP);
-
-        MonitorData[] data = _rooms.GetMonitorData(ts);
+        Data[] data = _rooms.GetMonitorData(ts);
 
         if (!data.Any())
             return;
         
-        foreach (MonitorData d in data)
+        // We have some messages that have yet to be sent to Slack; create tasks to send them out.
+        // NOTE: it's possible we could be rate-limited, and we could see some dropped messages if 5 separate
+        // containers are processing tasks at the same time.  In this situation, we could mitigate this by
+        // increasing the interval, or by moving the processing to this task in the primary node and adding a hard
+        // wait (not ideal).
+        foreach (Data d in data)
             CreateTask(d);
 
+        // Grab the max timestamp from the messages.  Store it as our "last read" measure in the queue config.
         long max = data
-            .Where(monitorData => monitorData != null && monitorData.Messages.Any())
-            .SelectMany(monitorData => monitorData.Messages)
+            .Where(monitorData => monitorData != null && monitorData.ChatMessages.Any())
+            .SelectMany(monitorData => monitorData.ChatMessages)
             .Max(message => message.Timestamp);
 
-        // Set(KEY_TIMESTAMP, max);
+        Set(KEY_TIMESTAMP, max);
     }
 
-    protected override void ProcessTask(MonitorData data)
+    protected override void ProcessTask(Data taskData)
     {
-        string[] accountIds = data.Messages
+        // Player Service expects only Mongo-compatible IDs.
+        string[] accountIds = taskData.ChatMessages
             .Select(message => message.AccountId)
             .Distinct()
             .Where(id => !string.IsNullOrWhiteSpace(id) && id.CanBeMongoId())
@@ -69,6 +79,7 @@ public class MonitorService : QueueService<MonitorData>
 
         PlayerInfo[] players = Array.Empty<PlayerInfo>();
 
+        // Attempt to get player details from Player Service
         _api
             .Request(PlatformEnvironment.Url("/player/v2/lookup"))
             .AddAuthorization(DynamicConfig.Instance?.AdminToken)
@@ -80,40 +91,33 @@ public class MonitorService : QueueService<MonitorData>
             }))
             .Get();
 
-        SlackMessage toSlack = new SlackMessage
+        SlackMessage message = new SlackMessage
         {
             Channel = null,
             Blocks = new List<SlackBlock>
             {
-                new SlackBlock(SlackBlock.BlockType.HEADER, $"{PlatformEnvironment.Deployment}.{data.Room}"),
+                new SlackBlock(SlackBlock.BlockType.HEADER, $"{PlatformEnvironment.Deployment}.{taskData.Room}"),
                 new SlackBlock(SlackBlock.BlockType.MARKDOWN, text: $"Portal links: {string.Join(", ", players.Select(player => player.PortalLink))}"),
                 new SlackBlock(SlackBlock.BlockType.DIVIDER)
             }
         };
 
-        foreach (Message message in data.Messages)
+        foreach (Message chat in taskData.ChatMessages)
         {
             string author = players
-                .FirstOrDefault(player => player.AccountId == message.AccountId)
+                .FirstOrDefault(player => player.AccountId == chat.AccountId)
                 ?.DisplayName
-                ?? message.AccountId;
+                ?? chat.AccountId;
 
-            string time = DateTimeOffset.FromUnixTimeSeconds(message.Timestamp).ToString("HH:mm");
+            string time = DateTimeOffset.FromUnixTimeSeconds(chat.Timestamp).ToString("HH:mm");
 
-            toSlack.Blocks.Add(new SlackBlock(
+            message.Blocks.Add(new SlackBlock(
                 type: SlackBlock.BlockType.MARKDOWN, 
-                text: $"```{time} {author.PadLeft(24, ' ')}: {message.Text}```"
+                text: $"```{time} {author.PadLeft(20, ' ')}: {chat.Text}```"
             ));
         }
-
-        try
-        {
-            _slack.Send(toSlack.Compress()).Wait();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        
+        _slack.Send(message.Compress()).Wait();
     }
 
     public class PlayerInfo : PlatformDataModel
@@ -133,11 +137,10 @@ public class MonitorService : QueueService<MonitorData>
         [JsonIgnore] 
         public string PortalLink => $"<{PlatformEnvironment.Url($"/player/{AccountId}").Replace("://", "://portal.")}|{DisplayName}>";
     }
-}
-
-public class MonitorData : PlatformDataModel
-{
-    public string Room { get; set; }
-    public string SlackColor { get; set; }
-    public Message[] Messages { get; set; }
+    
+    public class Data : PlatformDataModel
+    {
+        public string Room { get; set; }
+        public Message[] ChatMessages { get; set; }
+    }
 }
