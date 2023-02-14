@@ -291,4 +291,21 @@ public class RoomService : PlatformMongoService<Room>
 		_collection.InsertOne(output);
 		return output;
 	}
+
+	public MonitorData[] GetMonitorData(long timestamp)
+	{
+		return _collection
+			.Find(filter: _ => true)
+			.Project(Builders<Room>.Projection.Expression(room => new MonitorData
+			{
+				Room = room.Id,
+				SlackColor = room.SlackColor,
+				Messages = room.Messages
+					.Where(message => message.Timestamp > timestamp && message.Type == Message.TYPE_CHAT)
+					.ToArray()
+			}))
+			.ToList()
+			.Where(data => data.Messages.Any())
+			.ToArray();
+	}
 }
