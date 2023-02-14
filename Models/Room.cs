@@ -64,7 +64,7 @@ public class Room : PlatformCollectionDocument
 	
 	[BsonElement(DB_KEY_GUILD_ID), BsonIgnoreIfNull]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_GUILD_ID)]
-	[SimpleIndex(unique: true)]
+	[SimpleIndex]
 	public string GuildId { get; set; }
 	
 	[SimpleIndex]
