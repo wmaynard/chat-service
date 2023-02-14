@@ -7,6 +7,7 @@ using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
@@ -86,7 +87,7 @@ public class Report : PlatformCollectionDocument
 		{
 			List<SlackBlock> headers = new List<SlackBlock>()
 			{
-				new(SlackBlock.BlockType.HEADER, $"{(Reporters.Count > 1 ? "Updated" : "New")} Report | {DateTime.Now:yyyy.MM.dd HH:mm}"),
+				new(SlackBlock.BlockType.HEADER, $"{PlatformEnvironment.Deployment} | {(Reporters.Count > 1 ? "Updated" : "New")} Report | {DateTime.Now:yyyy.MM.dd HH:mm}"),
 				new($"Reported Player: {ReportedPlayer.SlackLink}\nReporter{(Reporters.Count > 1 ? "s" : "")}: {string.Join(", ", Reporters.Select(info => info.SlackLink))}"),
 				new("_The message flagged by the user is indicated by a *!* and special formatting._"),
 				new(SlackBlock.BlockType.DIVIDER)

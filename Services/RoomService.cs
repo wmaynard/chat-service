@@ -6,7 +6,6 @@ using MongoDB.Driver;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
@@ -19,7 +18,6 @@ public class RoomService : PlatformMongoService<Room>
 {
 	internal const string QUERY_ROOM_MEMBER = Room.DB_KEY_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 	internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
-	private readonly RoomMonitor _monitor;
 	private SlackMessageClient SlackMonitorChannel { get; set; }
 
 	private readonly Timer _stickyTimer;
@@ -49,7 +47,6 @@ public class RoomService : PlatformMongoService<Room>
 
 	public RoomService() : base("rooms")
 	{
-		_monitor = new RoomMonitor(SendToSlack);
 		_stickyTimer = new Timer((PlatformEnvironment.Optional<int?>("stickyCheck") ?? 3_000) * 1_000)
 		{
 			AutoReset = true
@@ -121,34 +118,6 @@ public class RoomService : PlatformMongoService<Room>
 			Log.Error(Owner.Will, "Error encountered when checking for expired stickies.", exception: e);
 		}
 		_stickyTimer.Start();
-	}
-
-	private void SendToSlack(object sender, RoomMonitor.MonitorEventArgs args)
-	{
-		List<Room> rooms = args.Restarted
-			? _collection.Find(room => room.Messages.Any(m => m.Timestamp > args.LastRead)).ToList()
-			: _collection.Find(room => args.RoomIds.Contains(room.Id)).ToList();
-		if (!rooms.Any())
-			return;
-
-		List<SlackBlock> blocks = args.Restarted
-			? new List<SlackBlock>()
-			{
-				new SlackBlock(SlackBlock.BlockType.HEADER, "Service Restarted"),
-				new SlackBlock("Flushing all rooms in their entirety")
-			}
-			: null;
-
-		SlackMessage m = new SlackMessage(
-			blocks: blocks,
-			attachments: rooms.Select(r => r.ToSlackAttachment(args.LastRead)).ToArray()
-		);
-		
-		SlackMonitorChannel ??= new SlackMessageClient(
-			channel: PlatformEnvironment.Require<string>("monitorChannel"), 
-			token: PlatformEnvironment.SlackLogBotToken
-		);
-		SlackMonitorChannel.Send(m).Wait();
 	}
 
 	public override Room Get(string id) => base.Get(id) ?? throw new RoomNotFoundException(id);

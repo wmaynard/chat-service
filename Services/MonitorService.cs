@@ -12,15 +12,19 @@ using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
+/// <summary>
+/// The QueueService is necessary to avoid unnecessary chat duplication.  When deployed, services have multiple instances running.
+/// QueueService guarantees only one of the nodes can process PrimaryNodeWork() at a time.  Refer to the platform-common
+/// documentation for more information.
+/// </summary>
 public class MonitorService : QueueService<MonitorService.Data>
 {
     private const string KEY_TIMESTAMP = "lastRead";
     private SlackMessageClient _slack;
     private readonly RoomService _rooms;
     private readonly ApiService _api;
-
-
-    public MonitorService(RoomService rooms, ApiService api) : base(collection: "monitor", intervalMs: 5_000)
+    
+    public MonitorService(RoomService rooms, ApiService api) : base(collection: "monitor", intervalMs: 600_000)
     {
         _rooms = rooms;
         _api = api;
