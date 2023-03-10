@@ -4,3 +4,5 @@
 nuget.config
 notes.txt
 environment.json
+
+*.idea/
