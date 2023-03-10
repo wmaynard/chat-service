@@ -10,13 +10,15 @@ using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Services;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
 public class ReportService : PlatformMongoService<Report>
 {
-	private const int SUMMARY_INTERVAL_MS = 21_600_000; // six hours
+	private const    int           SUMMARY_INTERVAL_MS = 21_600_000; // six hours
 	private readonly DynamicConfig _config;
+	private readonly ApiService    _apiService;
 
 	private readonly SlackMessageClient SlackReportChannel;
 	
@@ -149,6 +151,18 @@ public class ReportService : PlatformMongoService<Report>
 		catch (Exception ex)
 		{
 			Log.Error(Owner.Will, "Unable to send the Reports Summary.", exception: ex);
+			
+			_apiService.Alert(
+				title: "Unable to send the Reports Summary.",
+				message: "Unable to send the Reports Summary.",
+				countRequired: 1,
+				timeframe: 300,
+				data: new RumbleJson
+				    {
+				        { "Exception", ex }
+				    } 
+			);
+
 		}
 
 		SummaryTimer.Start();
