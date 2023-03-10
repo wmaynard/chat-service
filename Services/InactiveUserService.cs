@@ -8,7 +8,6 @@ using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Services;
-using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
@@ -17,9 +16,8 @@ public class InactiveUserService : PlatformTimerService
 	public const long FORCED_LOGOUT_THRESHOLD_S = 1_800; // 30 minutes
 	// public const long FORCED_LOGOUT_THRESHOLD_S = 300; // 5 minutes
 	private readonly Dictionary<string, long> _activity;
-	private readonly RoomService              _roomService;
-	private readonly ApiService               _apiService;
-	private readonly SlackMessageClient       _slack;
+	private readonly RoomService _roomService;
+	private readonly SlackMessageClient _slack;
 
 	private int _forceLogouts;
 
@@ -46,17 +44,6 @@ public class InactiveUserService : PlatformTimerService
 		catch (Exception e)
 		{
 			Log.Error(Owner.Will, $"Could not instantiate {this.GetType().Name}.", exception: e);
-			
-			_apiService.Alert(
-				title: $"Could not instantiate {this.GetType().Name}.",
-				message: $"Could not instantiate {this.GetType().Name}.",
-				countRequired: 1,
-				timeframe: 300,
-				data: new RumbleJson
-				    {
-				        { "Exception", e }
-				    } 
-			);
 		}
 	}
 

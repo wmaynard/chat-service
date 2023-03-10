@@ -10,7 +10,6 @@ using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
 using Rumble.Platform.Common.Services;
-using Rumble.Platform.Data;
 using Timer = System.Timers.Timer;
 
 namespace Rumble.Platform.ChatService.Services;
@@ -21,8 +20,7 @@ public class RoomService : PlatformMongoService<Room>
 	internal const string QUERY_ROOM_PREVIOUS_MEMBER = Room.DB_KEY_PREVIOUS_MEMBERS + "." + PlayerInfo.DB_KEY_ACCOUNT_ID;
 	private SlackMessageClient SlackMonitorChannel { get; set; }
 
-	private readonly Timer      _stickyTimer;
-	private readonly ApiService _apiService;
+	private readonly Timer _stickyTimer;
 
 	public Room StickyRoom
 	{
@@ -118,18 +116,6 @@ public class RoomService : PlatformMongoService<Room>
 		catch (Exception e)
 		{
 			Log.Error(Owner.Will, "Error encountered when checking for expired stickies.", exception: e);
-			
-			_apiService.Alert(
-				title: "Error encountered when checking for expired stickies.",
-				message: "Error encountered when checking for expired stickies.",
-				countRequired: 1,
-				timeframe: 300,
-				data: new RumbleJson
-				    {
-				        { "Exception", e }
-				    } 
-			);
-
 		}
 		_stickyTimer.Start();
 	}
