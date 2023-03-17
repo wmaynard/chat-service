@@ -37,6 +37,7 @@ stages:
   - dev
   - staging
   - production
+  - production-2
   - performance
   - cleanup
 
@@ -104,16 +105,8 @@ build_image:
     entrypoint: [""]
   script:
     - mkdir -p /kaniko/.docker
-    - mkdir -p $CI_PROJECT_DIR/trivy
-    - mkdir -p $CI_PROJECT_DIR/.trivycache
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-    - cd $CI_PROJECT_DIR/trivy
-    - wget https://github.com/aquasecurity/trivy/releases/download/v0.20.1/trivy_0.20.1_Linux-64bit.tar.gz
-    - tar -zxvf trivy*
-    - chmod +x $CI_PROJECT_DIR/trivy
-    - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
-    - ./trivy --cache-dir $CI_PROJECT_DIR/.trivycache image --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
   rules:
     - if: '$BUILD_DISABLED'
       when: never
@@ -126,10 +119,6 @@ build_image:
   needs:
     - job: build_app
       artifacts: true
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR/trivy/$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA.html
-    expire_in: 1 week
 
 include: 
   - '/.gitlab/deploy-k8s.yaml'

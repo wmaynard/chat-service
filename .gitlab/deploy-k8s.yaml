@@ -1,6 +1,8 @@
 .auto-deploy:
-  image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.26.0"
+  image: "registry.gitlab.com/gitlab-org/cluster-integration/auto-deploy-image:v2.47.0"
   dependencies: []
+  needs: ["build_image"]
+  allow_failure: true
   variables:
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
@@ -75,6 +77,19 @@ TT-production-a1:
     KUBE_NAMESPACE: "chat-service"
   tags:
     - production-a1
+  environment:
+    name: TT-Prod-A1
+    url: https://platform-a1.prod.tower.rumblegames.com/
+
+TT-production-a1-apse1:
+  extends: .auto-deploy
+  stage: production
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a1-apse1-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
+  tags:
+    - production-a1-apse1
   environment:
     name: TT-Prod-A1
     url: https://platform-a1.prod.tower.rumblegames.com/
