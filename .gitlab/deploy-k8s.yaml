@@ -96,7 +96,7 @@ TT-production-a1-apse1:
 
 TT-production-a2:
   extends: .auto-deploy
-  stage: production
+  stage: production-2
   variables:
     KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a2-platform-services"
     KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
