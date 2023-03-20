@@ -106,3 +106,16 @@ TT-production-a2:
   environment:
     name: TT-Prod-A2
     url: https://platform-a2.prod.tower.rumblegames.com/
+
+TT-production-a2-apse1:
+  extends: .auto-deploy
+  stage: production-2
+  variables:
+    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a2-apse1-platform-services"
+    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+    KUBE_NAMESPACE: "chat-service"
+  tags:
+    - production-a2-apse1
+  environment:
+    name: TT-Prod-A2
+    url: https://platform-a2.prod.tower.rumblegames.com/
