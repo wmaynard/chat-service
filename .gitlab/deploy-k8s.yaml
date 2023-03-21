@@ -4,7 +4,7 @@
   needs: ["build_image"]
   allow_failure: true
   variables:
-  K8S_SECRET_RUMBLE_REGION: "US"
+    K8S_SECRET_RUMBLE_REGION: "US"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
     - kubectl config use-context $KUBE_CONTEXT
