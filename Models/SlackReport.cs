@@ -16,13 +16,13 @@ public struct SlackReport // TODO: PlatformDataModel?
 	
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_BLOCKS)]
 	public List<SlackBlock> Blocks { get; set; }
-	
+
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_CHANNEL)]
-	public string DestinationChannel { get; set; }
+	public string DestinationChannel => PlatformEnvironment.Require<string>("reportsChannel");
 
 	public SlackReport(List<SlackBlock> blocks, List<SlackBlock> attachments)
 	{
-		DestinationChannel = PlatformEnvironment.Require<string>("reportsChannel");
+		// DestinationChannel = PlatformEnvironment.Require<string>("reportsChannel");
 		Blocks = blocks;
 		Attachments = new object[]{ new
 		{

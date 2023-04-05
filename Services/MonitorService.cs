@@ -24,10 +24,11 @@ public class MonitorService : QueueService<MonitorService.Data>
     private readonly RoomService _rooms;
     private readonly ApiService _api;
     
-    public MonitorService(RoomService rooms, ApiService api) : base(collection: "monitor", intervalMs: 600_000)
+    public MonitorService(RoomService rooms, ApiService api) : base(collection: "monitor", intervalMs: 5_000)
     {
         _rooms = rooms;
         _api = api;
+        Confiscate();
     }
 
     protected override void OnTasksCompleted(Data[] data) => Log.Local(Owner.Will, "All monitor messages sent.");

@@ -25,18 +25,27 @@ public class ReportService : PlatformMongoService<Report>
 	private Timer SummaryTimer { get; set; }
 	
 	private ReportMetrics[] PreviousMetrics { get; set; }
+	private bool _initialized = false;
 
 	public ReportService(DynamicConfig dynamicConfig) : base("reports")
 	{
-		_config = dynamicConfig;
-		SlackReportChannel = new SlackMessageClient(
-			channel: _config.Require<string>("reportsChannel") ?? PlatformEnvironment.SlackLogChannel,
-			token: PlatformEnvironment.SlackLogBotToken
-		);
-		SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
-		SummaryTimer.Elapsed += SendSummaryReport;
-		SummaryTimer.Start();
-		SendSummaryReport(null, null);
+		try
+		{
+			_config = dynamicConfig;
+			SlackReportChannel = new SlackMessageClient(
+				channel: _config.Require<string>("reportsChannel") ?? PlatformEnvironment.SlackLogChannel,
+				token: PlatformEnvironment.SlackLogBotToken
+			);
+			SummaryTimer = new Timer(SUMMARY_INTERVAL_MS);
+			SummaryTimer.Elapsed += SendSummaryReport;
+			SummaryTimer.Start();
+			SendSummaryReport(null, null);
+			_initialized = true;
+		}
+		catch (Exception e)
+		{
+			Log.Error(Owner.Will, "Could not initialize ReportService; no reports can be sent to Slack");
+		}
 	}
 	
 	#region CRUD
@@ -60,6 +69,8 @@ public class ReportService : PlatformMongoService<Report>
 	
 	private void SendSummaryReport(object sender, ElapsedEventArgs args)
 	{
+		if (!_initialized)
+			return;
 		List<Report> reports = _collection.Find(r => r.Status != Report.STATUS_BANNED).ToList();
 		if (!reports.Any())
 		{
@@ -67,7 +78,7 @@ public class ReportService : PlatformMongoService<Report>
 			return;
 		}
 			
-		SummaryTimer.Stop();
+		SummaryTimer?.Stop();
 		try
 		{
 			ReportMetrics[] metrics = ReportMetrics.Generate(ref reports)
@@ -79,7 +90,7 @@ public class ReportService : PlatformMongoService<Report>
 				.Any(b => b == false))
 			{
 				Log.Verbose(Owner.Will, "Report metrics have been calculated, but are unchanged from last time.  No Slack message will be sent.");
-				SummaryTimer.Start();
+				SummaryTimer?.Start();
 				return;
 			}
 			PreviousMetrics = metrics;
@@ -165,7 +176,7 @@ public class ReportService : PlatformMongoService<Report>
 
 		}
 
-		SummaryTimer.Start();
+		SummaryTimer?.Start();
 	}
 	
 	public object SendToSlack(Report report)
