@@ -69,10 +69,7 @@ public class PlayerInfo : PlatformDataModel
 	// TODO: Needs to be changed to PORTAL URL
 	[BsonIgnore]
 	[JsonIgnore]
-	public string SlackLink => SlackFormatter.Link(
-		url: PlatformEnvironment.Url($"/portal/player/details?id={AccountId}"),
-		text: UniqueScreenname
-	);
+	public string SlackLink => $"<{PlatformEnvironment.Url($"/player/{AccountId}").Replace("://", "://portal.")}|{ScreenName}#{Discriminator}>";
 	
 	[BsonIgnore]
 	[JsonIgnore]
