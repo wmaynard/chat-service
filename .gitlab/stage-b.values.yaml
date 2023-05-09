@@ -53,7 +53,7 @@ service:
   additionalHosts:
   commonName: stage-b.nonprod.tower.cdrentertainment.com
   externalPort: 5000
-  internalPort: 80
+  internalPort: 8080
 ingress:
   className: nginx
   enabled: true
