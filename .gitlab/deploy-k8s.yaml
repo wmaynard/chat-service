@@ -34,20 +34,20 @@ dev:
     url: https://dev.nonprod.tower.cdrentertainment.com/
 
 
-stage-a-apse1:
-  extends: .auto-deploy
-  stage: staging
-  needs: ["dev"]
-  variables:
-    KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
-    KUBE_NAMESPACE: "chat-service-8-dev"
-    KUBE_CONTEXT: "platform-services/platform-services-agent:nonprod-apse1"
-    K8S_SECRET_RUMBLE_REGION: "AP"
-  tags:
-    - nonprod-apse1
-  environment:
-    name: stage-a
-    url: https://stage-a.nonprod.tower.cdrentertainment.com/
+# stage-a-apse1:
+#   extends: .auto-deploy
+#   stage: staging
+#   needs: ["dev"]
+#   variables:
+#     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
+#     KUBE_NAMESPACE: "chat-service-8-dev"
+#     KUBE_CONTEXT: "platform-services/platform-services-agent:nonprod-apse1"
+#     K8S_SECRET_RUMBLE_REGION: "AP"
+#   tags:
+#     - nonprod-apse1
+#   environment:
+#     name: stage-a
+#     url: https://stage-a.nonprod.tower.cdrentertainment.com/
 
 stage-a:
   extends: .auto-deploy
@@ -103,20 +103,20 @@ TT-production-a1:
     name: TT-Prod-A1
     url: https://platform-a1.prod.tower.rumblegames.com/
 
-TT-production-a1-apse1:
-  extends: .auto-deploy
-  needs: ["stage-a"]
-  stage: production
-  variables:
-    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a1-apse1-platform-services"
-    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
-    KUBE_NAMESPACE: "chat-service"
-    K8S_SECRET_RUMBLE_REGION: "AP"
-  tags:
-    - production-a1-apse1
-  environment:
-    name: TT-Prod-A1
-    url: https://platform-a1.prod.tower.rumblegames.com/
+# TT-production-a1-apse1:
+#   extends: .auto-deploy
+#   needs: ["stage-a"]
+#   stage: production
+#   variables:
+#     KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a1-apse1-platform-services"
+#     KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+#     KUBE_NAMESPACE: "chat-service"
+#     K8S_SECRET_RUMBLE_REGION: "AP"
+#   tags:
+#     - production-a1-apse1
+#   environment:
+#     name: TT-Prod-A1
+#     url: https://platform-a1.prod.tower.rumblegames.com/
 
 TT-production-a2:
   extends: .auto-deploy
@@ -132,17 +132,17 @@ TT-production-a2:
     name: TT-Prod-A2
     url: https://platform-a2.prod.tower.rumblegames.com/
 
-TT-production-a2-apse1:
-  extends: .auto-deploy
-  needs: ["stage-a"]
-  stage: production-2
-  variables:
-    KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a2-apse1-platform-services"
-    KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
-    KUBE_NAMESPACE: "chat-service"
-    K8S_SECRET_RUMBLE_REGION: "AP"
-  tags:
-    - production-a2-apse1
-  environment:
-    name: TT-Prod-A2
-    url: https://platform-a2.prod.tower.rumblegames.com/
+# TT-production-a2-apse1:
+#   extends: .auto-deploy
+#   needs: ["stage-a"]
+#   stage: production-2
+#   variables:
+#     KUBE_CONTEXT: "platform-services/platform-services-agent:prod-a2-apse1-platform-services"
+#     KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
+#     KUBE_NAMESPACE: "chat-service"
+#     K8S_SECRET_RUMBLE_REGION: "AP"
+#   tags:
+#     - production-a2-apse1
+#   environment:
+#     name: TT-Prod-A2
+#     url: https://platform-a2.prod.tower.rumblegames.com/
