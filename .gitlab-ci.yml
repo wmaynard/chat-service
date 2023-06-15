@@ -28,6 +28,22 @@ variables:
   ROLLOUT_RESOURCE_TYPE: deployment
 
   DOCKER_TLS_CERTDIR: ""  # https://gitlab.com/gitlab-org/gitlab-runner/issues/4501
+# Form variables for restart-service job
+  RESTART_SERVICE:
+    value: "false"
+    options:
+      - "false"
+      - "true"
+    description: "Run the restart service script"
+  RESTART_SERVICE_ENV:
+    value: "dev"
+    description: "Environment to restart service in"
+    options:
+      - "dev"
+      - "stage-a"
+      - "stage-b"
+      - "prod-a1"
+      - "prod-a2"
 
 stages:
   - app_build
@@ -40,6 +56,7 @@ stages:
   - production-2
   - performance
   - cleanup
+  - jobs
 
 workflow:
   rules:
@@ -70,6 +87,8 @@ build_app:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    - if: '$RESTART_SERVICE == "true"'
+      when: never
     - when: always
 
 sonarqube-check:
@@ -95,9 +114,13 @@ sonarqube-check:
       - "dotnet build"
       - "dotnet sonarscanner end /d:sonar.login=\"$SONAR_TOKEN\""
   allow_failure: true
-  only:
-    - merge_requests
-    - main 
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: '$RESTART_SERVICE == "true"'
+      when: never
+    - when: always
+
 
 
 build_image:
@@ -116,10 +139,50 @@ build_image:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
+    - if: '$RESTART_SERVICE == "true"'
+      when: never
     - when: on_success
   needs:
     - job: build_app
       artifacts: true
+
+restart_service:
+  stage: jobs
+  allow_failure: false
+  image:
+    name: bitnami/kubectl
+  script:
+    - |
+      if [ $RESTART_SERVICE_ENV == "dev" ]; then
+        export RUMBLE_NAMESPACE=chat-service-8-dev
+        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+      elif [ $RESTART_SERVICE_ENV == "stage-a" ]; then
+        export RUMBLE_NAMESPACE=chat-service-8-stage-a
+        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+      elif [ $RESTART_SERVICE_ENV == "stage-b" ]; then
+        export RUMBLE_NAMESPACE=chat-service-8-stage-b
+        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+      elif [ $RESTART_SERVICE_ENV == "prod-a1" ]; then
+        export RUMBLE_NAMESPACE=chat-service
+        export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a1-platform-services
+      elif [ $RESTART_SERVICE_ENV == "prod-a2" ]; then
+        export RUMBLE_NAMESPACE=chat-service
+        export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a2-platform-services
+      else
+        echo "Somehow an invalid environment was selected"
+        exit 666
+      fi
+      echo "Using $RUMBLE_CONTEXT to delete all pods from $RUMBLE_NAMESPACE"
+    - |
+      if [ ! -z "$RUMBLE_NAMESPACE" ]; then
+        kubectl config use-context $RUMBLE_CONTEXT
+        kubectl get pods -o yaml -n $RUMBLE_NAMESPACE | kubectl delete -f -
+      fi
+  rules:
+    - if: '$RESTART_SERVICE == "true"'
+      when: always
+
+
 
 include: 
   - '/.gitlab/deploy-k8s.yaml'
