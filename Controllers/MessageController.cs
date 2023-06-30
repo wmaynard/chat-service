@@ -111,10 +111,6 @@ public class MessageController : ChatControllerBase
 
 		string roomId = Require<string>("roomId");
 		Message msg = Message.FromGeneric(Require<RumbleJson>("message"), Token.AccountId).Validate();
-		// Message msg = Require<Message>("message");
-		// msg.AccountId = Token.AccountId;
-		// msg.Validate();
-		// Message msg = Message.FromJsonElement(Require("message"), Token.AccountId).Validate();
 
 		IEnumerable<Ban> bans = _banService.GetBansForUser(Token.AccountId)
 			.Where(b => !b.IsExpired)
