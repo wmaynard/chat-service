@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using RCL.Logging;
@@ -15,6 +13,7 @@ using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Data;
+using Ban = Rumble.Platform.Common.Models.Ban;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -24,14 +23,45 @@ public class V2AdminController : V2ChatControllerBase
 {
 #pragma warning disable CS0649
 	private readonly V2ReportService _reportService;
+	private readonly V2RoomService   _roomService;
 	private readonly ApiService      _apiService;
+	private readonly DynamicConfig   _config;
 #pragma warning restore CS0649
 
 	[HttpGet, Route("playerDetails")]
 	public ActionResult PlayerDetails()
 	{
 		string aid = Require<string>("aid");
-		// TODO check with player/token service to see if player is banned from chat
+		
+		string adminToken = _config.AdminToken;
+
+		_apiService
+			.Request(url: $"/token/admin/status?accountId={aid}")
+			.AddAuthorization(adminToken)
+			.OnFailure(response =>
+			{
+				Log.Error(
+					owner: Owner.Nathan,
+					message: "Unable to fetch chat ban status for player.",
+					data: new
+					{
+					Response = response.AsRumbleJson
+					});
+			})
+			.Get(out RumbleJson res, out int code);
+
+		List<Ban> bans = (List<Ban>) res["bans"];
+
+		foreach (Ban ban in bans)
+		{
+			if (ban.Audience.Contains("chat_service"))
+			{
+				throw new V2UserBannedException(tokenInfo: Token, 
+				                                message: null,
+				                                ban: ban);
+			}
+		}
+		
 		V2Report[] reports = _reportService.GetReportsForPlayer(aid);
 
 		return Ok(new
@@ -108,7 +138,7 @@ public class V2AdminController : V2ChatControllerBase
 	[HttpGet, Route(template: "rooms/list")]
 	public ActionResult ListAllRooms() => Ok(CollectionResponseObject(_roomService.List()));
 
-	[HttpPost, Route(template: "rooms/removePlayers")]
+	[HttpPatch, Route(template: "rooms/removePlayers")]
 	public ActionResult RemovePlayers()
 	{
 		string[] aids = Require<string[]>("aids");
@@ -125,7 +155,7 @@ public class V2AdminController : V2ChatControllerBase
 	#endregion ROOMS
 	
 	#region MESSAGES
-	[HttpPost, Route(template: "messages/delete")]
+	[HttpDelete, Route(template: "messages/delete")]
 	public ActionResult DeleteMessage()
 	{
 		string[] messageIds = Require<string[]>("messageIds");
@@ -167,7 +197,7 @@ public class V2AdminController : V2ChatControllerBase
 		return Ok(stickies.ResponseObject);
 	}
 
-	[HttpPost, Route(template: "messages/unsticky")]
+	[HttpPatch, Route(template: "messages/unsticky")]
 	public ActionResult Unsticky()
 	{
 		string messageId = Require<string>("messageId");
@@ -189,7 +219,7 @@ public class V2AdminController : V2ChatControllerBase
 	#endregion MESSAGES
 	
 	#region REPORTS
-	[HttpPost, Route("reports/delete")]
+	[HttpDelete, Route("reports/delete")]
 	public ActionResult DeleteReport()
 	{
 		string reportId = Require<string>("reportId");
@@ -199,7 +229,7 @@ public class V2AdminController : V2ChatControllerBase
 		return Ok(report.ResponseObject);
 	}
 	
-	[HttpPost, Route("reports/ignore")]
+	[HttpPatch, Route("reports/ignore")]
 	public ActionResult IgnoreReport()
 	{
 		string reportId = Require<string>("reportId");

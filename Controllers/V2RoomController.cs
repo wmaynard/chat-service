@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Exceptions;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Extensions;
+using Rumble.Platform.Common.Services;
+using Rumble.Platform.Common.Utilities;
+using Rumble.Platform.Data;
+using Ban = Rumble.Platform.Common.Models.Ban;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -16,6 +21,8 @@ public class V2RoomController : V2ChatControllerBase
 {
 #pragma warning disable CS0649
 	private readonly V2InactiveUserService _inactiveUserService;
+	private readonly DynamicConfig         _config;
+	private readonly V2RoomService         _roomService;
 #pragma warning restore CS0649
 
 	#region GLOBAL
@@ -25,8 +32,35 @@ public class V2RoomController : V2ChatControllerBase
 	public ActionResult JoinGlobal()
 	{
 		_inactiveUserService.Track(Token);
-		
-		// TODO check with player/token service to see if player is banned from chat
+
+		string adminToken = _config.AdminToken;
+
+		_apiService
+			.Request(url: $"/token/admin/status?accountId={Token.AccountId}")
+			.AddAuthorization(adminToken)
+			.OnFailure(response =>
+			{
+				Log.Error(
+					owner: Owner.Nathan,
+					message: "Unable to fetch chat ban status for player.",
+					data: new
+					{
+					Response = response.AsRumbleJson
+					});
+			})
+			.Get(out RumbleJson res, out int code);
+
+		List<Ban> bans = (List<Ban>) res["bans"];
+
+		foreach (Ban ban in bans)
+		{
+			if (ban.Audience.Contains("chat_service"))
+			{
+				throw new V2UserBannedException(tokenInfo: Token, 
+				                                message: null,
+				                                ban: ban);
+			}
+		}
 
 		string language = Require<string>(V2Room.FRIENDLY_KEY_LANGUAGE);
 		string roomId = Optional<string>("roomId");
@@ -59,7 +93,7 @@ public class V2RoomController : V2ChatControllerBase
 	
 	#region GENERAL
 	// Returns a list of available global rooms for the player, as dictated by their language setting.
-	[HttpPost, Route(template: "available")]
+	[HttpGet, Route(template: "available")]
 	public ActionResult Available()
 	{
 		_inactiveUserService.Track(Token);
@@ -97,7 +131,7 @@ public class V2RoomController : V2ChatControllerBase
 	}
 	
 	// Returns a user's rooms.
-	[HttpPost, Route(template: "list")]
+	[HttpGet, Route(template: "list")]
 	public ActionResult List()
 	{
 		_inactiveUserService.Track(Token);

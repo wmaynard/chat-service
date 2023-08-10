@@ -3,6 +3,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Web;
+using Ban = Rumble.Platform.Common.Models.Ban;
 
 namespace Rumble.Platform.ChatService.Exceptions;
 
@@ -19,7 +20,7 @@ public class V2UserBannedException : PlatformException
 	{
 		Token = tokenInfo;
 		AttemptedMessage = message;
-		ban?.PurgeSnapshot();
+		// ban?.PurgeSnapshot(); // TODO this is removed in platform common ban
 		Ban = ban;
 	}
 }

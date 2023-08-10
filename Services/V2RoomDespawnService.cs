@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RCL.Logging;
+using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 using Rumble.Platform.Common.Interop;
@@ -10,57 +11,49 @@ namespace Rumble.Platform.ChatService.Services;
 
 public class V2RoomDespawnService : PlatformTimerService
 {
-	public const     int                      DESPAWN_THRESHOLD_SECONDS = 3_600;
-	private readonly V2RoomService            _roomService;
-	private          Dictionary<string, long> _lifeSupport;
-	private          SlackMessageClient       _slack;
-	private          int                      _roomsDestroyed;
+	public const     int                DESPAWN_THRESHOLD_SECONDS = 3_600;
+	private readonly V2RoomService      _roomService;
+	private readonly DynamicConfig      _config;
+	private          List<V2Room>       _roomsToDestroy;
+	private          SlackMessageClient _slack;
+	private          List<string>       _roomsDestroyed;
 
 	public V2RoomDespawnService(V2RoomService roomService) : base(intervalMS: 60_000)
 	{
 		_roomService = roomService;
-		_lifeSupport = new Dictionary<string, long>();
-		_roomsDestroyed = 0;
+		_roomsDestroyed = new List<string>();
 
-		_roomService.OnEmptyRoomsFound += TrackEmptyRooms;
+		long inactiveBuffer = _config.Require<long>(key: "inactiveBuffer");
+		long cutoff = UnixTime - inactiveBuffer;
+
+		_roomsToDestroy = _roomService.Find(room => room.LastUpdated < cutoff).ToList();
+
 		_slack = new SlackMessageClient(
 			channel: PlatformEnvironment.Require<string>("monitorChannel"),
 			token: PlatformEnvironment.SlackLogBotToken
 		);
 	}
 
-	// Keep the previous timestamps, but forget about rooms that now have users in them.
-	// This way, we only clear rooms that have been empty for the duration of the timestamp
-	// and seeing no activity.
-	internal void TrackEmptyRooms(object sender, V2RoomService.EmptyRoomEventArgs args) => _lifeSupport = args.roomIds
-	                                                                                                          .ToDictionary(
-	                                                                                                                        keySelector: id => id,
-	                                                                                                                        elementSelector: id => _lifeSupport.TryGetValue(id, out long idleSince) ? idleSince : UnixTime
-	                                                                                                                       );
-
 	protected override void OnElapsed()
 	{
-		string[] roomsToDestroy = _lifeSupport
-			.Where(pair => UnixTime - pair.Value > DESPAWN_THRESHOLD_SECONDS)
-			.Select(pair => pair.Key)
-			.ToArray();
-
-		if (!roomsToDestroy.Any())
+		if (!_roomsToDestroy.Any())
 			return;
 		
 		Log.Info(Owner.Default, "Deleting empty rooms", data: new
 		{
-			RoomIds = roomsToDestroy
+			RoomIds = _roomsToDestroy
 		});
-		foreach (string id in roomsToDestroy)
-			_roomService.Delete(id);
-		_roomsDestroyed += roomsToDestroy.Length;
-		UpdateSlack(roomsToDestroy);
-		Graphite.Track("global-rooms-despawned", roomsToDestroy.Length, type: Graphite.Metrics.Type.FLAT);
-		_lifeSupport.Clear();
+		foreach (V2Room room in _roomsToDestroy)
+		{
+			_roomService.Delete(room.Id);
+			_roomsDestroyed.Add(room.Id);
+		}
+		
+		UpdateSlack(_roomsDestroyed);
+		Graphite.Track("global-rooms-despawned", _roomsDestroyed.Count, type: Graphite.Metrics.Type.FLAT);
 	}
 
-	public void UpdateSlack(string[] roomIds)
+	public void UpdateSlack(List<string> roomIds)
 	{
 		if (!roomIds.Any())
 			return;

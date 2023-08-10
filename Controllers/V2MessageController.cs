@@ -8,7 +8,9 @@ using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Interop;
+using Rumble.Platform.Common.Services;
 using Rumble.Platform.Data;
+using Ban = Rumble.Platform.Common.Models.Ban;
 
 namespace Rumble.Platform.ChatService.Controllers;
 
@@ -17,7 +19,9 @@ public class V2MessageController : V2ChatControllerBase
 {
 #pragma warning disable CS0649
 	private readonly V2ReportService       _reportService;
+	private readonly V2RoomService         _roomService;
 	private readonly V2InactiveUserService _inactiveUserService;
+	private readonly DynamicConfig         _config;
 #pragma warning restore CS0649
 	
 	#region SERVER
@@ -109,9 +113,36 @@ public class V2MessageController : V2ChatControllerBase
 
 		string roomId = Require<string>("roomId");
 		V2Message msg = V2Message.FromGeneric(Require<RumbleJson>("message"), Token.AccountId).Validate();
-		
-		// TODO check with player/token service to see if player is banned from chat
 
+		string adminToken = _config.AdminToken;
+
+		_apiService
+			.Request(url: $"/token/admin/status?accountId={Token.AccountId}")
+			.AddAuthorization(adminToken)
+			.OnFailure(response =>
+			           {
+				           Log.Error(
+				                     owner: Owner.Nathan,
+				                     message: "Unable to fetch chat ban status for player.",
+				                     data: new
+				                           {
+					                           Response = response.AsRumbleJson
+				                           });
+			           })
+			.Get(out RumbleJson res, out int code);
+
+		List<Ban> bans = (List<Ban>) res["bans"];
+
+		foreach (Ban ban in bans)
+		{
+			if (ban.Audience.Contains("chat_service"))
+			{
+				throw new V2UserBannedException(tokenInfo: Token, 
+				                                message: msg,
+				                                ban: ban);
+			}
+		}
+		
 		Graphite.Track("messages", 1, type: Graphite.Metrics.Type.FLAT);
 		object updates = GetAllUpdates(delegate(IEnumerable<V2Room> rooms)
 		{
@@ -125,7 +156,7 @@ public class V2MessageController : V2ChatControllerBase
 		return Ok(updates);
 	}
 	
-	[HttpPost, Route(template: "unread")]
+	[HttpGet, Route(template: "unread")]
 	public ActionResult Unread()
 	{
 		_inactiveUserService.Track(Token);
@@ -133,7 +164,7 @@ public class V2MessageController : V2ChatControllerBase
 		return Ok(GetAllUpdates());
 	}
 	
-	[HttpPost, Route(template: "sticky")]
+	[HttpGet, Route(template: "sticky")]
 	public ActionResult StickyList()
 	{
 		_inactiveUserService.Track(Token);

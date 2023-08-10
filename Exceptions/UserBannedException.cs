@@ -3,6 +3,7 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Web;
+using Ban = Rumble.Platform.ChatService.Models.Ban;
 
 namespace Rumble.Platform.ChatService.Exceptions;
 

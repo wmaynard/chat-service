@@ -18,24 +18,26 @@ namespace Rumble.Platform.ChatService.Models;
 [BsonIgnoreExtraElements]
 public class V2Room : PlatformCollectionDocument
 {
-	internal const string DB_KEY_CAPACITY = "cap";
+	internal const string DB_KEY_CAPACITY          = "cap";
 	internal const string DB_KEY_CREATED_TIMESTAMP = "ts";
-	internal const string DB_KEY_GUILD_ID = "gid";
-	internal const string DB_KEY_LANGUAGE = "lang";
-	internal const string DB_KEY_MEMBERS = "who";
-	internal const string DB_KEY_MESSAGES = "msg";
-	internal const string DB_KEY_TYPE = "t";
+	internal const string DB_KEY_GUILD_ID          = "gid";
+	internal const string DB_KEY_LANGUAGE          = "lang";
+	internal const string DB_KEY_MEMBERS           = "who";
+	internal const string DB_KEY_MESSAGES          = "msg";
+	internal const string DB_KEY_TYPE              = "t";
+	internal const string DB_KEY_LAST_UPDATED      = "last";
 
-	public const string FRIENDLY_KEY_CAPACITY = "capacity";
-	public const string FRIENDLY_KEY_CREATED_TIMESTAMP = "created";
-	public const string FRIENDLY_KEY_GUILD_ID = "guildId";
-	public const string FRIENDLY_KEY_HAS_STICKY = "hasSticky";
-	public const string FRIENDLY_KEY_LANGUAGE = "language";
+	public const string FRIENDLY_KEY_CAPACITY               = "capacity";
+	public const string FRIENDLY_KEY_CREATED_TIMESTAMP      = "created";
+	public const string FRIENDLY_KEY_GUILD_ID               = "guildId";
+	public const string FRIENDLY_KEY_HAS_STICKY             = "hasSticky";
+	public const string FRIENDLY_KEY_LANGUAGE               = "language";
 	public const string FRIENDLY_KEY_LANGUAGE_DISCRIMINATOR = "listingId";
-	public const string FRIENDLY_KEY_MEMBERS = "members";
-	public const string FRIENDLY_KEY_MESSAGES = "messages";
-	public const string FRIENDLY_KEY_TYPE = "type";
-	public const string FRIENDLY_KEY_VACANCIES = "vacancies";
+	public const string FRIENDLY_KEY_MEMBERS                = "members";
+	public const string FRIENDLY_KEY_MESSAGES               = "messages";
+	public const string FRIENDLY_KEY_TYPE                   = "type";
+	public const string FRIENDLY_KEY_VACANCIES              = "vacancies";
+	public const string FRIENDLY_KEY_LAST_UPDATED           = "lastUpdated";
 
 	public enum V2RoomType
 	{
@@ -92,6 +94,10 @@ public class V2Room : PlatformCollectionDocument
 	[BsonElement(DB_KEY_TYPE)]
 	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_TYPE)]
 	public V2RoomType Type { get; set; }
+	
+	[BsonElement(DB_KEY_LAST_UPDATED)]
+	[JsonInclude, JsonPropertyName(FRIENDLY_KEY_LAST_UPDATED)]
+	public long LastUpdated { get; set; }
 	#endregion MONGO
 	
 	#region CLIENT
@@ -127,7 +133,7 @@ public class V2Room : PlatformCollectionDocument
 	[BsonIgnore]
 	[JsonIgnore]
 	public bool IsFull => Members.Count >= MemberCapacity;
-	
+
 	[BsonIgnore]
 	[JsonIgnore]
 	public bool IsStickyRoom => Type == V2RoomType.Sticky;
@@ -153,7 +159,7 @@ public class V2Room : PlatformCollectionDocument
 	/// <exception cref="RoomFullException">Indicates the Room is already full, or became full as the account was joining.</exception>
 	public void AddMember(string accountId)
 	{
-		if (accountId == null) // TODO check with player service to see if account exists
+		if (accountId == null)
 			throw new V2InvalidPlayerInfoException(accountId, "AccountId");
 		if (HasMember(accountId))
 			throw new V2AlreadyInRoomException(this, accountId);
