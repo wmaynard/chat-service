@@ -30,14 +30,13 @@ application:
 hpa:
   enabled: false
   minReplicas: 2
-  maxReplicas: 5
+  maxReplicas: 10
   CPUUtilizationPercentage: 60
   MemUtilizationPercentage: 60
   keda:
     enabled: true
     requestsPerSecond: "10"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
-    filter: "exported_namespace"
 gitlab:
   app:
   env:
