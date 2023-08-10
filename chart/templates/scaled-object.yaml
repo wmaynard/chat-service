@@ -12,7 +12,6 @@ spec:
     - type: prometheus
       metadata:
         serverAddress: {{ .Values.hpa.keda.serverAddress }}
-        metricName: {{ template "appname" . }}_req_sec
         threshold: {{ .Values.hpa.keda.requestsPerSecond | quote }}
-        query: sum(rate(nginx_ingress_controller_requests{ {{ .Values.hpa.keda.filter }}='{{.Release.Namespace}}'}[2m]))
+        query: sum(rate(nginx_ingress_controller_requests{exported_namespace='{{ .Release.Namespace }}'}[1m]))
 {{- end -}}
