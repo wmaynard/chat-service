@@ -87,7 +87,7 @@ public class Ban : PlatformCollectionDocument
 		Reason = reason;
 		IssuedOn = Timestamp.UnixTime;
 		Expiration = expiration;
-		Snapshot = rooms.ToArray();
+		Snapshot = rooms?.ToArray();
 	}
 
 	public void PurgeSnapshot() => Snapshot = null;
