@@ -63,6 +63,8 @@ ingress:
     secretName: "chat-service-stage-a"
     useDefaultSecret: false
   annotations:
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 10m
+    nginx.ingress.kubernetes.io/service-upstream: "true"
   modSecurity:
     enabled: false
     secRuleEngine: "DetectionOnly"
