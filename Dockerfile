@@ -1,6 +1,6 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
-COPY bin/Release/net6.0/ .
+COPY bin/Release/net7.0/ .
 RUN apt update && apt install -y curl
 RUN addgroup --system --gid 1000 rumblegroup && adduser --system --uid 1000 --ingroup rumblegroup --shell /bin/sh rumbleuser
 RUN chown -R rumbleuser:rumblegroup /app
