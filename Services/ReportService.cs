@@ -161,18 +161,18 @@ public class ReportService : PlatformMongoService<Report>
 		}
 		catch (Exception ex)
 		{
-			Log.Error(Owner.Will, "Unable to send the Reports Summary.", exception: ex);
-			
-			_apiService.Alert(
-				title: "Unable to send the Reports Summary.",
-				message: "Unable to send the Reports Summary.",
-				countRequired: 1,
-				timeframe: 300,
-				data: new RumbleJson
-				    {
-				        { "Exception", ex }
-				    } 
-			);
+			// Log.Error(Owner.Will, "Unable to send the Reports Summary.", exception: ex);
+			//
+			// _apiService.Alert(
+			// 	title: "Unable to send the Reports Summary.",
+			// 	message: "Unable to send the Reports Summary.",
+			// 	countRequired: 1,
+			// 	timeframe: 300,
+			// 	data: new RumbleJson
+			//     {
+			//         { "Exception", ex }
+			//     } 
+			// );
 
 		}
 
