@@ -7,20 +7,34 @@
     K8S_SECRET_RUMBLE_REGION: "US"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
-    - kubectl config use-context $KUBE_CONTEXT
-    - auto-deploy check_kube_domain
-    - auto-deploy download_chart
-    - auto-deploy ensure_namespace
-    - auto-deploy create_secret
-    - auto-deploy deploy
+  - |-
+    PAYLOAD=$(cat << JSON
+    {
+      "text": "Deploy Started '$CI_PROJECT_NAME' - <a href=\"$CI_PROJECT_URL/-/commit/$CI_COMMIT_SHA\">Git Commit</a> - <a href=\"$CI_PIPELINE_URL\">Pipeline Url</a>",
+      "tags": [
+        "deployment",
+        "$CI_ENVIRONMENT_NAME"
+      ]
+    }
+    JSON
+    )
+  - echo $PAYLOAD
+  - kubectl config use-context $KUBE_CONTEXT
+  - auto-deploy check_kube_domain
+  - auto-deploy download_chart
+  - auto-deploy ensure_namespace
+  - auto-deploy create_secret
+  - >
+    curl --location --http1.1 --request POST "https://grafana.rumblegames.com/api/annotations" --header 'Content-Type: application/json' --header "Authorization: Bearer $GRAFANA_TOKEN" --data "${PAYLOAD}" || true
+  - auto-deploy deploy
   rules:
-    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: '$RESTART_SERVICE == "true"'
-      when: never
-    - when: manual
+  - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+    when: never
+  - if: $CI_COMMIT_TAG
+    when: never
+  - if: '$RESTART_SERVICE == "true"'
+    when: never
+  - when: manual
 
 
 dev:
@@ -30,7 +44,7 @@ dev:
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-dev"
   tags:
-    - cluster
+  - cluster
   environment:
     name: dev
     url: https://dev.nonprod.tower.cdrentertainment.com/
@@ -59,7 +73,7 @@ stage-a:
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-stage-a"
   tags:
-    - cluster
+  - cluster
   environment:
     name: stage-a
     url: https://stage-a.nonprod.tower.cdrentertainment.com/
@@ -74,7 +88,7 @@ stage-b:
     KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
     KUBE_NAMESPACE: "chat-service-8-stage-b"
   tags:
-    - cluster
+  - cluster
   environment:
     name: stage-b
     url: https://stage-b.nonprod.tower.cdrentertainment.com/
@@ -99,7 +113,7 @@ TT-production-a1:
     KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
     KUBE_NAMESPACE: "chat-service"
   tags:
-    - production-a1
+  - production-a1
   environment:
     name: TT-Prod-A1
     url: https://platform-a1.prod.tower.rumblegames.com/
@@ -127,7 +141,7 @@ TT-production-a2:
     KUBE_INGRESS_BASE_DOMAIN: prod.tower.rumblegames.com
     KUBE_NAMESPACE: "chat-service"
   tags:
-    - production-a2
+  - production-a2
   environment:
     name: TT-Prod-A2
     url: https://platform-a2.prod.tower.rumblegames.com/
