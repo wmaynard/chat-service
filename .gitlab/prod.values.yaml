@@ -10,7 +10,7 @@ image:
   tag: stable
   pullPolicy: IfNotPresent
   # secrets:
-  #   - name: gitlab-registry
+#   - name: gitlab-registry
 extraLabels: {}
 lifecycle: {}
 # preStop:
@@ -25,7 +25,7 @@ application:
   tier: web
   migrateCommand:
   initializeCommand:
-  secretName: 
+  secretName:
   secretChecksum:
 hpa:
   enabled: false
@@ -48,9 +48,9 @@ service:
   annotations: {}
   name: cs-prod # 15 character limit..
   type: NodePort
-  url: 
+  url:
   additionalHosts:
-  commonName: 
+  commonName:
   externalPort: 5000
   internalPort: 8080
 ingress:
@@ -69,9 +69,9 @@ ingress:
     enabled: false
     secRuleEngine: "DetectionOnly"
     # secRules:
-    #   - variable: ""
-    #     operator: ""
-    #     action: ""
+  #   - variable: ""
+  #     operator: ""
+  #     action: ""
   canary:
     weight:
 prometheus:
@@ -97,11 +97,12 @@ startupProbe:
 postgresql:
   managed: false
   managedClassSelector:
-    #   matchLabels:
-    #     stack: gitlab (This is an example. The labels should match the labels on the CloudSQLInstanceClass)
+  #   matchLabels:
+  #     stack: gitlab (This is an example. The labels should match the labels on the CloudSQLInstanceClass)
 
 resources:
   limits:
+    cpu: null
     memory: 256Mi
   requests:
     cpu: 128m
@@ -149,48 +150,48 @@ serviceAccount:
 persistence:
   enabled: false
   volumes:
-    - name: data
-      mount:
-        path: "/pvc-mount"
-        # subPath: "/pvc-mount/config.txt"
-      claim:
-        accessMode: ReadWriteOnce
-        size: 8Gi
-        # If you want to use a custom storage class, you can specify `storageClass`. In this case, you need to create a storage class at first.
-        # If `storageClass` is not specified, the behavior will vary per Kubernetes provider.
-        # For example, GKE automatically chooses a default storage class and allocate a physical storage.
-        # See https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes for more information.
-        # storageClass: "myStorage"
+  - name: data
+    mount:
+      path: "/pvc-mount"
+      # subPath: "/pvc-mount/config.txt"
+    claim:
+      accessMode: ReadWriteOnce
+      size: 8Gi
+      # If you want to use a custom storage class, you can specify `storageClass`. In this case, you need to create a storage class at first.
+# If `storageClass` is not specified, the behavior will vary per Kubernetes provider.
+# For example, GKE automatically chooses a default storage class and allocate a physical storage.
+# See https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes for more information.
+# storageClass: "myStorage"
 
 workers: {}
-  # worker:
-  #   replicaCount: 1
-  #   terminationGracePeriodSeconds: 60
-  #   command:
-  #   - /bin/herokuish
-  #   - procfile
-  #   - start
-  #   - worker
-  #   nodeSelector: {}
-  #   tolerations: []
-  #   livenessProbe:
-  #     path: "/"
-  #     initialDelaySeconds: 15
-  #     timeoutSeconds: 15
-  #     scheme: "HTTP"
-  #     probeType: "httpGet"
-  #   readinessProbe:
-  #     path: "/"
-  #     initialDelaySeconds: 5
-  #     timeoutSeconds: 3
-  #     scheme: "HTTP"
-  #     probeType: "httpGet"
-  #   lifecycle:
-  #     preStop:
-  #       exec:
-  #         command: ["/bin/sh", "-c", "sleep 10"]
-  #   preStopCommand:
-  #   - /bin/herokuish
-  #   - procfile
-  #   - start
-  #   - stop_worker
+# worker:
+#   replicaCount: 1
+#   terminationGracePeriodSeconds: 60
+#   command:
+#   - /bin/herokuish
+#   - procfile
+#   - start
+#   - worker
+#   nodeSelector: {}
+#   tolerations: []
+#   livenessProbe:
+#     path: "/"
+#     initialDelaySeconds: 15
+#     timeoutSeconds: 15
+#     scheme: "HTTP"
+#     probeType: "httpGet"
+#   readinessProbe:
+#     path: "/"
+#     initialDelaySeconds: 5
+#     timeoutSeconds: 3
+#     scheme: "HTTP"
+#     probeType: "httpGet"
+#   lifecycle:
+#     preStop:
+#       exec:
+#         command: ["/bin/sh", "-c", "sleep 10"]
+#   preStopCommand:
+#   - /bin/herokuish
+#   - procfile
+#   - start
+#   - stop_worker
