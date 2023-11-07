@@ -30,13 +30,14 @@ application:
 hpa:
   enabled: false
   minReplicas: 2
-  maxReplicas: 5
+  maxReplicas: 3
   CPUUtilizationPercentage: 60
   MemUtilizationPercentage: 60
   keda:
     enabled: true
     requestsPerSecond: "10"
     serverAddress: http://prometheus-server.gitlab-managed-apps.svc:80
+    MemUtilizationPercentage: 95
 gitlab:
   app:
   env:
@@ -103,7 +104,7 @@ postgresql:
 resources:
   limits:
     cpu: null
-    memory: 256Mi
+    memory: 288Mi
   requests:
     cpu: 256m
     memory: 256Mi

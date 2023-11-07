@@ -14,4 +14,8 @@ spec:
         serverAddress: {{ .Values.hpa.keda.serverAddress }}
         threshold: {{ .Values.hpa.keda.requestsPerSecond | quote }}
         query: sum(rate(nginx_ingress_controller_requests{exported_namespace='{{ .Release.Namespace }}'}[1m]))
+    - type: memory
+      metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+      metadata:
+        value: {{ .Values.hpa.keda.MemUtilizationPercentage | quote }}
 {{- end -}}
