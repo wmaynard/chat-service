@@ -3,7 +3,7 @@ image: alpine:latest
 variables:
   # KUBE_INGRESS_BASE_DOMAIN is the application deployment domain and should be set as a variable at the group or project level.
   KUBE_INGRESS_BASE_DOMAIN: nonprod.tower.cdrentertainment.com
-  HELM_SCALE_EXTRA_ARGS: --set postgresql.enabled="false" 
+  HELM_SCALE_EXTRA_ARGS: --set postgresql.enabled="false"
 
   K8S_SECRET_GRAPHITE: "$GRAPHITE"
   K8S_SECRET_LOGGLY_URL: "$LOGGLY_URL"
@@ -15,10 +15,10 @@ variables:
   K8S_SECRET_VERBOSE_LOGGING: "$VERBOSE_LOGGING"
   K8S_SECRET_COMMIT_SHA: "$CI_COMMIT_SHA"
 
-# from gitlab project ci variables - normally env specific
+  # from gitlab project ci variables - normally env specific
   K8S_SECRET_RUMBLE_KEY: "$RUMBLE_KEY"
   K8S_SECRET_MONGODB_URI: "$MONGODB_URI"
-    
+
   K8S_SECRET_PLATFORM_COMMON: "$PLATFORM_COMMON"
 
 
@@ -27,99 +27,99 @@ variables:
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
-  DOCKER_TLS_CERTDIR: ""  # https://gitlab.com/gitlab-org/gitlab-runner/issues/4501
-# Form variables for restart-service job
+  DOCKER_TLS_CERTDIR: "" # https://gitlab.com/gitlab-org/gitlab-runner/issues/4501
+  # Form variables for restart-service job
   RESTART_SERVICE:
     value: "false"
     options:
-      - "false"
-      - "true"
+    - "false"
+    - "true"
     description: "Run the restart service script"
   RESTART_SERVICE_ENV:
     value: "dev"
     description: "Environment to restart service in"
     options:
-      - "dev"
-      - "stage-a"
-      - "stage-b"
-      - "prod-a1"
-      - "prod-a2"
+    - "dev"
+    - "stage-a"
+    - "stage-b"
+    - "prod-a1"
+    - "prod-a2"
 
 stages:
-  - app_build
-  - scan
-  - build
-  - deploy  # dummy stage to follow the template guidelines
-  - dev
-  - staging
-  - production
-  - production-2
-  - performance
-  - cleanup
-  - jobs
+- app_build
+- scan
+- build
+- deploy # dummy stage to follow the template guidelines
+- dev
+- staging
+- production
+- production-2
+- performance
+- cleanup
+- jobs
 
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: never
-    - when: always
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - when: always
 
 
 build_app:
   stage: app_build
   image: mcr.microsoft.com/dotnet/sdk:7.0
   tags:
-    - kubernetes
+  - kubernetes
   script:
-    - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name platform "$CI_SERVER_URL/api/v4/groups/5/-/packages/nuget/index.json"
-    - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name tower "$CI_SERVER_URL/api/v4/groups/6/-/packages/nuget/index.json"
-    - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name github "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
-    - dotnet restore
-    - dotnet build --no-restore --configuration Release
-    - CURRENTVERSION="$(dotnet ./bin/Release/net7.0/chat-service.dll -version | cut -d':' -f2)"
-    - echo "CURRENTVERSION=$CURRENTVERSION" >> .env
-    - git tag $CURRENTVERSION; git push https://${BOT_USER}:${BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name platform "$CI_SERVER_URL/api/v4/groups/5/-/packages/nuget/index.json"
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name tower "$CI_SERVER_URL/api/v4/groups/6/-/packages/nuget/index.json"
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name github "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
+  - dotnet restore
+  - dotnet build --no-restore --configuration Release
+  - CURRENTVERSION="$(dotnet ./bin/Release/net7.0/chat-service.dll -version | cut -d':' -f2)"
+  - echo "CURRENTVERSION=$CURRENTVERSION" >> .env
+  - git tag $CURRENTVERSION; git push https://${BOT_USER}:${BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
   artifacts:
     paths:
-      - bin/Release/net7.0/*
+    - bin/Release/net7.0/*
     reports:
       dotenv: .env
   rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: '$RESTART_SERVICE == "true"'
-      when: never
-    - when: always
+  - if: $CI_COMMIT_TAG
+    when: never
+  - if: '$RESTART_SERVICE == "true"'
+    when: never
+  - when: always
 
 sonarqube-check:
   stage: scan
   image: mcr.microsoft.com/dotnet/sdk:7.0
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+    GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
   cache:
     key: "${CI_JOB_NAME}"
     paths:
-      - .sonar/cache
-  script: 
-      - "apt-get update"
-      - "apt-get install --yes openjdk-11-jre"
-      - "dotnet tool install --global dotnet-sonarscanner"
-      - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name gitlab "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
-      - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name platform "$CI_SERVER_URL/api/v4/groups/5/-/packages/nuget/index.json"
-      - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name tower "$CI_SERVER_URL/api/v4/groups/6/-/packages/nuget/index.json"
-      - dotnet restore
-      - "export PATH=\"$PATH:$HOME/.dotnet/tools\""
-      - "dotnet sonarscanner begin /k:\"rumble-${CI_PROJECT_TITLE}\" /d:sonar.login=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" "
-      - "dotnet build"
-      - "dotnet sonarscanner end /d:sonar.login=\"$SONAR_TOKEN\""
+    - .sonar/cache
+  script:
+  - "apt-get update"
+  - "apt-get install --yes openjdk-17-jre"
+  - "dotnet tool install --global dotnet-sonarscanner"
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name gitlab "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name platform "$CI_SERVER_URL/api/v4/groups/5/-/packages/nuget/index.json"
+  - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name tower "$CI_SERVER_URL/api/v4/groups/6/-/packages/nuget/index.json"
+  - dotnet restore
+  - "export PATH=\"$PATH:$HOME/.dotnet/tools\""
+  - "dotnet sonarscanner begin /k:\"rumble-${CI_PROJECT_TITLE}\" /d:sonar.login=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" "
+  - "dotnet build"
+  - "dotnet sonarscanner end /d:sonar.login=\"$SONAR_TOKEN\""
   allow_failure: true
   rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: '$RESTART_SERVICE == "true"'
-      when: never
-    - when: always
+  - if: $CI_COMMIT_TAG
+    when: never
+  - if: '$RESTART_SERVICE == "true"'
+    when: never
+  - when: always
 
 
 
@@ -130,21 +130,21 @@ build_image:
     name: "$KANIKO_IMAGE"
     entrypoint: [""]
   script:
-    - echo "$CURRENTVERSION"
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CURRENTVERSION
+  - echo "$CURRENTVERSION"
+  - mkdir -p /kaniko/.docker
+  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+  - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA --destination $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CURRENTVERSION
   rules:
-    - if: '$BUILD_DISABLED'
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: '$RESTART_SERVICE == "true"'
-      when: never
-    - when: on_success
+  - if: '$BUILD_DISABLED'
+    when: never
+  - if: $CI_COMMIT_TAG
+    when: never
+  - if: '$RESTART_SERVICE == "true"'
+    when: never
+  - when: on_success
   needs:
-    - job: build_app
-      artifacts: true
+  - job: build_app
+    artifacts: true
 
 restart_service:
   stage: jobs
@@ -152,37 +152,37 @@ restart_service:
   image:
     name: bitnami/kubectl
   script:
-    - |
-      if [ $RESTART_SERVICE_ENV == "dev" ]; then
-        export RUMBLE_NAMESPACE=chat-service-8-dev
-        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
-      elif [ $RESTART_SERVICE_ENV == "stage-a" ]; then
-        export RUMBLE_NAMESPACE=chat-service-8-stage-a
-        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
-      elif [ $RESTART_SERVICE_ENV == "stage-b" ]; then
-        export RUMBLE_NAMESPACE=chat-service-8-stage-b
-        export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
-      elif [ $RESTART_SERVICE_ENV == "prod-a1" ]; then
-        export RUMBLE_NAMESPACE=chat-service
-        export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a1-platform-services
-      elif [ $RESTART_SERVICE_ENV == "prod-a2" ]; then
-        export RUMBLE_NAMESPACE=chat-service
-        export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a2-platform-services
-      else
-        echo "Somehow an invalid environment was selected"
-        exit 666
-      fi
-      echo "Using $RUMBLE_CONTEXT to delete all pods from $RUMBLE_NAMESPACE"
-    - |
-      if [ ! -z "$RUMBLE_NAMESPACE" ]; then
-        kubectl config use-context $RUMBLE_CONTEXT
-        kubectl get pods -o yaml -n $RUMBLE_NAMESPACE | kubectl delete -f -
-      fi
+  - |
+    if [ $RESTART_SERVICE_ENV == "dev" ]; then
+      export RUMBLE_NAMESPACE=chat-service-8-dev
+      export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+    elif [ $RESTART_SERVICE_ENV == "stage-a" ]; then
+      export RUMBLE_NAMESPACE=chat-service-8-stage-a
+      export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+    elif [ $RESTART_SERVICE_ENV == "stage-b" ]; then
+      export RUMBLE_NAMESPACE=chat-service-8-stage-b
+      export RUMBLE_CONTEXT=platform-services/platform-services-agent:platform-services
+    elif [ $RESTART_SERVICE_ENV == "prod-a1" ]; then
+      export RUMBLE_NAMESPACE=chat-service
+      export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a1-platform-services
+    elif [ $RESTART_SERVICE_ENV == "prod-a2" ]; then
+      export RUMBLE_NAMESPACE=chat-service
+      export RUMBLE_CONTEXT=platform-services/platform-services-agent:prod-a2-platform-services
+    else
+      echo "Somehow an invalid environment was selected"
+      exit 666
+    fi
+    echo "Using $RUMBLE_CONTEXT to delete all pods from $RUMBLE_NAMESPACE"
+  - |
+    if [ ! -z "$RUMBLE_NAMESPACE" ]; then
+      kubectl config use-context $RUMBLE_CONTEXT
+      kubectl get pods -o yaml -n $RUMBLE_NAMESPACE | kubectl delete -f -
+    fi
   rules:
-    - if: '$RESTART_SERVICE == "true"'
-      when: always
+  - if: '$RESTART_SERVICE == "true"'
+    when: always
 
 
 
-include: 
-  - '/.gitlab/deploy-k8s.yaml'
+include:
+- '/.gitlab/deploy-k8s.yaml'
