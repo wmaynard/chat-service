@@ -94,7 +94,7 @@ public class PlayerInfo : PlatformDataModel
 			AccountId = JsonHelper.Optional<string>(input, FRIENDLY_KEY_ACCOUNT_ID),
 			Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
 			ScreenName = JsonHelper.Optional<string>(input, FRIENDLY_KEY_SCREENNAME),
-			InRoomSince = Timestamp.UnixTime,
+			InRoomSince = Timestamp.Now,
 			Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
 			Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
 			Discriminator = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_DISCRIMINATOR) ?? 0
@@ -107,7 +107,7 @@ public class PlayerInfo : PlatformDataModel
 			AccountId = token.AccountId,
 			Avatar = JsonHelper.Optional<string>(input, FRIENDLY_KEY_AVATAR),
 			ScreenName = token.ScreenName,
-			InRoomSince = Timestamp.UnixTime,
+			InRoomSince = Timestamp.Now,
 			Level = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_LEVEL) ?? 0,
 			Power = JsonHelper.Optional<int?>(input, FRIENDLY_KEY_POWER) ?? 0,
 			Discriminator = token.Discriminator

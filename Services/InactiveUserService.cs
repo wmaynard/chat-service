@@ -40,7 +40,7 @@ public class InactiveUserService : PlatformTimerService
 				.SelectMany(room => room.Members)
 				.ToDictionary(
 					keySelector: player => player.AccountId,
-					elementSelector: player => UnixTime
+					elementSelector: player => Timestamp.Now
 				);
 
 		}
@@ -67,7 +67,7 @@ public class InactiveUserService : PlatformTimerService
 		if (_activity == null || !_activity.Any())
 			return;
 		string[] inactiveAccountIDs = _activity
-			.Where(pair => UnixTime - pair.Value > FORCED_LOGOUT_THRESHOLD_S)
+			.Where(pair => Timestamp.Now - pair.Value > FORCED_LOGOUT_THRESHOLD_S)
 			.Select(pair => pair.Key)
 			.ToArray();
 		if (!inactiveAccountIDs.Any())
@@ -160,7 +160,7 @@ public class InactiveUserService : PlatformTimerService
 		{
 			if (aid == null)
 				throw new NullReferenceException();
-			_activity[aid] = UnixTime;
+			_activity[aid] = Timestamp.Now;
 		}
 		catch (Exception e)
 		{

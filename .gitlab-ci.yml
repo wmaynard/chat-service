@@ -67,7 +67,7 @@ workflow:
 
 build_app:
   stage: app_build
-  image: mcr.microsoft.com/dotnet/sdk:7.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   tags:
   - kubernetes
   script:
@@ -76,12 +76,12 @@ build_app:
   - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name github "https://gitlab.cdrentertainment.com/api/v4/projects/14/packages/nuget/index.json"
   - dotnet restore
   - dotnet build --no-restore --configuration Release
-  - CURRENTVERSION="$(dotnet ./bin/Release/net7.0/chat-service.dll -version | cut -d':' -f2)"
+  - CURRENTVERSION="$(dotnet ./bin/Release/net8.0/chat-service.dll -version | cut -d':' -f2)"
   - echo "CURRENTVERSION=$CURRENTVERSION" >> .env
   - git tag $CURRENTVERSION; git push https://${BOT_USER}:${BOT_PAT}@gitlab.cdrentertainment.com/platform-services/$CI_PROJECT_NAME.git --tags
   artifacts:
     paths:
-    - bin/Release/net7.0/*
+    - bin/Release/net8.0/*
     reports:
       dotenv: .env
   rules:
@@ -93,7 +93,7 @@ build_app:
 
 sonarqube-check:
   stage: scan
-  image: mcr.microsoft.com/dotnet/sdk:7.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
     GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task

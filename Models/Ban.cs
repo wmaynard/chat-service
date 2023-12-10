@@ -85,7 +85,7 @@ public class Ban : PlatformCollectionDocument
 	{
 		AccountId = accountId;
 		Reason = reason;
-		IssuedOn = Timestamp.UnixTime;
+		IssuedOn = Timestamp.Now;
 		Expiration = expiration;
 		Snapshot = rooms?.ToArray();
 	}

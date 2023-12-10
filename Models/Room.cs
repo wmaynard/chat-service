@@ -153,7 +153,7 @@ public class Room : PlatformCollectionDocument
 	
 	public Room ()
 	{
-		CreatedTimestamp = Timestamp.UnixTime;
+		CreatedTimestamp = Timestamp.Now;
 		Messages = new List<Message>();
 		Members = new HashSet<PlayerInfo>();
 		PreviousMembers = new HashSet<PlayerInfo>();

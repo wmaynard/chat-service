@@ -35,13 +35,13 @@ public class RoomDespawnService : PlatformTimerService
 	internal void TrackEmptyRooms(object sender, RoomService.EmptyRoomEventArgs args) => _lifeSupport = args.roomIds
 		.ToDictionary(
 			keySelector: id => id,
-			elementSelector: id => _lifeSupport.TryGetValue(id, out long idleSince) ? idleSince : UnixTime
+			elementSelector: id => _lifeSupport.TryGetValue(id, out long idleSince) ? idleSince : Timestamp.Now
 		);
 
 	protected override void OnElapsed()
 	{
 		string[] roomsToDestroy = _lifeSupport
-			.Where(pair => UnixTime - pair.Value > DESPAWN_THRESHOLD_SECONDS)
+			.Where(pair => Timestamp.Now - pair.Value > DESPAWN_THRESHOLD_SECONDS)
 			.Select(pair => pair.Key)
 			.ToArray();
 

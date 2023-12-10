@@ -93,7 +93,7 @@ public class Message : PlatformDataModel
 
 	[BsonIgnore]
 	[JsonIgnore]
-	public bool IsExpired => Expiration != null && Rumble.Platform.Common.Utilities.Timestamp.UnixTime > Expiration;
+	public bool IsExpired => Expiration != null && Rumble.Platform.Common.Utilities.Timestamp.Now > Expiration;
 	
 	[BsonIgnore]
 	[JsonIgnore]
@@ -104,7 +104,7 @@ public class Message : PlatformDataModel
 	{
 		Id = Guid.NewGuid().ToString();
 		Type = TYPE_CHAT;
-		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime;
+		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.Now;
 	}
 
 	internal static Message FromGeneric(RumbleJson input, string accountId)
@@ -112,14 +112,14 @@ public class Message : PlatformDataModel
 		long? startTime = input.Optional<long?>(FRIENDLY_KEY_VISIBLE_FROM);
 		long? duration = input.Optional<long?>(FRIENDLY_KEY_DURATION_IN_SECONDS);
 		long? expiration = duration != null
-			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.UnixTime) + duration
+			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.Now) + duration
 			: input.Optional<long?>(FRIENDLY_KEY_EXPIRATION);
 
 		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = input.Optional<string>(FRIENDLY_KEY_TEXT),
-			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime,
+			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.Now,
 			Type = TYPE_CHAT,
 			VisibleFrom = startTime,
 			Expiration = expiration,
@@ -139,14 +139,14 @@ public class Message : PlatformDataModel
 		long? startTime = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_VISIBLE_FROM);
 		long? duration = JsonHelper.Optional<long?>(input, FRIENDLY_KEY_DURATION_IN_SECONDS);
 		long? expiration = duration != null
-			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.UnixTime) + duration
+			? (startTime ?? Rumble.Platform.Common.Utilities.Timestamp.Now) + duration
 			: JsonHelper.Optional<long?>(input, FRIENDLY_KEY_EXPIRATION);
 		
 		return new Message
 		{
 			Id = Guid.NewGuid().ToString(),
 			Text = JsonHelper.Optional<string>(input, FRIENDLY_KEY_TEXT),
-			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime,
+			Timestamp = Rumble.Platform.Common.Utilities.Timestamp.Now,
 			Type = TYPE_CHAT,
 			VisibleFrom = startTime,
 			Expiration = expiration,

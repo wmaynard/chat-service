@@ -130,7 +130,7 @@ public class Report : PlatformCollectionDocument
 
 	public Report()
 	{
-		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.UnixTime;
+		Timestamp = Rumble.Platform.Common.Utilities.Timestamp.Now;
 		Status = STATUS_UNADDRESSED;
 		Reporters = new HashSet<PlayerInfo>();
 	}
