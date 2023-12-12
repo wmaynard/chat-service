@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using RCL.Logging;
+using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
@@ -12,17 +13,28 @@ namespace Rumble.Platform.ChatService.Models;
 
 public class Room : PlatformCollectionDocument
 {
+    [BsonElement("who")]
+    [JsonPropertyName("members")]
     public string[] Members { get; set; }
     
+    [BsonElement("type")]
+    [JsonIgnore]
     public RoomType Type { get; set; }
+
+    [BsonIgnore]
+    [JsonPropertyName("type")]
+    public string VerboseType => Type.GetDisplayName();
     
     [BsonIgnore]
+    [JsonPropertyName("unread")]
     public Message[] Messages { get; set; }
     
+    [BsonElement("updated")]
+    [JsonIgnore]
     public long MembershipUpdatedMs { get; set; }
     
-    [BsonIgnoreIfDefault]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [BsonElement("globalId"), BsonIgnoreIfDefault]
+    [JsonPropertyName("number"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long FriendlyId { get; set; }
 
     public Room Prune()
@@ -116,9 +128,9 @@ public class RoomService : MinqService<Room>
             ?.FriendlyId
             ?? 0;
 
-        mongo
+        output = mongo
             .ExactId(output.Id)
-            .Update(update => update.Set(room => room.FriendlyId, ++max));
+            .UpdateAndReturnOne(update => update.Set(room => room.FriendlyId, ++max));
         
         Log.Info(Owner.Will, "A global room was assigned a friendly ID number.", data: new
         {
@@ -146,6 +158,15 @@ public class RoomService : MinqService<Room>
     public string[] ListGlobalRooms() => mongo
         .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
         .Project(room => room.Id);
+
+    public const int ROOM_LIST_PAGE_SIZE = 10;
+    public Room[] ListGlobalRoomsWithCapacity(int page, out long remainingRooms) => mongo
+        .Where(query => query
+            .EqualTo(room => room.Type, RoomType.Global)
+            .LengthLessThan(room => room.Members, 200)
+        )
+        .Sort(sort => sort.OrderBy(room => room.FriendlyId))
+        .Page(ROOM_LIST_PAGE_SIZE, page, out remainingRooms);
     
     public RoomType GetRoomType(string id) => mongo
         .ExactId(id)

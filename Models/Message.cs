@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.Common.Minq;
+using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 
@@ -7,20 +11,54 @@ namespace Rumble.Platform.ChatService.Models;
 
 public class Message : PlatformCollectionDocument
 {
+    [BsonElement(TokenInfo.DB_KEY_ACCOUNT_ID)]
+    [JsonPropertyName(TokenInfo.FRIENDLY_KEY_ACCOUNT_ID)]
     public string AccountId { get; set; }
+    
+    [BsonElement("body")]
+    [JsonPropertyName("text")]
     public string Body { get; set; }
+    
+    [BsonElement("data")]
+    [JsonPropertyName("context")]
     public RumbleJson Data { get; set; }
+    
+    [BsonElement("exp")]
+    [JsonIgnore]
     public long Expiration { get; set; }
+    
+    [BsonElement("room")]
+    [JsonPropertyName("roomId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string RoomId { get; set; }
+    
+    [BsonElement("type")]
+    [JsonIgnore]
     public MessageType Type { get; set; }
+
+    protected override void Validate(out List<string> errors)
+    {
+        errors = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(Body))
+            errors.Add("Messages must have content."); // TODO: Add key to this
+        if (Type != MessageType.Unassigned)
+            errors.Add("Sending a message with an explicit message type is not allowed, it is server-authoritative.");
+    }
+
+    public Message Prune()
+    {
+        RoomId = null;
+        
+        return this;
+    }
 }
 
 public enum MessageType
 {
     Unassigned = 0,
-    Administrator,
-    Global,
-    Private,
+    Global = 1,
+    Private = 10,
+    Administrator = 1000,
 }
 
 public class MessageService : MinqService<Message>
@@ -45,7 +83,11 @@ public class MessageService : MinqService<Message>
             .GreaterThan(message => message.CreatedOn, timestamp)
             .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
         )
-        .Sort(sort => sort.OrderBy(message => message.CreatedOn))
+        .Or(or => or.EqualTo(message => message.Type, MessageType.Administrator))
+        .Sort(sort => sort
+            .OrderByDescending(message => message.Type)
+            .OrderBy(message => message.CreatedOn)
+        )
         .Limit(MESSAGE_LIMIT * roomIds.Length)
         .ToArray();
 

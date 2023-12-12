@@ -1,8 +1,13 @@
+using System;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Filters;
 using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Filters;
 
@@ -12,9 +17,13 @@ public class UnreadFilter : PlatformFilter, IActionFilter
     private MessageService _messages;
     private ActivityService _activities;
     
-    public void OnActionExecuting(ActionExecutingContext context)
+    public void OnActionExecuting(ActionExecutingContext context) { }
+
+    public void OnActionExecuted(ActionExecutedContext context)
     {
         if (string.IsNullOrWhiteSpace(Token?.AccountId) || Token.IsAdmin)
+            return;
+        if (context.Result is not OkObjectResult ok)
             return;
 
         _rooms ??= PlatformService.Require<RoomService>();
@@ -22,15 +31,28 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         _activities ??= PlatformService.Require<ActivityService>();
 
         _activities.MarkAsActive(Token.AccountId);
-        Room[] rooms = _rooms.GetMembership(Token.AccountId);
-
-        long lastRead = Body.Optional<long?>("lastRead") ?? Timestamp.OneDayAgo;
+        Room[] rooms = _rooms.GetMembership(Token.AccountId); // This guarantees membership in a global room
         
-        throw new System.NotImplementedException();
-    }
 
-    public void OnActionExecuted(ActionExecutedContext context)
-    {
-        throw new System.NotImplementedException();
+        long lastRead = Body?.Optional<long?>("lastRead") ?? Timestamp.OneDayAgo;
+        Message[] messages = _messages.GetAllMessages(rooms.Select(room => room.Id).ToArray(), lastRead);
+
+        foreach (Room room in rooms)
+            room.Messages = messages
+                .Where(message => message.RoomId == room.Id)
+                .Select(message => message.Prune())
+                .ToArray();
+
+        try
+        {
+            if (ok.Value is RumbleJson response)
+                response["roomUpdates"] = rooms
+                    .Where(room => room.Messages.Any())
+                    .ToArray();
+        }
+        catch (Exception e)
+        {
+            Log.Error(Owner.Will, "Unable to append unread activity to chat response", exception: e);
+        }
     }
 }

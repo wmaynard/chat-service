@@ -1,25 +1,36 @@
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 using RCL.Logging;
 using Rumble.Platform.Common.Minq;
+using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
-public class ActivityTimestamp : PlatformCollectionDocument
+public class Activity : PlatformCollectionDocument
 {
+    [BsonElement(TokenInfo.DB_KEY_ACCOUNT_ID)]
+    [JsonIgnore]
     public string AccountId { get; set; }
+    
+    [BsonElement("active")]
+    [JsonIgnore]
     public bool IsActive { get; set; }
+    
+    [BsonElement("updated")]
+    [JsonIgnore]
     public long LastActive { get; set; } // Do we need a MarkedInactive timestamp?
 }
 
-public class ActivityService : MinqTimerService<ActivityTimestamp>
+public class ActivityService : MinqTimerService<Activity>
 {
     private readonly RoomService _rooms;
     private readonly RumbleJson _activePlayerBuffer = new(); 
 
-    public ActivityService(RoomService rooms) : base("activity")
+    public ActivityService(RoomService rooms) : base("activity", 5_000)//IntervalMs.FiveMinutes)
         => _rooms = rooms;
 
     protected override void OnElapsed()
@@ -38,8 +49,8 @@ public class ActivityService : MinqTimerService<ActivityTimestamp>
 
     private void FlushActivityBuffer()
     {
-        ActivityTimestamp[] input = _activePlayerBuffer
-            .Select(pair => new ActivityTimestamp
+        Activity[] input = _activePlayerBuffer
+            .Select(pair => new Activity
             {
                 AccountId = pair.Key,
                 IsActive = true,
@@ -47,6 +58,12 @@ public class ActivityService : MinqTimerService<ActivityTimestamp>
             })
             .ToArray();
 
+        if (!input.Any())
+            return;
+        
+
+        // TODO: Without a batch update, the only efficient way to do this is to wipe the records and re-insert them.
+        // Consequently, our Activity.CreatedOn will never be accurate.
         mongo
             .WithTransaction(out Transaction transaction)
             .Where(query => query.ContainedIn(ts => ts.AccountId, input.Select(activity => activity.AccountId)))
@@ -58,6 +75,8 @@ public class ActivityService : MinqTimerService<ActivityTimestamp>
         
         _activePlayerBuffer.Clear();
         Commit(transaction);
+        
+        Log.Local(Owner.Will, "Flushed activity buffer.");
     }
 
     /// <summary>
@@ -69,16 +88,17 @@ public class ActivityService : MinqTimerService<ActivityTimestamp>
         mongo
             .WithTransaction(out Transaction transaction)
             .Where(query => query
-                .EqualTo(ts => ts.IsActive, true)
-                .LessThanOrEqualTo(ts => ts.LastActive, Timestamp.ThirtyMinutesAgo)
+                .EqualTo(player => player.IsActive, true)
+                .LessThanOrEqualTo(player => player.LastActive, Timestamp.ThirtyMinutesAgo)
             )
             .Process(batchSize: 1_000, batch =>
             {
                 string[] accountIds = batch.Results.Select(ts => ts.AccountId).ToArray();
                 affected += _rooms.RemoveFromGlobalRooms(transaction, accountIds);
                 mongo
-                    .Where(query => query.ContainedIn(ts => ts.AccountId, accountIds))
-                    .Update(update => update.Set(ts => ts.IsActive, false));
+                    .WithTransaction(transaction)
+                    .Where(query => query.ContainedIn(player => player.AccountId, accountIds))
+                    .Update(update => update.Set(player => player.IsActive, false));
             });
         try
         {

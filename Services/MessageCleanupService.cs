@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Services;
@@ -14,7 +16,7 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
     private readonly RoomService _rooms;
     private readonly MessageService _messages;
     
-    public MessageCleanupService(MessageService messages, RoomService rooms) : base("cleanup", Interval.ThirtyMinutes, 10, preferOffCluster: true)
+    public MessageCleanupService(MessageService messages, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.ThirtyMinutes, 10, preferOffCluster: true)
     {
         _messages = messages;
         _rooms = rooms;
@@ -112,7 +114,12 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
 
 public class MessageCleanupTask : PlatformCollectionDocument
 {
+    [BsonElement("type")]
+    [JsonIgnore]
     public CleanupType Type { get; set; }
+    
+    [BsonElement("roomId")]
+    [JsonIgnore]
     public string RoomId { get; set; }
 }
 
