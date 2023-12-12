@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Attributes;
@@ -13,6 +14,7 @@ public class TopController : PlatformController
 {
     #pragma warning disable
     private readonly MessageService _messages;
+    private readonly ReportService _reports;
     private readonly RoomService _rooms;
     #pragma warning restore
     
@@ -35,7 +37,7 @@ public class TopController : PlatformController
         return Ok(message);
     }
 
-    [HttpGet, Route("rooms")]
+    [HttpGet, Route("globals")]
     public ActionResult ListGlobalRooms()
     {
         int page = Optional<int>("page");
@@ -49,5 +51,23 @@ public class TopController : PlatformController
             { "roomsPerPage", RoomService.ROOM_LIST_PAGE_SIZE },
             { "remainingRoomCount", remainingRooms }
         });
+    }
+
+    [HttpPut, Route("preferences")]
+    public ActionResult SetPreferences()
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpPost, Route("report")]
+    public ActionResult ReportMessage()
+    {
+        string messageId = Require<string>("messageId");
+
+        Report report = _reports.Submit(Token.AccountId, messageId);
+        
+        // TODO: Notify CS?  Log?  Keep GDPR in mind!
+
+        return Ok(report);
     }
 }

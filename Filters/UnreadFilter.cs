@@ -40,9 +40,12 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         foreach (Room room in rooms)
             room.Messages = messages
                 .Where(message => message.RoomId == room.Id)
+                .Where(message => room.Members.Contains(message.AccountId)) // TODO: Track inactive members
                 .Select(message => message.Prune())
                 .ToArray();
 
+        // TODO: Rate-limiting
+        
         try
         {
             if (ok.Value is RumbleJson response)

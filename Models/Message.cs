@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
@@ -144,4 +146,35 @@ public class MessageService : MinqService<Message>
     public long DeleteExpiredMessages() => mongo
         .Where(query => query.LessThan(message => message.Expiration, Timestamp.Now))
         .Delete();
+
+    public Message[] GetContextAround(string messageId)
+    {
+        Message target = mongo.ExactId(messageId).FirstOrDefault();
+
+        if (target == null)
+            throw new PlatformException("Unable to fetch context");
+
+        Message[] before = mongo
+            .Where(query => query
+                .EqualTo(message => message.RoomId, target.RoomId)
+                .LessThanOrEqualTo(message => message.CreatedOn, target.CreatedOn)
+            )
+            .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
+            .Limit(25)
+            .ToArray();
+        
+        Message[] after = mongo
+            .Where(query => query
+                .EqualTo(message => message.RoomId, target.RoomId)
+                .GreaterThanOrEqualTo(message => message.CreatedOn, target.CreatedOn)
+            )
+            .Sort(sort => sort.OrderBy(message => message.CreatedOn))
+            .Limit(25)
+            .ToArray();
+
+        return before
+            .Union(after)
+            .DistinctBy(message => message.Id)
+            .ToArray();
+    }
 }
