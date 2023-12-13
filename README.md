@@ -21,6 +21,8 @@ It's important to state this right at the beginning as it's a critical point to 
 
 Room updates are limited to 100 rooms, sorted first by room type (Global, Private, then finally DMs), then by the last time the room's member list changed.  If someone happens to hit this 100-room limit, it's possible they will miss messages without knowing it; it may be necessary in this case to page the unread messages or otherwise force them to leave DMs, which we'll get to later.  
 
+Returned messages are limited to `Math.Min(100 * numberOfActiveRooms, 1000)`.  Consequently, when an update is received, the client should store the most recent message's timestamp for `lastRead` - **not** the current timestamp, as there may be more messages the client is simply behind on.
+
 Without further ado, let's get into implementation details.
 
 <hr />

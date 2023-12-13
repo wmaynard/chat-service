@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
@@ -9,7 +10,8 @@ namespace Rumble.Platform.ChatService.Services;
 
 public class MessageService : MinqService<Message>
 {
-    public const int MESSAGE_LIMIT = 200;
+    public const int MESSAGE_LIMIT = 100;
+    public const int HARD_MESSAGE_LIMIT = 1_000;
     
     public MessageService() : base("messages") { }
 
@@ -30,11 +32,8 @@ public class MessageService : MinqService<Message>
             .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
         )
         .Or(or => or.EqualTo(message => message.Type, MessageType.Administrator))
-        .Sort(sort => sort
-            .OrderByDescending(message => message.Type)
-            .OrderBy(message => message.CreatedOn)
-        )
-        .Limit(MESSAGE_LIMIT * roomIds.Length)
+        .Sort(sort => sort.OrderBy(message => message.CreatedOn))
+        .Limit(Math.Min(MESSAGE_LIMIT * roomIds.Length, HARD_MESSAGE_LIMIT))
         .ToArray();
 
     public string GetLastGlobalRoomId(string accountId, params string[] roomIds) => mongo

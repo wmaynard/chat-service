@@ -34,7 +34,6 @@ public class UnreadFilter : PlatformFilter, IActionFilter
 
         _activities.MarkAsActive(Token.AccountId);
         Room[] rooms = _rooms.GetMembership(Token.AccountId); // This guarantees membership in a global room
-        
 
         long lastRead = Body?.Optional<long?>("lastRead") ?? Timestamp.OneDayAgo;
         Message[] messages = _messages.GetAllMessages(rooms.Select(room => room.Id).ToArray(), lastRead);
@@ -55,7 +54,7 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         
         try
         {
-            ok.Value ??= new RumbleJson();
+            ok.Value ??= new RumbleJson(); // This covers 204 No Content
 
             if (ok.Value is RumbleJson response)
                 response["roomUpdates"] = rooms;
