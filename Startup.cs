@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Filters;
+using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Enums;
+using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -15,5 +17,13 @@ public class Startup : PlatformStartup
 		.SetRegistrationName("Chat")
 		.SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)
 		.DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting)
-		.AddFilter<UnreadFilter>();
+		.AddFilter<UnreadFilter>()
+		.OnReady(_ =>
+		{
+			PlatformService.Require<MessageService>().WipeDatabase();
+			PlatformService.Require<RoomService>().WipeDatabase();
+			PlatformService.Require<ActivityService>().WipeDatabase();
+			PlatformService.Require<PreferencesService>().WipeDatabase();
+		})
+		;
 }

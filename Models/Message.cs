@@ -21,11 +21,11 @@ public class Message : PlatformCollectionDocument
     [JsonPropertyName("text")]
     public string Body { get; set; }
     
-    [BsonElement("data")]
-    [JsonPropertyName("context")]
+    [BsonElement("data"), BsonIgnoreIfNull]
+    [JsonPropertyName("context"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RumbleJson Data { get; set; }
     
-    [BsonElement("exp")]
+    [BsonElement("exp"), BsonIgnoreIfDefault]
     [JsonIgnore]
     public long Expiration { get; set; }
     
@@ -33,7 +33,7 @@ public class Message : PlatformCollectionDocument
     [JsonPropertyName("roomId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string RoomId { get; set; }
     
-    [BsonElement("type")]
+    [BsonElement("type"), BsonIgnoreIfDefault]
     [JsonIgnore]
     public MessageType Type { get; set; }
 
@@ -47,9 +47,16 @@ public class Message : PlatformCollectionDocument
             errors.Add("Sending a message with an explicit message type is not allowed, it is server-authoritative.");
     }
 
+    /// <summary>
+    /// Removes unnecessary data; useful for when returning information to the game client or when creating reports
+    /// that don't need certain datapoints.
+    /// </summary>
+    /// <returns></returns>
     public Message Prune()
     {
         RoomId = null;
+        Type = MessageType.Unassigned;
+        Expiration = 0;
         
         return this;
     }
@@ -175,6 +182,7 @@ public class MessageService : MinqService<Message>
         return before
             .Union(after)
             .DistinctBy(message => message.Id)
+            .OrderBy(message => message.CreatedOn)
             .ToArray();
     }
 }

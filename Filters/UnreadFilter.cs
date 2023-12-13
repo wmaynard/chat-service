@@ -38,24 +38,29 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         Message[] messages = _messages.GetAllMessages(rooms.Select(room => room.Id).ToArray(), lastRead);
 
         foreach (Room room in rooms)
-            room.Messages = messages
-                .Where(message => message.RoomId == room.Id)
-                .Where(message => room.Members.Contains(message.AccountId)) // TODO: Track inactive members
-                .Select(message => message.Prune())
-                .ToArray();
+            room.Messages = room.Type == RoomType.Global
+                ? messages
+                    .Where(message => message.RoomId == room.Id)
+                    .Select(message => message.Prune())
+                    .ToArray()
+                : messages
+                    .Where(message => message.RoomId == room.Id)
+                    .Where(message => room.Members.Contains(message.AccountId)) // Limit messages to only that group's members
+                    .Select(message => message.Prune())
+                    .ToArray();
 
         // TODO: Rate-limiting
         
         try
         {
+            ok.Value ??= new RumbleJson();
+
             if (ok.Value is RumbleJson response)
-                response["roomUpdates"] = rooms
-                    .Where(room => room.Messages.Any())
-                    .ToArray();
+                response["roomUpdates"] = rooms;
         }
         catch (Exception e)
         {
             Log.Error(Owner.Will, "Unable to append unread activity to chat response", exception: e);
         }
     }
-}
+} // TODO: Previous Members list for rooms

@@ -11,25 +11,27 @@ using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
-public class MessageCleanupService : QueueService<MessageCleanupTask>
+public class JanitorService : QueueService<CleanupTask>
 {
     private readonly RoomService _rooms;
     private readonly MessageService _messages;
+    private readonly ReportService _reports;
     
-    public MessageCleanupService(MessageService messages, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.ThirtyMinutes, 10, preferOffCluster: true)
+    public JanitorService(MessageService messages, ReportService reports, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.ThirtyMinutes, 10, preferOffCluster: true)
     {
         _messages = messages;
         _rooms = rooms;
+        _reports = reports;
     }
 
-    protected override void OnTasksCompleted(MessageCleanupTask[] data) { }
+    protected override void OnTasksCompleted(CleanupTask[] data) { }
 
     protected override void PrimaryNodeWork()
     {
         int page = 0;
         long remaining = 0;
 
-        List<MessageCleanupTask> newTasks = new();
+        List<CleanupTask> newTasks = new();
 
         // First, we need to run through all of our messages that don't have a message type associated with them.
         // We'll create a task to assign them a type so they can be effectively sorted when returning high traffic chat.
@@ -42,7 +44,7 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
         } while (remaining > 0);
         
         newTasks.AddRange(roomIdsToLookup
-            .Select(roomId => new MessageCleanupTask
+            .Select(roomId => new CleanupTask
             {
                 Type = CleanupType.AssignMessageType,
                 RoomId = roomId
@@ -53,7 +55,7 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
         // high traffic, so we'll want to clean those out quickly.
         string[] globalRoomIds = _rooms.ListGlobalRooms();
         newTasks.AddRange(globalRoomIds
-            .Select(roomId => new MessageCleanupTask
+            .Select(roomId => new CleanupTask
             {
                 Type = CleanupType.DeleteOldGlobalMessages,
                 RoomId = roomId
@@ -61,7 +63,7 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
         );
         
         // Finally, we'll want to create a cleanup task to simply delete expired messages.
-        newTasks.Add(new MessageCleanupTask
+        newTasks.Add(new CleanupTask
         {
             Type = CleanupType.DeleteExpiredMessages
         });
@@ -69,7 +71,7 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
         CreateUntrackedTasks(newTasks.ToArray());
     }
 
-    protected override void ProcessTask(MessageCleanupTask task)
+    protected override void ProcessTask(CleanupTask task)
     {
         switch (task.Type)
         {
@@ -106,13 +108,21 @@ public class MessageCleanupService : QueueService<MessageCleanupTask>
             case CleanupType.DeleteOldGlobalMessages:
                 _messages.DeleteMessages(task.RoomId, 200);
                 break;
+            case CleanupType.ClearOldReports:
+                long deleted = _reports.DeleteUnnecessaryReports();
+                if (deleted > 0)
+                    Log.Info(Owner.Will, "Deleted old, unneeded reports", data: new
+                    {
+                        Count = deleted
+                    });
+                break;
             default:
                 throw new NotImplementedException();
         }
     }
 }
 
-public class MessageCleanupTask : PlatformCollectionDocument
+public class CleanupTask : PlatformCollectionDocument
 {
     [BsonElement("type")]
     [JsonIgnore]
@@ -127,5 +137,9 @@ public enum CleanupType
 {
     AssignMessageType,
     DeleteOldGlobalMessages,
-    DeleteExpiredMessages
+    DeleteExpiredMessages,
+    ClearOldReports
 }
+
+// TODO: Cleanup Inactive DMs
+// TODO: Delete Empty DM rooms

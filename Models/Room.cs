@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using RCL.Logging;
+using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Utilities;
@@ -13,6 +14,9 @@ namespace Rumble.Platform.ChatService.Models;
 
 public class Room : PlatformCollectionDocument
 {
+    public const int CAPACITY_MEMBERS = 200;
+    public const int CAPACITY_OVERFLOW = 250;
+    
     [BsonElement("who")]
     [JsonPropertyName("members")]
     public string[] Members { get; set; }
@@ -46,10 +50,10 @@ public class Room : PlatformCollectionDocument
 
 public enum RoomType
 {
-    Global,
-    DirectMessage,
-    Private,
-    PossibleHack
+    PossibleHack = 0,
+    Global = 10,
+    Private = 20,
+    DirectMessage = 30,
 }
 
 public class RoomService : MinqService<Room>
@@ -69,6 +73,11 @@ public class RoomService : MinqService<Room>
     {
         List<Room> output = mongo
             .Where(query => query.Contains(room => room.Members, accountId))
+            .Limit(100)
+            .Sort(sort => sort
+                .OrderByDescending(room => room.Type)
+                .ThenByDescending(room => room.MembershipUpdatedMs)
+            )
             .ToList();
         
         // Check to make sure the player is not in more than one global room.  If they are, we need to remove them from
@@ -93,20 +102,46 @@ public class RoomService : MinqService<Room>
         }
         
         if (output.All(room => room.Type != RoomType.Global))
-            output.Add(JoinGlobal(accountId));
+            output.Add(AutoJoinGlobal(accountId));
 
         return output
             .Where(room => room != null)
             .ToArray();
     }
 
-    private Room JoinGlobal(string accountId)
+    public Room JoinGlobal(string accountId, string roomId)
+    {
+        mongo
+            .WithTransaction(out Transaction transaction)
+            .Where(query => query.Contains(room => room.Members, accountId))
+            .Update(update => update.RemoveItems(room => room.Members, accountId));
+
+        Room output = mongo
+            .WithTransaction(transaction)
+            .Where(query => query
+                .EqualTo(room => room.Id, roomId)
+                .EqualTo(room => room.Type, RoomType.Global)
+                .LengthLessThanOrEqualTo(room => room.Members, Room.CAPACITY_OVERFLOW)
+            )
+            .UpdateAndReturnOne(update => update.AddItems(room => room.Members, accountId));
+
+        if (output == null)
+        {
+            Abort(transaction);
+            throw new PlatformException("Join request failed.  Room could not be found or is full.");
+        }
+
+        Commit(transaction);
+        return output;
+    }
+
+    private Room AutoJoinGlobal(string accountId)
     {
         Room output = mongo
             .Where(query => query.Contains(room => room.Members, accountId))
             .Or(or => or
                 .EqualTo(room => room.Type, RoomType.Global)
-                .LengthLessThanOrEqualTo(room => room.Members, 200)
+                .LengthLessThanOrEqualTo(room => room.Members, Room.CAPACITY_MEMBERS)
             )
             .Upsert(update => update
                 .AddItems(room => room.Members, accountId)
@@ -163,7 +198,7 @@ public class RoomService : MinqService<Room>
     public Room[] ListGlobalRoomsWithCapacity(int page, out long remainingRooms) => mongo
         .Where(query => query
             .EqualTo(room => room.Type, RoomType.Global)
-            .LengthLessThan(room => room.Members, 200)
+            .LengthLessThan(room => room.Members, Room.CAPACITY_MEMBERS)
         )
         .Sort(sort => sort.OrderBy(room => room.FriendlyId))
         .Page(ROOM_LIST_PAGE_SIZE, page, out remainingRooms);
@@ -173,4 +208,17 @@ public class RoomService : MinqService<Room>
         .FirstOrDefault()
         ?.Type
         ?? RoomType.PossibleHack;
+
+    public string GetDmRoom(params string[] accountIds) => mongo
+        .Where(query => query.EqualTo(room => room.Members, accountIds.OrderBy(_ => _).ToArray()))
+        .Upsert(update => update
+            .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
+            .SetOnInsert(room => room.Type, RoomType.DirectMessage)
+        )
+        .Id;
+
+    public bool Leave(string accountId, string roomId) => mongo
+        .ExactId(roomId)
+        .And(query => query.ContainedIn(room => room.Type, new[] { RoomType.DirectMessage }))
+        .Update(update => update.RemoveItems(room => room.Members, accountId)) > 0;
 }
