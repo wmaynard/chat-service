@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Mvc;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Extensions;
@@ -18,15 +19,11 @@ public class TopController : PlatformController
 {
     #pragma warning disable
     private readonly MessageService _messages;
-    private readonly ReportService _reports;
     private readonly RoomService _rooms;
     #pragma warning restore
-    
+
     [HttpGet]
-    public ActionResult GetMessages()
-    {
-        return Ok();
-    }
+    public ActionResult GetMessages() => Ok();
 
     [HttpPost, Route("message")]
     public ActionResult SendMessage()
@@ -75,6 +72,4 @@ public class TopController : PlatformController
 
         return output;
     }
-    
-
 }

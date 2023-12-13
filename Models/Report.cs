@@ -1,101 +1,41 @@
-using System.Linq;
-using Rumble.Platform.Common.Exceptions;
-using Rumble.Platform.Common.Minq;
-using Rumble.Platform.Common.Utilities;
+using System.Text.Json.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
+using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
 public class Report : PlatformCollectionDocument
 {
+    [BsonElement("message")]
+    [JsonPropertyName("messageId")]
     public string OffendingMessageId { get; set; }
+    
+    [BsonElement("reporter")]
+    [JsonPropertyName("reporterId")]
     public string FirstReporterId { get; set; }
+    
+    [BsonElement("others")]
+    [JsonPropertyName("otherReporterIds")]
     public string[] ReporterIds { get; set; }
+    
+    [BsonElement("count")]
+    [JsonPropertyName("timesReported")]
     public int ReportedCount { get; set; }
+    
+    [BsonElement("log")]
+    [JsonPropertyName("messageLog")]
     public Message[] Context { get; set; }
+    
+    [BsonElement("room")]
+    [JsonPropertyName("roomId")]
     public string RoomId { get; set; }
+    
+    [BsonElement("status")]
+    [JsonPropertyName("status")]
     public ReportStatus Status { get; set; }
+    
+    [BsonElement("note"), BsonIgnoreIfNull]
+    [JsonPropertyName("resolutionNote")]
     public string AdminNote { get; set; }
-}
-
-public enum ReportStatus
-{
-    New,
-    Acknowledged,
-    Benign,
-    KeepForever
-}
-
-public class ReportService : MinqService<Report>
-{
-    private readonly MessageService _messages;
-
-    public ReportService(MessageService messages) : base("reports")
-        => _messages = messages;
-
-    public Report Submit(string reporterId, string messageId)
-    {
-        Message[] context = _messages.GetContextAround(messageId);
-        string roomId = context
-            .FirstOrDefault(message => !string.IsNullOrWhiteSpace(message.RoomId))
-            ?.RoomId;
-        context = context
-            .Select(message => message.Prune())
-            .ToArray();
-
-        if (context.FirstOrDefault(message => message.Id == messageId)?.AccountId == reporterId)
-            throw new PlatformException("You can't report yourself.");
-        
-        Report existing = mongo
-            .Where(query => query.EqualTo(report => report.OffendingMessageId, messageId))
-            .FirstOrDefault();
-
-        if (existing == null)
-            return mongo
-                .Where(query => query.EqualTo(report => report.OffendingMessageId, messageId))
-                .Upsert(update => update
-                    .AddItems(report => report.ReporterIds, limitToKeep: 50, reporterId)
-                    .Increment(report => report.ReportedCount)
-                    .Set(report => report.Context, context)
-                    .SetOnInsert(report => report.FirstReporterId, reporterId)
-                    .SetOnInsert(report => report.RoomId, roomId)
-                );
-
-        Message[] merged = context
-            .UnionBy(existing.Context, message => message.Id)
-            .OrderBy(message => message.CreatedOn)
-            .ToArray();
-
-        return mongo
-            .Where(query => query.EqualTo(report => report.OffendingMessageId, messageId))
-            .UpdateAndReturnOne(update => update
-                .AddItems(report => report.ReporterIds, limitToKeep: 50, reporterId)
-                .Set(report => report.Context, merged)
-                .Increment(report => report.ReportedCount)
-            );
-    }
-
-    public long DeleteUnnecessaryReports()
-    {
-        long affected = mongo
-            .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.Benign)
-                .LessThan(report => report.CreatedOn, Timestamp.TwoWeeksAgo)
-            )
-            .Delete();
-        affected += mongo
-            .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.Acknowledged)
-                .LessThan(report => report.CreatedOn, Timestamp.ThreeMonthsAgo)
-            )
-            .Delete();
-        affected += mongo
-            .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.New)
-                .LessThan(report => report.CreatedOn, Timestamp.SixMonthsAgo)
-            )
-            .Delete();
-
-        return affected;
-    }
 }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Filters;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Enums;
 using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;

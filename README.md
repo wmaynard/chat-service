@@ -250,7 +250,7 @@ POST /report
             "65781a2ee074f00f1e9b37e6"
         ],
         "reportedCount": 1,
-        "context": [
+        "messageLog": [
             ...
             {
                 "accountId": "65781a2ee074f00f1e9b37e6",
@@ -297,3 +297,4 @@ POST /report
 }
 ```
 
+## Regarding Bans V2

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Services;
+using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Filters;
 using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
@@ -63,4 +65,4 @@ public class UnreadFilter : PlatformFilter, IActionFilter
             Log.Error(Owner.Will, "Unable to append unread activity to chat response", exception: e);
         }
     }
-} // TODO: Previous Members list for rooms
+}
