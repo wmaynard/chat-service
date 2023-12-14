@@ -28,7 +28,8 @@ public class TopController : PlatformController
     [HttpPost, Route("message")]
     public ActionResult SendMessage()
     {
-        Message message = RequireMessage();
+        Message message = RequireMessage().EnforceRoomIdIsValid();
+        message.Expiration = Message.StandardMessageExpiration;
 
         if (string.IsNullOrWhiteSpace(message?.RoomId) || !message.RoomId.CanBeMongoId())
             throw new PlatformException("Message must have a valid roomId");
@@ -49,6 +50,7 @@ public class TopController : PlatformController
     {
         List<string> members = Require<List<string>>("players");
         Message message = RequireMessage();
+        message.Expiration = Message.DirectMessageExpiration;
         
         members.Add(Token.AccountId);
         if (members.Any(member => string.IsNullOrWhiteSpace(member) || !member.CanBeMongoId()))
@@ -68,7 +70,6 @@ public class TopController : PlatformController
         Message output = Require<Message>("message");
 
         output.AccountId = Token.AccountId;
-        output.Expiration = Timestamp.TwoWeeksFromNow;
 
         return output;
     }

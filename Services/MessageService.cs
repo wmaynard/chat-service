@@ -31,7 +31,7 @@ public class MessageService : MinqService<Message>
             .GreaterThan(message => message.CreatedOn, timestamp)
             .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
         )
-        .Or(or => or.EqualTo(message => message.Type, MessageType.Administrator))
+        .Or(or => or.EqualTo(message => message.Type, MessageType.Announcement))
         .Sort(sort => sort.OrderBy(message => message.CreatedOn))
         .Limit(Math.Min(MESSAGE_LIMIT * roomIds.Length, HARD_MESSAGE_LIMIT))
         .ToArray();
@@ -120,5 +120,48 @@ public class MessageService : MinqService<Message>
             .DistinctBy(message => message.Id)
             .OrderBy(message => message.CreatedOn)
             .ToArray();
+    }
+
+    public long DeleteAncientAnnouncements()
+    {
+        Message announcement = mongo
+            .Where(query => query
+                .EqualTo(message => message.Type, MessageType.Announcement)
+                .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+            )
+            .Limit(10)
+            .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
+            .ToArray()
+            .LastOrDefault();
+
+        return announcement == null
+            ? 0
+            : mongo
+                .Where(query => query
+                    .EqualTo(message => message.Type, MessageType.Announcement)
+                    .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+                    .LessThan(message => message.CreatedOn, announcement.CreatedOn)
+                )
+                .Update(update => update.Set(message => message.Expiration, Timestamp.Now));
+    }
+
+    public Message[] Search(string term) => mongo.Search(term, limit: 100);
+
+    public Message[] AdminListMessages(string roomId, string accountId, string messageId, int page, out long remaining)
+    {
+        remaining = 0;
+        
+        return !string.IsNullOrWhiteSpace(messageId)
+            ? mongo.ExactId(messageId).ToArray()
+            : mongo
+                .Where(query =>
+                {
+                    if (!string.IsNullOrWhiteSpace(roomId))
+                        query.EqualTo(message => message.RoomId, roomId);
+                    if (!string.IsNullOrWhiteSpace(accountId))
+                        query.EqualTo(message => message.AccountId, accountId);
+                })
+                .Sort(sort => sort.OrderByDescending(message => message.Expiration))
+                .Page(100, page, out remaining);
     }
 }

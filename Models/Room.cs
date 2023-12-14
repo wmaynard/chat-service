@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
+using Amazon.Auth.AccessControlPolicy;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Extensions;
+using Rumble.Platform.Common.Models;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
@@ -34,6 +36,14 @@ public class Room : PlatformCollectionDocument
     [BsonElement("globalId"), BsonIgnoreIfDefault]
     [JsonPropertyName("number"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long FriendlyId { get; set; }
+    
+    [BsonElement("data"), BsonIgnoreIfNull]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RumbleJson Data { get; set; }
+    
+    [BsonElement("editor"), BsonIgnoreIfNull]
+    [JsonIgnore]
+    public TokenInfo Editor { get; set; }
 
     public Room Prune()
     {

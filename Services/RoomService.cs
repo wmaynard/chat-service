@@ -174,4 +174,30 @@ public class RoomService : MinqService<Room>
         .ExactId(roomId)
         .And(query => query.ContainedIn(room => room.Type, new[] { RoomType.DirectMessage }))
         .Update(update => update.RemoveItems(room => room.Members, accountId)) > 0;
+
+    public Room[] AdminListRooms(string roomId, string accountId, int page, out long remaining)
+    {
+        remaining = 0;
+
+        if (!string.IsNullOrWhiteSpace(roomId))
+            return mongo.ExactId(roomId).ToArray();
+
+        return string.IsNullOrWhiteSpace(accountId)
+            ? mongo
+                .All()
+                .Sort(sort => sort
+                    .OrderBy(room => room.Type)
+                    .OrderByDescending(room => room.FriendlyId)
+                    .OrderBy(room => room.CreatedOn)
+                )
+                .Page(10, page, out remaining)
+            : mongo
+                .Where(query => query.Contains(room => room.Members, accountId))
+                .Sort(sort => sort
+                    .OrderBy(room => room.Type)
+                    .OrderByDescending(room => room.FriendlyId)
+                    .OrderBy(room => room.CreatedOn)
+                )
+                .Page(10, page, out remaining);
+    }
 }

@@ -2,13 +2,20 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Exceptions;
+using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Models;
+using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Models;
 
 public class Message : PlatformCollectionDocument
 {
+    public static long StandardMessageExpiration => Timestamp.TwoWeeksFromNow;
+    public static long DirectMessageExpiration => Timestamp.OneMonthFromNow;
+    public static long PrivateMessageExpiration => Timestamp.ThreeMonthsFromNow;
+    
     [BsonElement(TokenInfo.DB_KEY_ACCOUNT_ID)]
     [JsonPropertyName(TokenInfo.FRIENDLY_KEY_ACCOUNT_ID)]
     public string AccountId { get; set; }
@@ -22,7 +29,7 @@ public class Message : PlatformCollectionDocument
     public RumbleJson Data { get; set; }
     
     [BsonElement("exp"), BsonIgnoreIfDefault]
-    [JsonIgnore]
+    [JsonPropertyName("expiration")]
     public long Expiration { get; set; }
     
     [BsonElement("room")]
@@ -32,6 +39,15 @@ public class Message : PlatformCollectionDocument
     [BsonElement("type"), BsonIgnoreIfDefault]
     [JsonIgnore]
     public MessageType Type { get; set; }
+    
+    [BsonElement("editor"), BsonIgnoreIfNull]
+    [JsonIgnore]
+    public TokenInfo Administrator { get; set; }
+
+    public Message()
+    {
+        Expiration = Timestamp.TwoWeeksFromNow;
+    }
 
     protected override void Validate(out List<string> errors)
     {
@@ -54,6 +70,13 @@ public class Message : PlatformCollectionDocument
         Type = MessageType.Unassigned;
         Expiration = 0;
         
+        return this;
+    }
+
+    public Message EnforceRoomIdIsValid()
+    {
+        if (string.IsNullOrWhiteSpace(RoomId) || !RoomId.CanBeMongoId())
+            throw new PlatformException("Message must have a valid roomId");
         return this;
     }
 }

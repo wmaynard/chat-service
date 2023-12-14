@@ -16,6 +16,7 @@ Any endpoint that a game client or other token representing a player hits the ch
 
 * Include a UTC Unix timestamp in the body or parameters (as appropriate) with the key of `lastRead`.
 * Find the maximum timestamp returned in the unread messages and store it for use in the next request to Chat.
+* Cache chat messages locally
 
 It's important to state this right at the beginning as it's a critical point to both a performant client and service.
 
@@ -97,7 +98,7 @@ PATCH /rooms/join
 
 Be aware that this does remove you from whatever other global room you were a part of.
 
-### Leaving Direct Messages
+### Leaving Direct Message Rooms
 
 There's little more annoying than a group chat you want no part of.  Luckily, Chat provides a way out of unwanted group chats:
 
@@ -138,6 +139,13 @@ POST /message
 
 This request will send any message to any room - though it will only be visible if you're a member of that room.
 
+#### So, what are some use cases for the new Context?
+
+* Content linking.  Wnat to share an item in your collection?  We could include that item's entire details in the message, where it can be parsed and used by other clients.
+* PvP challenges.  In games like Clash Royale, a player can issue a challenge in chat to play a friendly, unranked PvP match.  Add some match details and add a server-side claim functionality to upadte the message and we can pair people off in easier private matches.
+* Stickers & Emoji.  Add some flair to chat with context that links the message to art assets.
+* Shared rewards.  Some games offer IAPs where a purchase not only grants the buyer bonuses, but also allows other players to claim a smaller bonus from a chat message.  Use a server-side rewards claim / update the message if necessary.
+
 ### Direct Messages
 
 Chat supports direct messages for up to 20 players.  Keep in mind that a player's token constitutes one of the spots when creating a new DM.
@@ -175,6 +183,14 @@ Once the DM room exists, you should go back to using `/message` to send subseque
 3. DMs must contain at least one other player.
 
 <hr />
+
+We've had some discussions around PvP / Coop chat rooms.  With DM support, we now have the ability to implement this if we want!  Some considerations:
+
+* On a PvP match start, if we want to guarantee the room exists, we can send a message from a server with all players as recipients.
+* We have some options:
+  * Include the server's account ID, so that the DM is actually 3 "players".  This means the DM room will be separate from two players that match up who already have DMs together.  At the end of the match, if we want the messages to be unavailable after the match, we can have the server remove the players from it / delete the room.  This is the lightest on the database load since we can remove data as soon as it's no longer relevant.
+  * Leave the DM as just between the two players.  If we want to hide non-PvP messages, messages sent during PvP can include a value in the `context` field to act as a filter.  This gives us the option of allowing PvP messages to persist beyond the match, so if we want post-game banter or more social connection, it could be available this way.
+
 
 <hr />
 
@@ -228,6 +244,7 @@ So, what are some use cases for the new Preferences?
 * Favorite rooms.  When we have millions of players, community members may want to pick certain rooms to meet up in.
 * Chat themes.  Perhaps as achievements, we could have different UI skins for chat.
 * Localization preferences
+* Mute PvP chat
 
 Rather than build both a client and server pairing for all of these features (and possibly more), the client can now define whatever logic it wants by throwing a blob of data at the service and having it stick.
 
@@ -299,4 +316,27 @@ POST /report
 }
 ```
 
+No further action is needed on a player's side.  Players can report a message as many times as they want - this will only increase `reportedCount` when repeating a request.  As more players report the same message, `reporterIds` will also track secondary reporters.
+
+The `messageLog` will also continue to evolve up to a point; up to 25 messages before and after the offending message are stored, for a total of 51 messages.  So, if the message in question is reported as soon as it's sent, and then reported 10 minutes later with more chatter, more messages will be merged into the report.
+
 ## Regarding Bans V2
+
+In July 2023, we added Bans V2 to our Platform suite.  This update allows us to ban player tokens from a central point, and selectively ban them from various Platform servers.  So, as an example, we could ban a player from just Chat or just Leaderboards, or even IAPs.
+
+Chat V1 manages its own ban list using multiple endpoints, and caused inconsistent behaviors when a player was banned.  Now that bans are standardized, chat no longer is responsible for bans.
+
+However, it's important that a chat ban does not cause a consuming client to crash.  When a token is banned from the service, a 401 Unauthorized error will be returned as a response from the server.  When a ban is in effect, **no endpoint** will work.  Bans may be temporary or permanent.
+
+Bans can be issued either by a customer service rep acting on reports or _automatically_ by Chat.  Chat V2 has some features to automatically detect bad behavior and issues bans to stop it.
+
+Bans can be temporary or permanent.
+
+### Automatic Bans
+
+The logic of automatic bans is subject to change, so information here may be out-of-date, but the goal of automatic bans is to curb malicious actors before they become problems.  So many games have chat spam that promote links, or otherwise copy / paste spam in various channels, that chat systems become unusable Twitch-style streams of garbage posts.
+
+Chat discourages this in two ways:
+
+1. By regularly checking to see if players have sent a large number of _identical_ messages in a short period of time.  If Chat determines the player is too spammy - and particularly if it's across multiple rooms - Chat will ban the player.  This is a progressive ban; the first offense will be light - say a few minutes - but continued offenses will start increasing the ban time.  These bans are never permanent - that's only for CS to decide - but on the upper end they will last several days. 
+2. Chat will issue a short ban for players who spam too many requests in a short period of time.  This is intended to keep our servers open for traffic, as every request to chat results in multiple database hits.  This ban will not increase in duration and is just intended to force a cooldown.  The goal is to set the bar high enough that only someone intentionally spammy would ever see it.  The error code associated with this will be `HTTP 418 I'm a teapot`; go make some tea, and maybe when you're done with it you'll be able to chat again.
