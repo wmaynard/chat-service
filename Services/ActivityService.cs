@@ -34,19 +34,11 @@ public class ActivityService : MinqTimerService<Activity>
 
     public void MarkAsActive(string accountId)
     {
-        // _activePlayerBuffer[accountId] = Timestamp.Now;
         if (_buffer.TryGetValue(accountId, out Data data))
         {
             data.LastActive = Timestamp.Now;
             data.ActivityCount++;
             _buffer[accountId] = data;
-
-            long seconds = data.LastActive - data.CreatedOn;
-            if (seconds > 30 && data.ActivityCount > seconds / 2)
-            {
-                ApiService.Instance.BanPlayer(accountId, Interval.TenMinutes, Audience.ChatService, "Too many requests");
-                throw new TooManyRequestsException(accountId, data.ActivityCount, data.LastActive - data.CreatedOn);
-            }
         }
         else
             _buffer[accountId] = new Data
@@ -56,7 +48,6 @@ public class ActivityService : MinqTimerService<Activity>
                 CreatedOn = Timestamp.Now
             };
         
-        // if (_activePlayerBuffer.Count > 100)
         if (_buffer.Count > 100)
             FlushActivityBuffer();
     }

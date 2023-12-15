@@ -19,11 +19,16 @@ public class Startup : PlatformStartup
         .SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)
         .DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting)
         .AddFilter<UnreadFilter>()
+        .SetIndividualRps(0.5)
         .OnReady(_ =>
         {
+            #if  DEBUG
+            if (!PlatformEnvironment.MongoConnectionString.Contains("local"))
+                return;
             PlatformService.Require<MessageService>().WipeDatabase();
             PlatformService.Require<RoomService>().WipeDatabase();
             PlatformService.Require<ActivityService>().WipeDatabase();
             PlatformService.Require<PreferencesService>().WipeDatabase();
+            #endif
         });
 }

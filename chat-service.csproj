@@ -11,7 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="platform-csharp-common" Version="1.3.116" />
+		<PackageReference Include="platform-csharp-common" Version="1.3.118" />
 		<PackageReference Include="System.Json" Version="4.7.1" />
 	</ItemGroup>
 
@@ -34,8 +34,5 @@
 	</ItemGroup>
 
 
-	<ItemGroup>
-	  <ProjectReference Include="..\platform-common\platform-csharp-common.csproj" />
-	</ItemGroup>
 
 </Project>
