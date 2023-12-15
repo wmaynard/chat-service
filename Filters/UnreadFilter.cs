@@ -49,8 +49,6 @@ public class UnreadFilter : PlatformFilter, IActionFilter
                     .Where(message => room.Members.Contains(message.AccountId)) // Limit messages to only that group's members
                     .Select(message => message.Prune())
                     .ToArray();
-
-        // TODO: Rate-limiting
         
         try
         {
@@ -65,7 +63,3 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         }
     }
 }
-
-// TODO: admin update context
-// TODO: admin create DM room
-// TODO: Auto ban system

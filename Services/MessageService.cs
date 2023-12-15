@@ -54,6 +54,15 @@ public class MessageService : MinqService<Message>
         .Distinct()
         .ToArray();
 
+    public long DeleteAllMessages(string roomId, Transaction transaction) => mongo
+        .WithTransaction(transaction)
+        .Where(query => query.EqualTo(message => message.RoomId, roomId))
+        .Delete();
+
+    public long DeleteMessages(string[] roomIds) => mongo
+        .Where(query => query.ContainedIn(message => message.RoomId, roomIds))
+        .Delete();
+
     public long DeleteMessages(string roomId, int countToKeep = 0)
     {
         if (countToKeep <= 0)
@@ -87,7 +96,10 @@ public class MessageService : MinqService<Message>
         .Update(update => update.Set(message => message.Type, type));
 
     public long DeleteExpiredMessages() => mongo
-        .Where(query => query.LessThan(message => message.Expiration, Timestamp.Now))
+        .Where(query => query
+            .LessThan(message => message.Expiration, Timestamp.Now)
+            .NotEqualTo(message => message.Type, MessageType.Announcement)
+        )
         .Delete();
 
     public Message[] GetContextAround(string messageId)

@@ -36,7 +36,7 @@ public class Message : PlatformCollectionDocument
     [JsonPropertyName("roomId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string RoomId { get; set; }
     
-    [BsonElement("type"), BsonIgnoreIfDefault]
+    [BsonElement("type")]
     [JsonIgnore]
     public MessageType Type { get; set; }
     
@@ -54,7 +54,7 @@ public class Message : PlatformCollectionDocument
         errors = new List<string>();
         
         if (string.IsNullOrWhiteSpace(Body))
-            errors.Add("Messages must have content."); // TODO: Add key to this
+            errors.Add("Messages must have text content.");
         if (Type != MessageType.Unassigned)
             errors.Add("Sending a message with an explicit message type is not allowed, it is server-authoritative.");
     }

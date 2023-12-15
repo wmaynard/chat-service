@@ -22,7 +22,7 @@ POST /admin/broadcast
             "accountId": "deadbeefdeadbeefdeadbeef",    // ADMIN ONLY
             "text": "{accountId} summoned {titan}",
             "context": {
-                type": "broadcast",
+                "type": "broadcast",
                 "titan":  {
                     "rarity": 5,
                     "name": "Mongorc"
@@ -34,7 +34,7 @@ POST /admin/broadcast
             "accountId": "deadbeefdeadbeefdeadbeef",
             "text": "{accountId} summoned {titan}",
             "context": {
-                type": "broadcast",
+                "type": "broadcast",
                 "titan":  {
                     "rarity": 5,
                     "name": "Mongorc"
@@ -87,7 +87,7 @@ The use case of doing so might be rare - but an example of when this might be de
 To get a list of messages, there are various parameters you can use, and to allow a better browsing experience, listing messages now supports paging:
 
 ```
-GET /admin/messages?roomId={room}&accountId{account}&messageId={id}&page={pageNumber}
+GET /admin/messages?roomId={room}&accountId={account}&messageId={id}&page={pageNumber}
 
 200 OK
 {
@@ -168,7 +168,7 @@ TODO: Sample report structure in above code
 
 Updating reports works quite differently from other updates.  An administrator can only change the status of a report and nothing more.  Reports are designed to be untouchable in their content, as their purpose is to provide a written-in-stone snapshot of events.
 
-An administrator can mark a report with a status.  That status determines the **retention duration** for that report.  For more information, see the [Data Culling documentation](DATA_CULLING.md).
+An administrator can mark a report with a status.  That status determines the **retention duration** for that report.  For more information, see the [Data Retention documentation](DATA_RETENTION.md).
 
 ```
 PATCH /admin/reports/update
@@ -198,7 +198,7 @@ GET /admin/rooms?roomId={room}&accountId={account}&page={pageNumber}
 
 ## Creating Private Rooms
 
-This is an important feature for other interop activities, such as guilds.  Private rooms can only be created with an admin token; they can't be created by players.  These are different in DMs in that they're intended to be more or less permanent fixtures and rare to see created.  A list of `accountIds` must be provided and must contain at least one valid ID.
+This is an important feature for other interop activities, such as guilds.  Private rooms can only be created or modified with an admin token; they can't be altered by players.  These are different in DMs in that they're intended to be more or less permanent fixtures and rare to see created.  A list of `accountIds` must be provided and must contain at least one valid ID.
 
 A `data` object can be optionally passed in, but is not required.  It is not used directly by chat service, but will be available to any consuming clients if specified.
 
@@ -226,3 +226,24 @@ POST /admin/rooms/new
 The token used to create the room is logged for internal auditing only.
 
 ## Maintaining Private Rooms
+
+As private rooms can only be modified by admin clients, any feature using a private room must make requests through a proxy server or just be managed by the server on its own.  For example, guild chat will need to change who's in it based on their membership in that guild.  This is accomplished through the following endpoint:
+
+```
+PATCH /admin/rooms/update
+{
+    "roomId": "deadbeefdeadbeefdeadbeef",
+    "accountIds": [
+        "badf00dbadf00dbadf00dbad"
+        ...
+    ],
+    "data": {
+        "guildName": "Hitchhiker's Guides",
+        "guildLeader": "Joe McFugal"
+    }
+}
+```
+
+For a service like Guilds, there should be a task on a timer to send updates at regular intervals to ensure data integrity / fix any out-of-sync issues.  For example, if Chat is down and the guild roster changes, we don't want our data to be too out-of-sync.
+
+**Caution: if the `accountIds` field is an empty array, the room will be deleted.**

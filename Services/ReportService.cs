@@ -96,20 +96,20 @@ public class ReportService : MinqService<Report>
     {
         long affected = mongo
             .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.Severe)
+                .EqualTo(report => report.Status, ReportStatus.Mild)
                 .LessThan(report => report.CreatedOn, Timestamp.TwoWeeksAgo)
             )
             .Delete();
         affected += mongo
             .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.Mild)
-                .LessThan(report => report.CreatedOn, Timestamp.ThreeMonthsAgo)
+                .EqualTo(report => report.Status, ReportStatus.New)
+                .LessThan(report => report.CreatedOn, Timestamp.OneMonthAgo)
             )
             .Delete();
         affected += mongo
             .Where(query => query
-                .EqualTo(report => report.Status, ReportStatus.New)
-                .LessThan(report => report.CreatedOn, Timestamp.SixMonthsAgo)
+                .EqualTo(report => report.Status, ReportStatus.Severe)
+                .LessThan(report => report.CreatedOn, Timestamp.ThreeMonthsAgo)
             )
             .Delete();
 

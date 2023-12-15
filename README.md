@@ -8,7 +8,34 @@ Chat V1 was a particularly interesting Platform project - because it predated pl
 
 However, it had some significant downfalls.  It was very difficult to maintain, not being built on the tooling that most of Platform relies on now, and adding new features such as guild chat was not going to be clean or easy.
 
-This guide will walk you through how to use the second iteration of chat.  There is only one guiding principle that carries over from V1...
+This guide will walk you through how to use the second iteration of chat.  Before we get to the meat of the docs, there are some project-specific terms we should define:
+
+## Glossary
+
+| Term                   | Definition                                                                                                                                                                                                                                                     |
+|:-----------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client                 | Any application that hits the service, either directly or indirectly.  Could be the game, Portal, or Postman, as examples.                                                                                                                                     |
+| Client - Admin         | An application that is specifically hitting the service with an admin token.  This cannot be the game client, but could be a server or other Platform service.                                                                                                 |
+| Janitor                | A background task that runs in the service, responsible for ongoing maintenance tasks such as but not limited to data deletion.  For more information, see the [Data Retention](DATA_RETENTION.md) document.                                                   |
+| Message                | An object representing some text to display to users; has optional client-defined data associated with it and an internally-used type.                                                                                                                         |
+| Message - Announcement | A specific type of message representing a system-wide critical message.  Announcements appear in all chat responess when active, regardless of player rooms.                                                                                                   |
+| Message - Broadcast    | Any message that was sent from an **admin client** that is not an **announcement**.  Examples might include summon evenets or congratulatory messages from another Platform service.  V1 had broadcasts too, but they were much narrower in scope and utility. |
+| Message - Direct (DM)  | A message that is privately sent between two or more players.  Think of these like Slack DMs.                                                                                                                                                                  |
+| Message - Unread       | Any message that has a CreatedOn timestamp that is larger than the `lastRead` timestamp sent with every non-admin client's requests.                                                                                                                           |
+| Paging                 | New to most Platform services; when returning a large number of records, the data clients receive will be limited to a small number of matching records.  Requests will need to pass in a page number to see different records.                                |
+| Player / User          | An end user of a client.                                                                                                                                                                                                                                       |
+| Report                 | A snapshot of messages that is not modifyable by anyone, even an administrator.  These represent action items an admin has to review, at which point they can update the status but nothing else.  Player consequences are handled externally from Chat.       |
+| Report - New           | A report that has not yet been reviewed.                                                                                                                                                                                                                       |
+| Report - Mild          | A report that an admin wants to keep around for a short while, for example, in case the reported player continues to misbehave.                                                                                                                                |
+| Report - Severe        | A report that an admin wants to keep around for a long time but not indefinitely.                                                                                                                                                                              |
+| Report - Permanent     | A report that an admin wants to keep around indefinitely.                                                                                                                                                                                                      |
+| Room                   | A registry of who is participating in a given room.  Each room has a type that defines slightly different experiences.                                                                                                                                         |
+| Room - DM              | A room that can be created by a standard client by sending messages to one or more people.  Acts as an impromptu private chat.                                                                                                                                 |
+| Room - Global          | A room that represents public chat.  Users are automatically placed into a global room if they aren't already in one with any Chat request.  Players are removed automatically after inactivity.                                                               |
+| Room - Hacked          | Not actually a room.  Since clients can specify a room to send messages to, this is a classification indicating there's no actual "room" associated with the message.  Used internally to identify bad actors.                                                 |
+| Room - Private         | A room only managed by admin clients.  Represents special rooms for other servers or game features.                                                                                                                                                            |
+
+There is only one guiding principle that carries over from V1...
 
 ## Every Request Returns Unread Messages
 
@@ -23,6 +50,11 @@ It's important to state this right at the beginning as it's a critical point to 
 Room updates are limited to 100 rooms, sorted first by room type (Global, Private, then finally DMs), then by the last time the room's member list changed.  If someone happens to hit this 100-room limit, it's possible they will miss messages without knowing it; it may be necessary in this case to page the unread messages or otherwise force them to leave DMs, which we'll get to later.  
 
 Returned messages are limited to `Math.Min(100 * numberOfActiveRooms, 1000)`.  Consequently, when an update is received, the client should store the most recent message's timestamp for `lastRead` - **not** the current timestamp, as there may be more messages the client is simply behind on.
+
+Throughout these documents, please keep in mind:
+1. All endpoints start with `{environment}/chat`.  This is not specified; instead all of the request documentation omits this as it is a shared root.  So when you see `PATCH /rooms/join`, your actual request should be `PATCH http://dev.nonprod.tower.cdrentertainment.com/chat/rooms/join`.
+2. A unix timestamp, `lastRead` should appear in every request.  It should be in the body of every request that takes one, and as a query parameter in GET / DELETE requests (which don't support a JSON body).  This, too, is not specified in the samples.
+3. The Platform Services Postman Collection should be considered the authoritative source of requests, _not_ this document, as changes will be tested using it, so it's more likely to be up-to-date than these documents.
 
 Without further ado, let's get into implementation details.
 
@@ -96,7 +128,7 @@ PATCH /rooms/join
 }
 ```
 
-Be aware that this does remove you from whatever other global room you were a part of.
+Be aware that this does remove you from whatever other global room you were a part of.  Clients should block the request from going out if the target room ID is the same as the global room the player is already in; there are no Platform checks for it since it would add a database hit, so saving Chat the traffic will improve performance.
 
 ### Leaving Direct Message Rooms
 
@@ -113,7 +145,33 @@ DELETE /rooms/leave?roomId={...}
 
 Chat doesn't currently have support to add people to an existing DM room - either by invitation or rejoining on your own.  So, once you're out, you're out for good until someone creates a group with the same members.
 
+You cannot leave other types of rooms.
+
 <hr />
+
+## Receiving Messages
+
+As covered earlier, every client-side request to Chat will return unread messages, and should contain a `lastRead` timestamp.  The following endpoint is completely empty but intended to be the default request:
+
+```
+GET /?lastRead=1702603902
+
+200 OK
+{
+    "roomUpdates": [
+        {
+            "members": [
+                "65781a2ee074f00f1e9b37e6"
+            ],
+            "type": "Global",
+            "unread": [ ... ],
+            "number": 1,
+            "id": "657956f98be2aefc0e26982b",
+            "createdOn": 1702450937
+        }
+    ]
+}
+```
 
 ## Sending Messages
 
@@ -224,7 +282,7 @@ GET /preferences
 Then, to update them:
 
 ```
-PUT /preferences/save
+PUT /preferences/update
 {
     "settings": {
         // Any data you want

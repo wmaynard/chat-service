@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RCL.Logging;
@@ -5,7 +6,9 @@ using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Minq;
+using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
+using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
@@ -143,10 +146,6 @@ public class RoomService : MinqService<Room>
         .ExactId(roomId)
         .Update(update => update.RemoveItems(room => room.Members, accountIds)) > 0;
 
-    public string[] ListGlobalRooms() => mongo
-        .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
-        .Project(room => room.Id);
-
     public const int ROOM_LIST_PAGE_SIZE = 10;
     public Room[] ListGlobalRoomsWithCapacity(int page, out long remainingRooms) => mongo
         .Where(query => query
@@ -200,4 +199,75 @@ public class RoomService : MinqService<Room>
                 )
                 .Page(10, page, out remaining);
     }
+
+    public Room[] ListRoomsByType(RoomType type, int page, out long remaining) => mongo
+        .Where(query => query.EqualTo(room => room.Type, type))
+        .Page(100, page, out remaining);
+
+    public bool Delete(string id, out long messagesDeleted)
+    {
+        messagesDeleted = 0;
+        
+        bool output = mongo
+            .WithTransaction(out Transaction transaction)
+            .ExactId(id)
+            .Delete() == 0;
+
+        if (!output)
+        {
+            Abort(transaction);
+            return false;
+        }
+
+        try
+        {
+            messagesDeleted = _messages.DeleteAllMessages(id, transaction);
+            Commit(transaction);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(Owner.Will, "Could not delete room and messages", exception: e);
+            Abort(transaction);
+            throw;
+        }
+    }
+
+    public void DeleteInactiveDmRooms(out long deletedRooms, out long deletedMessages)
+    {
+        string[] toDelete = mongo
+            .Where(query => query
+                .EqualTo(room => room.Type, RoomType.DirectMessage)
+                .Or(or => or
+                    .LessThan(room => room.MembershipUpdatedMs, TimestampMs.OneWeekAgo)
+                    .LengthLessThan(room => room.Members, 2)
+                )
+            )
+            .Project(room => room.Id);
+
+        deletedMessages = _messages.DeleteMessages(toDelete);
+        deletedRooms = mongo
+            .Where(query => query.ContainedIn(room => room.Id, toDelete))
+            .Delete();
+    }
+
+    public long DeleteEmptyPrivateRooms() => mongo
+        .Where(query => query
+            .EqualTo(room => room.Type, RoomType.Private)
+            .LengthLessThan(room => room.Members, 1)
+        )
+        .Delete();
+
+    public Room AdminUpdate(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
+        .ExactId(roomId)
+        .UpdateAndReturnOne(update =>
+        {
+            update
+                .Set(room => room.Members, roster)
+                .Set(room => room.Editor, admin);
+
+            if (data != null)
+                update.Set(room => room.Data, data);
+        })
+        ?? throw new PlatformException("Room not found, could not update roster.");
 }

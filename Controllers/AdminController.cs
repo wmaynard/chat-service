@@ -168,7 +168,28 @@ public class AdminController : PlatformController
             { "roomsPerPage", 10 },
             { "remainingRoomCount", remaining }
         });
+    }
 
+    [HttpPatch, Route("rooms/update")]
+    public ActionResult UpdateRoomMembership()
+    {
+        string roomId = Require<string>("roomId");
+        string[] accounts = Require<string[]>("accountIds");
+        RumbleJson data = Optional<RumbleJson>("data");
+
+        if (accounts.Length == 0)
+        {
+            _rooms.Delete(roomId, out long messagesDeleted);
+            return Ok(new RumbleJson
+            {
+                { "messagesDeleted", messagesDeleted }
+            });
+        }
+
+        if (accounts.Any(account => string.IsNullOrWhiteSpace(account) || !account.CanBeMongoId()) || !accounts.Length.Between(1, 50))
+            throw new PlatformException("Invalid account ID(s) detected; cannot create private room.");
+
+        return Ok(_rooms.AdminUpdate(roomId, accounts, data, Token));
     }
     #endregion Rooms
 }

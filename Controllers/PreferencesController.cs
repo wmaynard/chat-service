@@ -22,7 +22,7 @@ public class PreferencesController : PlatformController
     [HttpGet]
     public ActionResult GetPreferences() => Ok(_preferences.FromAccountId(Token.AccountId));
 
-    [HttpPut, Route("save"), RequestSizeLimit(3_145_728)] // 3MB
+    [HttpPut, Route("update"), RequestSizeLimit(3_145_728)] // 3MB
     public ActionResult SetPreferences()
     {
         RumbleJson settings = Require<RumbleJson>("settings");

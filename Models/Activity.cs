@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.Common.Models;
@@ -18,4 +19,8 @@ public class Activity : PlatformCollectionDocument
     [BsonElement("updated")]
     [JsonIgnore]
     public long LastActive { get; set; } // Do we need a MarkedInactive timestamp?
+    
+    [BsonElement("log")]
+    [JsonIgnore]
+    public Queue<int> Counts { get; set; }
 }

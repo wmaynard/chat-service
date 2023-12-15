@@ -6,19 +6,20 @@ using MongoDB.Bson.Serialization.Attributes;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
+using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
-public class JanitorService : QueueService<CleanupTask>
+public class Janitor2Service : QueueService<CleanupTask>
 {
     private readonly RoomService _rooms;
     private readonly MessageService _messages;
     private readonly ReportService _reports;
     
-    public JanitorService(MessageService messages, ReportService reports, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.ThirtyMinutes, 10, preferOffCluster: true)
+    public Janitor2Service(MessageService messages, ReportService reports, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.FiveMinutes, 10, preferOffCluster: true)
     {
         _messages = messages;
         _rooms = rooms;
@@ -29,51 +30,85 @@ public class JanitorService : QueueService<CleanupTask>
 
     protected override void PrimaryNodeWork()
     {
+        Dictionary<CleanupType, CleanupTask[]> dict = new();
+        dict[CleanupType.AssignMessageType] = CreateTasks_Assignment();
+        dict[CleanupType.DeleteOldGlobalMessages] = CreateTasks_GlobalMessageCleanup();
+        dict[CleanupType.DeleteExpiredMessages] = new[]
+        {
+            new CleanupTask { Type = CleanupType.DeleteExpiredMessages }
+        };
+        dict[CleanupType.ClearOldReports] = new[]
+        {
+            new CleanupTask { Type = CleanupType.ClearOldReports }
+        };
+        dict[CleanupType.DeleteInactiveDmRooms] = new[]
+        {
+            new CleanupTask { Type = CleanupType.DeleteInactiveDmRooms }
+        };
+        dict[CleanupType.DeleteEmptyPrivateRooms] = new[]
+        {
+            new CleanupTask { Type = CleanupType.DeleteEmptyPrivateRooms }
+        };
+        dict[CleanupType.FindMessageSpam] = new []
+        {
+            new CleanupTask { Type = CleanupType.FindMessageSpam }
+        };
+
+        CreateUntrackedTasks(dict
+            .Values
+            .Where(task => task != null)
+            .SelectMany(_ => _)
+            .ToArray()
+        );
+        
+        foreach (KeyValuePair<CleanupType, CleanupTask[]> pair in dict)
+            Log.Local(Owner.Will, $"Created tasks: {pair.Value.Length}x {pair.Key.GetDisplayName()}");
+    }
+
+    private CleanupTask[] CreateTasks_Assignment()
+    {
+        List<CleanupTask> output = new();
+        
         int page = 0;
         long remaining = 0;
-
-        List<CleanupTask> newTasks = new();
-
-        // First, we need to run through all of our messages that don't have a message type associated with them.
-        // We'll create a task to assign them a type so they can be effectively sorted when returning high traffic chat.
-        List<string> roomIdsToLookup = new();
         do
         {
             string[] rooms = _messages.GetRoomIdsForUnknownTypes(page, out remaining);
             
-            roomIdsToLookup.AddRange(rooms);
-        } while (remaining > 0);
-        
-        newTasks.AddRange(roomIdsToLookup
-            .Select(roomId => new CleanupTask
+            output.AddRange(rooms.Select(roomId => new CleanupTask
             {
                 Type = CleanupType.AssignMessageType,
                 RoomId = roomId
-            })
-        );
+            }));
+        } while (remaining > 0);
+
+        return output.ToArray();
+    }
+    private CleanupTask[] CreateTasks_GlobalMessageCleanup()
+    {
+        List<string> roomIds = new();
+
+        int page = 0;
+        long remaining = 0;
+        do
+        {
+            roomIds.AddRange(_rooms
+                .ListRoomsByType(RoomType.Global, page, out remaining)
+                .Select(room => room.Id)
+            );
+        } while (remaining > 0);
         
-        // Next, we need to delete messages from global rooms that are no longer relevant.  Global rooms are incredibly
-        // high traffic, so we'll want to clean those out quickly.
-        string[] globalRoomIds = _rooms.ListGlobalRooms();
-        newTasks.AddRange(globalRoomIds
+        return roomIds
             .Select(roomId => new CleanupTask
             {
                 Type = CleanupType.DeleteOldGlobalMessages,
                 RoomId = roomId
-            })
-        );
-        
-        // Finally, we'll want to create a cleanup task to simply delete expired messages.
-        newTasks.Add(new CleanupTask
-        {
-            Type = CleanupType.DeleteExpiredMessages
-        });
-
-        CreateUntrackedTasks(newTasks.ToArray());
+            }).ToArray();
     }
 
     protected override void ProcessTask(CleanupTask task)
     {
+        Log.Local(Owner.Will, $"Processing task type: {task.Type.GetDisplayName()}");
         switch (task.Type)
         {
             case CleanupType.AssignMessageType:
@@ -117,6 +152,26 @@ public class JanitorService : QueueService<CleanupTask>
                         Count = deleted
                     });
                 break;
+            case CleanupType.DeleteInactiveDmRooms:
+                _rooms.DeleteInactiveDmRooms(out long deletedRooms, out long deletedDms);
+                if (deletedDms + deletedRooms > 0)
+                    Log.Info(Owner.Will, "Deleted inactive DMs", data: new
+                    {
+                        RoomCount = deletedRooms,
+                        MessageCount = deletedDms
+                    });
+                break;
+            case CleanupType.DeleteEmptyPrivateRooms:
+                long deletedPrivateRooms = _rooms.DeleteEmptyPrivateRooms();
+                if (deletedPrivateRooms > 0)
+                    Log.Info(Owner.Will, "Deleted empty private rooms", data: new
+                    {
+                        RoomCount = deletedPrivateRooms
+                    });
+                break;
+            case CleanupType.FindMessageSpam:
+                // TODO: Waiting on PLATF-6517 for necessary diagnostics
+                break;
             default:
                 throw new NotImplementedException();
         }
@@ -138,9 +193,12 @@ public enum CleanupType
 {
     AssignMessageType,
     DeleteOldGlobalMessages,
-    DeleteExpiredMessages,
-    ClearOldReports
+    DeleteExpiredMessages,   // Covers all messages except announcements
+    ClearOldReports,
+    DeleteInactiveDmRooms,
+    DeleteEmptyPrivateRooms,
+    FindMessageSpam
 }
 
-// TODO: Cleanup Inactive DMs
-// TODO: Delete Empty DM rooms
+
+// TODO: Auto ban system
