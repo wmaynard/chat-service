@@ -1,10 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
 using RCL.Logging;
 using Rumble.Platform.ChatService.Filters;
-using Rumble.Platform.ChatService.Models;
-using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Enums;
-using Rumble.Platform.Common.Services;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Common.Web;
 
@@ -25,10 +21,10 @@ public class Startup : PlatformStartup
             #if  DEBUG
             if (!PlatformEnvironment.MongoConnectionString.Contains("local"))
                 return;
-            PlatformService.Require<MessageService>().WipeDatabase();
-            PlatformService.Require<RoomService>().WipeDatabase();
-            PlatformService.Require<ActivityService>().WipeDatabase();
-            PlatformService.Require<PreferencesService>().WipeDatabase();
+            // PlatformService.Require<MessageService>().WipeDatabase();
+            // PlatformService.Require<RoomService>().WipeDatabase();
+            // PlatformService.Require<ActivityService>().WipeDatabase();
+            // PlatformService.Require<PreferencesService>().WipeDatabase();
             #endif
         });
 }

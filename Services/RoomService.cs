@@ -14,10 +14,159 @@ namespace Rumble.Platform.ChatService.Services;
 
 public class RoomService : MinqService<Room>
 {
+    public const int ROOM_LIST_PAGE_SIZE = 10;
+    
     private readonly MessageService _messages;
 
     public RoomService(MessageService messages) : base("rooms")
         => _messages = messages;
+
+    public Room[] AdminListRooms(string roomId, string accountId, int page, out long remaining)
+    {
+        remaining = 0;
+
+        if (!string.IsNullOrWhiteSpace(roomId))
+            return mongo.ExactId(roomId).ToArray();
+
+        return string.IsNullOrWhiteSpace(accountId)
+            ? mongo
+                .All()
+                .Sort(sort => sort
+                    .OrderBy(room => room.Type)
+                    .OrderByDescending(room => room.FriendlyId)
+                    .OrderBy(room => room.CreatedOn)
+                )
+                .Page(10, page, out remaining)
+            : mongo
+                .Where(query => query.Contains(room => room.Members, accountId))
+                .Sort(sort => sort
+                    .OrderBy(room => room.Type)
+                    .OrderByDescending(room => room.FriendlyId)
+                    .OrderBy(room => room.CreatedOn)
+                )
+                .Page(10, page, out remaining);
+    }
+
+    public Room AdminUpdate(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
+        .ExactId(roomId)
+        .UpdateAndReturnOne(update =>
+        {
+            update
+                .Set(room => room.Members, roster)
+                .Set(room => room.Editor, admin);
+
+            if (data != null)
+                update.Set(room => room.Data, data);
+        })
+        ?? throw new PlatformException("Room not found, could not update roster.");
+
+    /// <summary>
+    /// Places the player into a global room, creating one if necessary.
+    /// </summary>
+    /// <param name="accountId"></param>
+    /// <returns></returns>
+    private Room AutoJoinGlobal(string accountId)
+    {
+        Room output = mongo
+            .Where(query => query.Contains(room => room.Members, accountId))
+            .Or(or => or
+                .EqualTo(room => room.Type, RoomType.Global)
+                .LengthLessThanOrEqualTo(room => room.Members, Room.CAPACITY_MEMBERS)
+            )
+            .Upsert(update => update
+                .AddItems(room => room.Members, accountId)
+                .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
+                .SetOnInsert(room => room.Type, RoomType.Global)
+            );
+
+        if (output.FriendlyId != default)
+            return output;
+        
+        // The global room we're joining doesn't yet have its ID number.  Let's give it one.
+        // TODO: We may need to account for a very difficult-to-produce edge case where two global rooms are created at the same time
+        // and have a collision on the FriendlyId.
+        long max = mongo
+                       .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
+                       .Sort(sort => sort.OrderByDescending(room => room.FriendlyId))
+                       .Limit(1)
+                       .FirstOrDefault()
+                       ?.FriendlyId
+                   ?? 0;
+
+        output = mongo
+            .ExactId(output.Id)
+            .UpdateAndReturnOne(update => update.Set(room => room.FriendlyId, ++max));
+        
+        Log.Info(Owner.Will, "A global room was assigned a friendly ID number.", data: new
+        {
+            RoomId = output.Id,
+            Number = max
+        });
+
+        return output;
+    }
+
+    public bool Delete(string id, out long messagesDeleted)
+    {
+        messagesDeleted = 0;
+        
+        bool output = mongo
+            .WithTransaction(out Transaction transaction)
+            .ExactId(id)
+            .Delete() == 0;
+
+        if (!output)
+        {
+            Abort(transaction);
+            return false;
+        }
+
+        try
+        {
+            messagesDeleted = _messages.DeleteAllMessages(id, transaction);
+            Commit(transaction);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(Owner.Will, "Could not delete room and messages", exception: e);
+            Abort(transaction);
+            throw;
+        }
+    }
+
+    public long DeleteEmptyPrivateRooms() => mongo
+        .Where(query => query
+            .EqualTo(room => room.Type, RoomType.Private)
+            .LengthLessThan(room => room.Members, 1)
+        )
+        .Delete();
+
+    public void DeleteInactiveDmRooms(out long deletedRooms, out long deletedMessages)
+    {
+        string[] toDelete = mongo
+            .Where(query => query
+                .EqualTo(room => room.Type, RoomType.DirectMessage)
+                .Or(or => or
+                    .LessThan(room => room.MembershipUpdatedMs, TimestampMs.OneWeekAgo)
+                    .LengthLessThan(room => room.Members, 2)
+                )
+            )
+            .Project(room => room.Id);
+
+        deletedMessages = _messages.DeleteMessages(toDelete);
+        deletedRooms = mongo
+            .Where(query => query.ContainedIn(room => room.Id, toDelete))
+            .Delete();
+    }
+
+    public string GetDmRoom(params string[] accountIds) => mongo
+        .Where(query => query.EqualTo(room => room.Members, accountIds.OrderBy(_ => _).ToArray()))
+        .Upsert(update => update
+            .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
+            .SetOnInsert(room => room.Type, RoomType.DirectMessage)
+        )
+        .Id;
 
     /// <summary>
     /// Returns all of the Rooms a player is participating in.  This method guarantees that the player will only ever
@@ -64,6 +213,12 @@ public class RoomService : MinqService<Room>
             .Where(room => room != null)
             .ToArray();
     }
+    
+    public RoomType GetRoomType(string id) => mongo
+        .ExactId(id)
+        .FirstOrDefault()
+        ?.Type
+        ?? RoomType.PossibleHack;
 
     public Room JoinGlobal(string accountId, string roomId)
     {
@@ -91,46 +246,10 @@ public class RoomService : MinqService<Room>
         return output;
     }
 
-    private Room AutoJoinGlobal(string accountId)
-    {
-        Room output = mongo
-            .Where(query => query.Contains(room => room.Members, accountId))
-            .Or(or => or
-                .EqualTo(room => room.Type, RoomType.Global)
-                .LengthLessThanOrEqualTo(room => room.Members, Room.CAPACITY_MEMBERS)
-            )
-            .Upsert(update => update
-                .AddItems(room => room.Members, accountId)
-                .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
-                .SetOnInsert(room => room.Type, RoomType.Global)
-            );
-
-        if (output.FriendlyId != default)
-            return output;
-        
-        // The global room we're joining doesn't yet have its ID number.  Let's give it one.
-        // TODO: We may need to account for a very difficult-to-produce edge case where two global rooms are created at the same time
-        // and have a collision on the FriendlyId.
-        long max = mongo
-            .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
-            .Sort(sort => sort.OrderByDescending(room => room.FriendlyId))
-            .Limit(1)
-            .FirstOrDefault()
-            ?.FriendlyId
-            ?? 0;
-
-        output = mongo
-            .ExactId(output.Id)
-            .UpdateAndReturnOne(update => update.Set(room => room.FriendlyId, ++max));
-        
-        Log.Info(Owner.Will, "A global room was assigned a friendly ID number.", data: new
-        {
-            RoomId = output.Id,
-            Number = max
-        });
-
-        return output;
-    }
+    public bool Leave(string accountId, string roomId) => mongo
+        .ExactId(roomId)
+        .And(query => query.ContainedIn(room => room.Type, new[] { RoomType.DirectMessage }))
+        .Update(update => update.RemoveItems(room => room.Members, accountId)) > 0;
 
     public long RemoveFromGlobalRooms(Transaction transaction, params string[] accountIds) => mongo
         .WithTransaction(transaction)
@@ -140,13 +259,7 @@ public class RoomService : MinqService<Room>
     private long RemoveMember(string accountId, params string[] roomIds) => mongo
         .Where(query => query.ContainedIn(room => room.Id, roomIds))
         .Update(update => update.RemoveItems(room => room.Members, accountId));
-
-    public bool TryRemoveMembers(Transaction transaction, string roomId, params string[] accountIds) => mongo
-        .WithTransaction(transaction)
-        .ExactId(roomId)
-        .Update(update => update.RemoveItems(room => room.Members, accountIds)) > 0;
-
-    public const int ROOM_LIST_PAGE_SIZE = 10;
+    
     public Room[] ListGlobalRoomsWithCapacity(int page, out long remainingRooms) => mongo
         .Where(query => query
             .EqualTo(room => room.Type, RoomType.Global)
@@ -154,120 +267,8 @@ public class RoomService : MinqService<Room>
         )
         .Sort(sort => sort.OrderBy(room => room.FriendlyId))
         .Page(ROOM_LIST_PAGE_SIZE, page, out remainingRooms);
-    
-    public RoomType GetRoomType(string id) => mongo
-        .ExactId(id)
-        .FirstOrDefault()
-        ?.Type
-        ?? RoomType.PossibleHack;
-
-    public string GetDmRoom(params string[] accountIds) => mongo
-        .Where(query => query.EqualTo(room => room.Members, accountIds.OrderBy(_ => _).ToArray()))
-        .Upsert(update => update
-            .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
-            .SetOnInsert(room => room.Type, RoomType.DirectMessage)
-        )
-        .Id;
-
-    public bool Leave(string accountId, string roomId) => mongo
-        .ExactId(roomId)
-        .And(query => query.ContainedIn(room => room.Type, new[] { RoomType.DirectMessage }))
-        .Update(update => update.RemoveItems(room => room.Members, accountId)) > 0;
-
-    public Room[] AdminListRooms(string roomId, string accountId, int page, out long remaining)
-    {
-        remaining = 0;
-
-        if (!string.IsNullOrWhiteSpace(roomId))
-            return mongo.ExactId(roomId).ToArray();
-
-        return string.IsNullOrWhiteSpace(accountId)
-            ? mongo
-                .All()
-                .Sort(sort => sort
-                    .OrderBy(room => room.Type)
-                    .OrderByDescending(room => room.FriendlyId)
-                    .OrderBy(room => room.CreatedOn)
-                )
-                .Page(10, page, out remaining)
-            : mongo
-                .Where(query => query.Contains(room => room.Members, accountId))
-                .Sort(sort => sort
-                    .OrderBy(room => room.Type)
-                    .OrderByDescending(room => room.FriendlyId)
-                    .OrderBy(room => room.CreatedOn)
-                )
-                .Page(10, page, out remaining);
-    }
 
     public Room[] ListRoomsByType(RoomType type, int page, out long remaining) => mongo
         .Where(query => query.EqualTo(room => room.Type, type))
         .Page(100, page, out remaining);
-
-    public bool Delete(string id, out long messagesDeleted)
-    {
-        messagesDeleted = 0;
-        
-        bool output = mongo
-            .WithTransaction(out Transaction transaction)
-            .ExactId(id)
-            .Delete() == 0;
-
-        if (!output)
-        {
-            Abort(transaction);
-            return false;
-        }
-
-        try
-        {
-            messagesDeleted = _messages.DeleteAllMessages(id, transaction);
-            Commit(transaction);
-            return true;
-        }
-        catch (Exception e)
-        {
-            Log.Error(Owner.Will, "Could not delete room and messages", exception: e);
-            Abort(transaction);
-            throw;
-        }
-    }
-
-    public void DeleteInactiveDmRooms(out long deletedRooms, out long deletedMessages)
-    {
-        string[] toDelete = mongo
-            .Where(query => query
-                .EqualTo(room => room.Type, RoomType.DirectMessage)
-                .Or(or => or
-                    .LessThan(room => room.MembershipUpdatedMs, TimestampMs.OneWeekAgo)
-                    .LengthLessThan(room => room.Members, 2)
-                )
-            )
-            .Project(room => room.Id);
-
-        deletedMessages = _messages.DeleteMessages(toDelete);
-        deletedRooms = mongo
-            .Where(query => query.ContainedIn(room => room.Id, toDelete))
-            .Delete();
-    }
-
-    public long DeleteEmptyPrivateRooms() => mongo
-        .Where(query => query
-            .EqualTo(room => room.Type, RoomType.Private)
-            .LengthLessThan(room => room.Members, 1)
-        )
-        .Delete();
-
-    public Room AdminUpdate(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
-        .ExactId(roomId)
-        .UpdateAndReturnOne(update =>
-        {
-            update
-                .Set(room => room.Members, roster)
-                .Set(room => room.Editor, admin);
-
-            if (data != null)
-                update.Set(room => room.Data, data);
-        })
-        ?? throw new PlatformException("Room not found, could not update roster.");
 }

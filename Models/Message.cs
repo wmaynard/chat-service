@@ -20,6 +20,10 @@ public class Message : PlatformCollectionDocument
     [JsonPropertyName(TokenInfo.FRIENDLY_KEY_ACCOUNT_ID)]
     public string AccountId { get; set; }
     
+    [BsonElement("editor"), BsonIgnoreIfNull]
+    [JsonIgnore]
+    public TokenInfo Administrator { get; set; }
+    
     [BsonElement("body")]
     [JsonPropertyName("text")]
     public string Body { get; set; }
@@ -39,10 +43,6 @@ public class Message : PlatformCollectionDocument
     [BsonElement("type")]
     [JsonIgnore]
     public MessageType Type { get; set; }
-    
-    [BsonElement("editor"), BsonIgnoreIfNull]
-    [JsonIgnore]
-    public TokenInfo Administrator { get; set; }
 
     public Message()
     {

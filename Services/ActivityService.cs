@@ -32,26 +32,6 @@ public class ActivityService : MinqTimerService<Activity>
         RemoveInactivePlayersFromGlobalRooms();
     }
 
-    public void MarkAsActive(string accountId)
-    {
-        if (_buffer.TryGetValue(accountId, out Data data))
-        {
-            data.LastActive = Timestamp.Now;
-            data.ActivityCount++;
-            _buffer[accountId] = data;
-        }
-        else
-            _buffer[accountId] = new Data
-            {
-                LastActive = Timestamp.Now,
-                ActivityCount = 1,
-                CreatedOn = Timestamp.Now
-            };
-        
-        if (_buffer.Count > 100)
-            FlushActivityBuffer();
-    }
-
     private void FlushActivityBuffer()
     {
         if (!_buffer.Any())
@@ -90,6 +70,31 @@ public class ActivityService : MinqTimerService<Activity>
     }
 
     /// <summary>
+    /// Marks an account as active in memory.  Memory is flushed to the database at regular intervals, but stored this way
+    /// to reduce DB strain.
+    /// </summary>
+    /// <param name="accountId"></param>
+    public void MarkAsActive(string accountId)
+    {
+        if (_buffer.TryGetValue(accountId, out Data data))
+        {
+            data.LastActive = Timestamp.Now;
+            data.ActivityCount++;
+            _buffer[accountId] = data;
+        }
+        else
+            _buffer[accountId] = new Data
+            {
+                LastActive = Timestamp.Now,
+                ActivityCount = 1,
+                CreatedOn = Timestamp.Now
+            };
+        
+        if (_buffer.Count > 100)
+            FlushActivityBuffer();
+    }
+
+    /// <summary>
     /// Inactive players need to be culled from rooms so that the global room they were in frees up an open spot.
     /// </summary>
     private void RemoveInactivePlayersFromGlobalRooms()
@@ -99,7 +104,7 @@ public class ActivityService : MinqTimerService<Activity>
             .WithTransaction(out Transaction transaction)
             .Where(query => query
                 .EqualTo(player => player.IsActive, true)
-                .LessThanOrEqualTo(player => player.LastActive, Timestamp.ThirtyMinutesAgo)
+                .LessThanOrEqualTo(player => player.LastActive, Timestamp.TenMinutesAgo)
             )
             .Process(batchSize: 1_000, batch =>
             {

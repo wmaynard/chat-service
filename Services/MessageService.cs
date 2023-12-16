@@ -15,48 +15,41 @@ public class MessageService : MinqService<Message>
     
     public MessageService() : base("messages") { }
 
-    public Message[] GetGlobalMessages(string roomId, long timestamp = 0) => mongo
+    public Message[] AdminListMessages(string roomId, string accountId, string messageId, int page, out long remaining)
+    {
+        remaining = 0;
+        
+        return !string.IsNullOrWhiteSpace(messageId)
+            ? mongo.ExactId(messageId).ToArray()
+            : mongo
+                .Where(query =>
+                {
+                    if (!string.IsNullOrWhiteSpace(roomId))
+                        query.EqualTo(message => message.RoomId, roomId);
+                    if (!string.IsNullOrWhiteSpace(accountId))
+                        query.EqualTo(message => message.AccountId, accountId);
+                })
+                .Sort(sort => sort.OrderByDescending(message => message.Expiration))
+                .Page(100, page, out remaining);
+    }
+
+    public long AssignType(string roomId, MessageType type) => mongo
         .Where(query => query
             .EqualTo(message => message.RoomId, roomId)
-            .GreaterThan(message => message.CreatedOn, timestamp)
-            .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+            .EqualTo(message => message.Type, MessageType.Unassigned)
         )
-        .Sort(sort => sort.OrderBy(message => message.CreatedOn))
-        .Limit(MESSAGE_LIMIT)
-        .ToArray();
-    
-    public Message[] GetAllMessages(string[] roomIds, long timestamp = 0) => mongo
-        .Where(query => query
-            .ContainedIn(message => message.RoomId, roomIds)
-            .GreaterThan(message => message.CreatedOn, timestamp)
-            .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
-        )
-        .Or(or => or.EqualTo(message => message.Type, MessageType.Announcement))
-        .Sort(sort => sort.OrderBy(message => message.CreatedOn))
-        .Limit(Math.Min(MESSAGE_LIMIT * roomIds.Length, HARD_MESSAGE_LIMIT))
-        .ToArray();
-
-    public string GetLastGlobalRoomId(string accountId, params string[] roomIds) => mongo
-        .Where(query => query
-            .EqualTo(message => message.AccountId, accountId)
-            .ContainedIn(message => message.RoomId, roomIds)
-        )
-        .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
-        .Limit(1)
-        .FirstOrDefault()
-        ?.RoomId;
-
-    public string[] GetRoomIdsForUnknownTypes(int pageNumber, out long remaining) => mongo
-        .Where(query => query.EqualTo(message => message.Type, MessageType.Unassigned))
-        .Limit(1_000)
-        .Page(1_000, pageNumber, out remaining)
-        .Select(message => message.RoomId)
-        .Distinct()
-        .ToArray();
+        .Update(update => update.Set(message => message.Type, type));
 
     public long DeleteAllMessages(string roomId, Transaction transaction) => mongo
         .WithTransaction(transaction)
         .Where(query => query.EqualTo(message => message.RoomId, roomId))
+        .Delete();
+
+    public long DeleteExpiredMessages() => mongo
+        .Where(query => query
+            .LessThan(message => message.Expiration, Timestamp.Now)
+            .NotEqualTo(message => message.Type, MessageType.Announcement)
+        )
         .Delete();
 
     public long DeleteMessages(string[] roomIds) => mongo
@@ -88,19 +81,39 @@ public class MessageService : MinqService<Message>
             .Delete();
     }
 
-    public long AssignType(string roomId, MessageType type) => mongo
-        .Where(query => query
-            .EqualTo(message => message.RoomId, roomId)
-            .EqualTo(message => message.Type, MessageType.Unassigned)
-        )
-        .Update(update => update.Set(message => message.Type, type));
+    public long ExpireExcessAnnouncements()
+    {
+        Message announcement = mongo
+            .Where(query => query
+                .EqualTo(message => message.Type, MessageType.Announcement)
+                .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+            )
+            .Limit(10)
+            .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
+            .ToArray()
+            .LastOrDefault();
 
-    public long DeleteExpiredMessages() => mongo
+        return announcement == null
+            ? 0
+            : mongo
+                .Where(query => query
+                    .EqualTo(message => message.Type, MessageType.Announcement)
+                    .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+                    .LessThan(message => message.CreatedOn, announcement.CreatedOn)
+                )
+                .Update(update => update.Set(message => message.Expiration, Timestamp.Now));
+    }
+    
+    public Message[] GetAllMessages(string[] roomIds, long timestamp = 0) => mongo
         .Where(query => query
-            .LessThan(message => message.Expiration, Timestamp.Now)
-            .NotEqualTo(message => message.Type, MessageType.Announcement)
+            .ContainedIn(message => message.RoomId, roomIds)
+            .GreaterThan(message => message.CreatedOn, timestamp)
+            .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
         )
-        .Delete();
+        .Or(or => or.EqualTo(message => message.Type, MessageType.Announcement))
+        .Sort(sort => sort.OrderBy(message => message.CreatedOn))
+        .Limit(Math.Min(MESSAGE_LIMIT * roomIds.Length, HARD_MESSAGE_LIMIT))
+        .ToArray();
 
     public Message[] GetContextAround(string messageId)
     {
@@ -134,46 +147,32 @@ public class MessageService : MinqService<Message>
             .ToArray();
     }
 
-    public long DeleteAncientAnnouncements()
-    {
-        Message announcement = mongo
-            .Where(query => query
-                .EqualTo(message => message.Type, MessageType.Announcement)
-                .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+    public string GetLastGlobalRoomId(string accountId, params string[] roomIds) => mongo
+        .Where(query => query
+            .EqualTo(message => message.AccountId, accountId)
+            .ContainedIn(message => message.RoomId, roomIds)
+        )
+        .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
+        .Limit(1)
+        .FirstOrDefault()
+        ?.RoomId;
+
+    public string[] GetRoomIdsForUnknownTypes(int pageNumber, out long remaining) => mongo
+        .Where(query => query.EqualTo(message => message.Type, MessageType.Unassigned))
+        .Limit(1_000)
+        .Page(1_000, pageNumber, out remaining)
+        .Select(message => message.RoomId)
+        .Distinct()
+        .ToArray();
+
+    public Message[] Search(string term) => mongo
+        .Where(query => query
+            .Or(or => or
+                .ContainsSubstring(message => message.AccountId, term)
+                .ContainsSubstring(message => message.Body, term)
+                .ContainsSubstring(message => message.RoomId, term)
             )
-            .Limit(10)
-            .Sort(sort => sort.OrderByDescending(message => message.CreatedOn))
-            .ToArray()
-            .LastOrDefault();
-
-        return announcement == null
-            ? 0
-            : mongo
-                .Where(query => query
-                    .EqualTo(message => message.Type, MessageType.Announcement)
-                    .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
-                    .LessThan(message => message.CreatedOn, announcement.CreatedOn)
-                )
-                .Update(update => update.Set(message => message.Expiration, Timestamp.Now));
-    }
-
-    public Message[] Search(string term) => mongo.Search(term, limit: 100);
-
-    public Message[] AdminListMessages(string roomId, string accountId, string messageId, int page, out long remaining)
-    {
-        remaining = 0;
-        
-        return !string.IsNullOrWhiteSpace(messageId)
-            ? mongo.ExactId(messageId).ToArray()
-            : mongo
-                .Where(query =>
-                {
-                    if (!string.IsNullOrWhiteSpace(roomId))
-                        query.EqualTo(message => message.RoomId, roomId);
-                    if (!string.IsNullOrWhiteSpace(accountId))
-                        query.EqualTo(message => message.AccountId, accountId);
-                })
-                .Sort(sort => sort.OrderByDescending(message => message.Expiration))
-                .Page(100, page, out remaining);
-    }
+        )
+        .Limit(100)
+        .ToArray(); // TODO: Rank for relevance
 }

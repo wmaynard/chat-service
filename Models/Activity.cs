@@ -12,6 +12,10 @@ public class Activity : PlatformCollectionDocument
     [JsonIgnore]
     public string AccountId { get; set; }
     
+    [BsonElement("log")]
+    [JsonIgnore]
+    public Queue<int> Counts { get; set; }
+    
     [BsonElement("active")]
     [JsonIgnore]
     public bool IsActive { get; set; }
@@ -19,8 +23,4 @@ public class Activity : PlatformCollectionDocument
     [BsonElement("updated")]
     [JsonIgnore]
     public long LastActive { get; set; } // Do we need a MarkedInactive timestamp?
-    
-    [BsonElement("log")]
-    [JsonIgnore]
-    public Queue<int> Counts { get; set; }
 }

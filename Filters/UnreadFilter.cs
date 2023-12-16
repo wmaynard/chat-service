@@ -41,7 +41,7 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         foreach (Room room in rooms)
             room.Messages = room.Type == RoomType.Global
                 ? messages
-                    .Where(message => message.RoomId == room.Id)
+                    .Where(message => message.RoomId == room.Id)                // No filtering because this is a global room
                     .Select(message => message.Prune())
                     .ToArray()
                 : messages

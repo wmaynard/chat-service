@@ -13,13 +13,13 @@ using Rumble.Platform.Data;
 
 namespace Rumble.Platform.ChatService.Services;
 
-public class Janitor2Service : QueueService<CleanupTask>
+public class JanitorService : QueueService<JanitorService.CleanupTask>
 {
     private readonly RoomService _rooms;
     private readonly MessageService _messages;
     private readonly ReportService _reports;
     
-    public Janitor2Service(MessageService messages, ReportService reports, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.FiveMinutes, 10, preferOffCluster: true)
+    public JanitorService(MessageService messages, ReportService reports, RoomService rooms) : base("cleanup", Common.Utilities.IntervalMs.ThirtyMinutes, 10, preferOffCluster: true)
     {
         _messages = messages;
         _rooms = rooms;
@@ -30,39 +30,19 @@ public class Janitor2Service : QueueService<CleanupTask>
 
     protected override void PrimaryNodeWork()
     {
-        Dictionary<CleanupType, CleanupTask[]> dict = new();
-        dict[CleanupType.AssignMessageType] = CreateTasks_Assignment();
-        dict[CleanupType.DeleteOldGlobalMessages] = CreateTasks_GlobalMessageCleanup();
-        dict[CleanupType.DeleteExpiredMessages] = new[]
-        {
-            new CleanupTask { Type = CleanupType.DeleteExpiredMessages }
-        };
-        dict[CleanupType.ClearOldReports] = new[]
-        {
-            new CleanupTask { Type = CleanupType.ClearOldReports }
-        };
-        dict[CleanupType.DeleteInactiveDmRooms] = new[]
-        {
-            new CleanupTask { Type = CleanupType.DeleteInactiveDmRooms }
-        };
-        dict[CleanupType.DeleteEmptyPrivateRooms] = new[]
-        {
-            new CleanupTask { Type = CleanupType.DeleteEmptyPrivateRooms }
-        };
-        dict[CleanupType.FindMessageSpam] = new []
-        {
-            new CleanupTask { Type = CleanupType.FindMessageSpam }
-        };
-
-        CreateUntrackedTasks(dict
-            .Values
-            .Where(task => task != null)
-            .SelectMany(_ => _)
-            .ToArray()
-        );
+        List<CleanupTask> list = new();
+        list.AddRange(CreateTasks_Assignment());
+        list.AddRange(CreateTasks_GlobalMessageCleanup());
+        list.Add(new CleanupTask { Type = CleanupType.DeleteExpiredMessages });
+        list.Add(new CleanupTask { Type = CleanupType.ClearOldReports });
+        list.Add(new CleanupTask { Type = CleanupType.DeleteInactiveDmRooms });
+        list.Add(new CleanupTask { Type = CleanupType.DeleteEmptyPrivateRooms });
+        list.Add(new CleanupTask { Type = CleanupType.FindMessageSpam });
         
-        foreach (KeyValuePair<CleanupType, CleanupTask[]> pair in dict)
-            Log.Local(Owner.Will, $"Created tasks: {pair.Value.Length}x {pair.Key.GetDisplayName()}");
+        CreateUntrackedTasks(list.Where(task => task != null).ToArray());
+        
+        foreach (IGrouping<CleanupType, CleanupTask> group in list.GroupBy(task => task.Type))
+            Log.Local(Owner.Will, $"Created tasks: {group.Count()}x {group.Key.GetDisplayName()}");
     }
 
     private CleanupTask[] CreateTasks_Assignment()
@@ -176,29 +156,27 @@ public class Janitor2Service : QueueService<CleanupTask>
                 throw new NotImplementedException();
         }
     }
-}
-
-public class CleanupTask : PlatformCollectionDocument
-{
-    [BsonElement("type")]
-    [JsonIgnore]
-    public CleanupType Type { get; set; }
     
-    [BsonElement("roomId")]
-    [JsonIgnore]
-    public string RoomId { get; set; }
+    public class CleanupTask : PlatformCollectionDocument
+    {
+        [BsonElement("type")]
+        [JsonIgnore]
+        public CleanupType Type { get; set; }
+    
+        [BsonElement("roomId")]
+        [JsonIgnore]
+        public string RoomId { get; set; }
+    }
+
+    // TODO: Review names
+    public enum CleanupType
+    {
+        AssignMessageType,
+        DeleteOldGlobalMessages,
+        DeleteExpiredMessages,   // Covers all messages except announcements
+        ClearOldReports,
+        DeleteInactiveDmRooms,
+        DeleteEmptyPrivateRooms,
+        FindMessageSpam
+    }
 }
-
-public enum CleanupType
-{
-    AssignMessageType,
-    DeleteOldGlobalMessages,
-    DeleteExpiredMessages,   // Covers all messages except announcements
-    ClearOldReports,
-    DeleteInactiveDmRooms,
-    DeleteEmptyPrivateRooms,
-    FindMessageSpam
-}
-
-
-// TODO: Auto ban system

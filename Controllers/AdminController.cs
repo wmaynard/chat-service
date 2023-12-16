@@ -46,8 +46,8 @@ public class AdminController : PlatformController
         }
         
         _messages.Insert(messages);
-        if (messages.Any(message => message.Type == MessageType.Announcement))
-            _messages.DeleteAncientAnnouncements();
+        if (messages.Any(message => message.Type == MessageType.Announcement)) // only allow a maximum of 10 active announcements
+            _messages.ExpireExcessAnnouncements();
         
         return Ok(messages);
     }
@@ -131,6 +131,24 @@ public class AdminController : PlatformController
     
     #region Rooms
 
+    [HttpGet, Route("rooms")]
+    public ActionResult ListRooms()
+    {
+        string accountId = Optional<string>(TokenInfo.FRIENDLY_KEY_ACCOUNT_ID);
+        string roomId = Optional<string>("roomId");
+        int page = Optional<int>("page");
+
+        Room[] output = _rooms.AdminListRooms(roomId, accountId, page, out long remaining);
+        
+        return Ok(new RumbleJson
+        {
+            { "reports", output },
+            { "page", page },
+            { "roomsPerPage", 10 },
+            { "remainingRoomCount", remaining }
+        });
+    }
+    
     [HttpPost, Route("rooms/new")]
     public ActionResult CreatePrivateRoom()
     {
@@ -151,25 +169,7 @@ public class AdminController : PlatformController
 
         return Ok(output);
     }
-
-    [HttpGet, Route("rooms")]
-    public ActionResult ListRooms()
-    {
-        string accountId = Optional<string>(TokenInfo.FRIENDLY_KEY_ACCOUNT_ID);
-        string roomId = Optional<string>("roomId");
-        int page = Optional<int>("page");
-
-        Room[] output = _rooms.AdminListRooms(roomId, accountId, page, out long remaining);
-        
-        return Ok(new RumbleJson
-        {
-            { "reports", output },
-            { "page", page },
-            { "roomsPerPage", 10 },
-            { "remainingRoomCount", remaining }
-        });
-    }
-
+    
     [HttpPatch, Route("rooms/update")]
     public ActionResult UpdateRoomMembership()
     {

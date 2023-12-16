@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Mvc;
 using Rumble.Platform.ChatService.Models;
+using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Extensions;
