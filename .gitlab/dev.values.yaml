@@ -29,8 +29,8 @@ application:
   secretChecksum:
 hpa:
   enabled: false
-  minReplicas: 2
-  maxReplicas: 3
+  minReplicas: 1
+  maxReplicas: 2
   CPUUtilizationPercentage: 60
   MemUtilizationPercentage: 60
   keda:
@@ -106,7 +106,7 @@ resources:
     cpu: null
     memory: 288Mi
   requests:
-    cpu: 256m
+    cpu: 128m
     memory: 256Mi
 
 ## Configure PodDisruptionBudget
