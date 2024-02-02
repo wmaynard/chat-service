@@ -27,9 +27,7 @@ public class PreferencesController : PlatformController
     public ActionResult SetPreferences()
     {
         RumbleJson settings = Require<RumbleJson>("settings");
-
-        _preferences.Update(Token.AccountId, settings);
-
-        return Ok();
+        
+        return Ok(_preferences.Update(Token.AccountId, settings));
     }
 }
