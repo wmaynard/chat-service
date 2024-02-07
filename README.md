@@ -1,312 +1,400 @@
-# chat-service
+# Chat V2
 
- An API for in-game social messaging
+ An API for in-game social messaging - now new and improved!
 
-# Introduction
+## Introduction
 
-The Chat Service does not differentiate between global chats, guild chats, direct messages (DMs), or any other variants.  After all, a DM is just a chat room with a limit of two people.  To minimize the number of requests, Chat returns a response containing all `RoomUpdates` with every interaction.  These `RoomUpdates` contain every unread message in every room a player is in, regardless of whether or not it's a DM, global chat, or any other room they're a member of.
+Chat V1 was a particularly interesting Platform project - because it predated platform-common, it had a lot of wild west-style code and a healthy amount of duct tape binding it together.  It was lightweight, responsive, and never complained about its RPS (requests per second) though, so despite the stress we hit it with, it actually performed quite well.
 
-Joining a room and sending a message alike should then be used to update client-side chats.
+However, it had some significant downfalls.  It was very difficult to maintain, not being built on the tooling that most of Platform relies on now, and adding new features such as guild chat was not going to be clean or easy.
 
-Rooms do not hold messages indefinitely.  The capacity is configurable in the constant `Room.MESSAGE_CAPACITY`.  When at capacity, any new messages will push old ones out, although **stickies** are ignored.  For customer service purposes, `Reports` and `Snapshots` both create complete copies of data that are stored independently from this limit.
+This guide will walk you through how to use the second iteration of chat.  Before we get to the meat of the docs, there are some project-specific terms we should define:
 
-Chat can be used as a method to nearly instantaneously notify users.  By sending messages with different message **types**, we can silently pass data to clients.  To prevent this from becoming a monolithic service, this functionality should remain exclusive to *communication with or between the players*.  Customer service interactions and emergency game notifications are acceptable, but anything else should spark a discussion into new services.  For more information see the **Messages Notes** section.
+## Glossary
 
-Chat is integrated with Slack so that Rumble Admins can keep an eye on the service and more easily manage it.  A **chat monitor** keeps a buffer of messages and all **reports** are sent to Slack as well, with easy-to-access links to the Publishing App.  This functionality is detailed later on in the **Slack Integration** section.
+| Term                   | Definition                                                                                                                                                                                                                                                     |
+|:-----------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client                 | Any application that hits the service, either directly or indirectly.  Could be the game, Portal, or Postman, as examples.                                                                                                                                     |
+| Client - Admin         | An application that is specifically hitting the service with an admin token.  This cannot be the game client, but could be a server or other Platform service.                                                                                                 |
+| Janitor                | A background task that runs in the service, responsible for ongoing maintenance tasks such as but not limited to data deletion.  For more information, see the [Data Retention](DATA_RETENTION.md) document.                                                   |
+| Message                | An object representing some text to display to users; has optional client-defined data associated with it and an internally-used type.                                                                                                                         |
+| Message - Announcement | A specific type of message representing a system-wide critical message.  Announcements appear in all chat responess when active, regardless of player rooms.                                                                                                   |
+| Message - Broadcast    | Any message that was sent from an **admin client** that is not an **announcement**.  Examples might include summon evenets or congratulatory messages from another Platform service.  V1 had broadcasts too, but they were much narrower in scope and utility. |
+| Message - Direct (DM)  | A message that is privately sent between two or more players.  Think of these like Slack DMs.                                                                                                                                                                  |
+| Message - Unread       | Any message that has a CreatedOn timestamp that is larger than the `lastRead` timestamp sent with every non-admin client's requests.                                                                                                                           |
+| Paging                 | New to most Platform services; when returning a large number of records, the data clients receive will be limited to a small number of matching records.  Requests will need to pass in a page number to see different records.                                |
+| Player / User          | An end user of a client.                                                                                                                                                                                                                                       |
+| Report                 | A snapshot of messages that is not modifyable by anyone, even an administrator.  These represent action items an admin has to review, at which point they can update the status but nothing else.  Player consequences are handled externally from Chat.       |
+| Report - New           | A report that has not yet been reviewed.                                                                                                                                                                                                                       |
+| Report - Mild          | A report that an admin wants to keep around for a short while, for example, in case the reported player continues to misbehave.                                                                                                                                |
+| Report - Severe        | A report that an admin wants to keep around for a long time but not indefinitely.                                                                                                                                                                              |
+| Report - Permanent     | A report that an admin wants to keep around indefinitely.                                                                                                                                                                                                      |
+| Room                   | A registry of who is participating in a given room.  Each room has a type that defines slightly different experiences.                                                                                                                                         |
+| Room - DM              | A room that can be created by a standard client by sending messages to one or more people.  Acts as an impromptu private chat.                                                                                                                                 |
+| Room - Global          | A room that represents public chat.  Users are automatically placed into a global room if they aren't already in one with any Chat request.  Players are removed automatically after inactivity.                                                               |
+| Room - Hacked          | Not actually a room.  Since clients can specify a room to send messages to, this is a classification indicating there's no actual "room" associated with the message.  Used internally to identify bad actors.                                                 |
+| Room - Private         | A room only managed by admin clients.  Represents special rooms for other servers or game features.                                                                                                                                                            |
 
-# Glossary
+There is only one guiding principle that carries over from V1...
 
-|                      Term | Definition                                                                                                                                                                                                                                                                                                                                                                                                       |
-|--------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  Account ID / aid / gukey | An **aid** is a MongoDB-generated unique identifier used to differentiate between players.                                                                                                                                                                                                                                                                                                                       | 
-|             Ban / Squelch | A **ban** is an administrator-issued restriction on a player's ability to interact with the service.  **Bans** may be timed or permanent.  Unlike **muting** a player, a **ban** stops them at the service-level from sending **messages**.  **Bans** do not affect **broadcasts**.                                                                                                                              |
-|                 Broadcast | A **broadcast** is a server-generated **message**.  It has special formatting and is programmatically created for qualifying **broadcast events**, such as summoning a very rare hero or completing certain quests.                                                                                                                                                                                              |
-|                      Chat | The `chat-service` project.                                                                                                                                                                                                                                                                                                                                                                                      |
-|             Discriminator | A semi-unique identifier for a player consisting of a randomly-generated 4-digit number.  This is not directly modifiable by the player, but is generated by `player-service`.                                                                                                                                                                                                                                   |
-|               Global Room | A special type of **room**, and the most public-facing ones.  Chat V1 consists solely of a single **global room**.  In the future, **global rooms** will **auto-scale**: upon reaching capacity, a new **global room** with the same language will be created.  Similarly, when a room is empty for a long enough time (TBD), it will be destroyed.                                                              |
-|                   Message | A **message** is a snippet of text or data sent by a player or generated by the server, such as in the case of **broadcasts**.  For communication purposes, however, **message** should generally refer to player-created content unless otherwise specified.                                                                                                                                                    |
-|                      Mute | **Muting** a player is merely an update to their preferences.  The game client needs to actually hide messages from **muted** players.                                                                                                                                                                                                                                                                           |
-|                PlayerInfo | To reduce bottlenecks, the chat service stores a copy of relevant player data for its own purposes.  This includes the player's avatar, screenname, discriminator, level, and power.  Other player data may be added as chat evolves.                                                                                                                                                                            |
-|                    Report | Refers to both the action of flagging an offensive **message** and the saved record of those **messages** and involved players.   Reports are viewable from the `publishing-app` and links to them are dumped into the (TBD) Slack channel.                                                                                                                                                                      | 
-|           Response Object | Platform-specific term for a standard data delivery vehicle.  Room information, for example, should always be returned in a JSON key / value pair like `"room": { /* ... */ }`.  The key should match the name of the class, and is handled through reflection via the `PlatformDataModel` class.                                                                                                                |
-|                      Room | All chat features can be broken down into **Rooms** of different types.  For example, a **direct message** is no different from a **global room** except for the fact that it can only have two members.  Other types of **room** include **guild** and **sticky**.                                                                                                                                              |
-|     Screenname / Username | The user-generated component for a friendly, readable name.  For example, if you see `JoeMcFugal#2006` in chat, the **screenname** is "JoeMcFugal".                                                                                                                                                                                                                                                              |
-|                  Snapshot | When a player is **banned** by an administrator, a complete record of all of their **rooms** is created.  This may not necessarily include any offensive content; if the player's **messages** have fallen off from the **room**, the **snapshot** may be entirely innocent.  However, if administrators issued a **ban** from a **report**, a copy of that **report** will be included for historical purposes. |
-|                    Sticky | A **sticky** or **sticky message** is a special kind of **message** that lives in its own, non-joinable **room**.  These **messages** are only viewable for a specific time period and can be used to promote events or send otherwise special server updates to players.  When a **sticky** is issued, copies of if are inserted into every room and added to every new room while it is active.                |
-|                     Token | An `Authorization` header in HTTP requests.  Currently, **tokens** are issued by `player-service`.  They should be included in the format `Bearer {token string}`.                                                                                                                                                                                                                                               |
-|                    Unmute | The counterpart to **mute**.  **Unmuting** a player removes them from the **muted** players list.                                                                                                                                                                                                                                                                                                                | 
+## Every Request Returns Unread Messages
 
-# Consuming The Service
-Every chat-related `POST` endpoint requires the following:
-* An `Authorization` header with a value set to `Bearer {token}`, where the token is issued from `player-service`.
-    * This is used to authenticate the client via `player-service`'s `/player/verify` endpoint.
-    * Tokens contain the user's identification in them, including **account ID**, **username**, and **discriminator**. 
-* A `lastRead` field, which is the Unix timestamp of the most recently-read message.
-    * On the client-side, store a previous `lastRead` timestamp to send with future requests rather than sending the system's local timestamp.  This guarantees you won't miss messages.
-    * While `lastRead` _can_ be `0`, this will return _all_ messages in _every_ room the player is in and is strongly discouraged.
+Any endpoint that a game client or other token representing a player hits the chat-service, Platform will return unread messages for the player.  This helps keep the traffic minimal.  For _every single request_ made to Chat, the consuming client should:
 
-Every JSON response contains an object that can be used to update the client, as in the sample below:
+* Include a UTC Unix timestamp in the body or parameters (as appropriate) with the key of `lastRead`.
+* Find the maximum timestamp returned in the unread messages and store it for use in the next request to Chat.
+* Cache chat messages locally
 
-    {
+It's important to state this right at the beginning as it's a critical point to both a performant client and service.
+
+Room updates are limited to 100 rooms, sorted first by room type (Global, Private, then finally DMs), then by the last time the room's member list changed.  If someone happens to hit this 100-room limit, it's possible they will miss messages without knowing it; it may be necessary in this case to page the unread messages or otherwise force them to leave DMs, which we'll get to later.  
+
+Returned messages are limited to `Math.Min(100 * numberOfActiveRooms, 1000)`.  Consequently, when an update is received, the client should store the most recent message's timestamp for `lastRead` - **not** the current timestamp, as there may be more messages the client is simply behind on.
+
+Throughout these documents, please keep in mind:
+1. All endpoints start with `{environment}/chat`.  This is not specified; instead all of the request documentation omits this as it is a shared root.  So when you see `PATCH /rooms/join`, your actual request should be `PATCH http://dev.nonprod.tower.cdrentertainment.com/chat/rooms/join`.
+2. A unix timestamp, `lastRead` should appear in every request.  It should be in the body of every request that takes one, and as a query parameter in GET / DELETE requests (which don't support a JSON body).  This, too, is not specified in the samples.
+3. The Platform Services Postman Collection should be considered the authoritative source of requests, _not_ this document, as changes will be tested using it, so it's more likely to be up-to-date than these documents.
+
+Without further ado, let's get into implementation details.
+
+<hr />
+
+## Room Management
+
+Rooms are fundamentally different in V2, though from a client perspective they might not appear to be.  Importantly, there's no need to "launch" chat anymore.  That was a requirement in V1 to initialize various bits, but with MINQ, we no longer need that.  So, now, **any endpoint in Chat** will guarantee you're in one - and exactly one - global room.
+
+Rooms come in four flavors:
+
+* Global Rooms, which every active player is in.  These are large capacity rooms and players can bounce between them at will.
+* DM Rooms, which can be created at will by players.  Players are joined to these rooms both when sending or receiving a message.
+* Private Rooms, which are admin-created, special rooms.  As an example of what a private room might be, Guilds would need a private room for all of its members; membership of private rooms is managed by admin tokens.
+* Possibly Hacked Rooms, which aren't actually Rooms.  If someone decompiles the client and sends chat messages manually, they may discover the client-authoritative ability to send messages anywhere they want, including to room IDs that don't exist.  These are invisible to all clients, but this is used for cleanup / data deletion, and may be used to identify malicious actors silently in the future.
+
+### Joining A Different Global Room
+
+There are two endpoints we need for this.  The first is the ability to list all current global rooms:
+
+```
+GET /rooms?page=0
+
+200 OK
+{
+    "rooms": [
+        {
+            "members": [
+                "65781a2ee074f00f1e9b37e6"
+            ],
+            "type": "Global",
+            "unread": null,
+            "number": 1,
+            "id": "657827358be2aefc0e263cfd",
+            "createdOn": 1702373173
+        },
         ...
-        "roomUpdates": [
+    ],
+    "page": 0,
+    "roomsPerPage": 10,
+    "remainingRoomCount": 0,
+    "roomUpdates": []
+}
+```
+
+If you're familiar with V1, there's a very important difference here: paging.  In preparation for global scaling, V2 now has paging for its global room selection.  If we have 1 million concurrent players and 200 players per room, that would mean we have at least 5,000 global rooms - which is just far too much data to return at once.
+
+Chat now returns only global rooms that have open capacity with this endpoint.  In its response, it also includes details for paging UI, including how many rooms are returned in each page, and how many remaining rooms beyond the page have capacity.  In order to browse rooms not returned in this, you'll need to update the `page` query parameter.
+
+Once you have a room's ID you want to join, you'll need to hit the next endpoint:
+
+```
+PATCH /rooms/join
+{
+    "roomId": "deadbeefdeadbeefdeadbeef"
+}
+
+200 OK
+{
+    "room": {
+        "members": [
+            "65796aced37c60ebf6cafd80"
+        ],
+        "type": "Global",
+        "unread": null,
+        "number": 2,
+        "id": "deadbeefdeadbeefdeadbeef",
+        "createdOn": 1702450444
+    },
+    "roomUpdates": []
+}
+```
+
+Be aware that this does remove you from whatever other global room you were a part of.  Clients should block the request from going out if the target room ID is the same as the global room the player is already in; there are no Platform checks for it since it would add a database hit, so saving Chat the traffic will improve performance.
+
+### Leaving Direct Message Rooms
+
+There's little more annoying than a group chat you want no part of.  Luckily, Chat provides a way out of unwanted group chats:
+
+```
+DELETE /rooms/leave?roomId={...}
+
+200 OK
+{
+    "roomUpdates": []
+}
+```
+
+Chat doesn't currently have support to add people to an existing DM room - either by invitation or rejoining on your own.  So, once you're out, you're out for good until someone creates a group with the same members.
+
+You cannot leave other types of rooms.
+
+<hr />
+
+## Receiving Messages
+
+As covered earlier, every client-side request to Chat will return unread messages, and should contain a `lastRead` timestamp.  The following endpoint is completely empty but intended to be the default request:
+
+```
+GET /?lastRead=1702603902
+
+200 OK
+{
+    "roomUpdates": [
+        {
+            "members": [
+                "65781a2ee074f00f1e9b37e6"
+            ],
+            "type": "Global",
+            "unread": [ ... ],
+            "number": 1,
+            "id": "657956f98be2aefc0e26982b",
+            "createdOn": 1702450937
+        }
+    ]
+}
+```
+
+## Sending Messages
+
+### Standard Chat (Global Rooms & Guild Rooms)
+
+A message consists of three parts:
+
+* Some `text` for the main message.
+* Any additional `context`, represented by a JSON object.  Chat is completely agnostic about context, so the client can send whatever it needs to to create a rich frontend experience.  Need to include item linking?  Throw whatever you need into the context.  Private match request?  Context!
+* A `roomId`, a valid 24-digit hex string representing the target room you wish to post to.
+
+```
+POST /message
+{
+    "lastRead": 1702371942,
+    "message": {
+        "text": "Hello World!",
+        "context": { ... },
+        "roomId": "..."             // <---- this must be included!
+    }
+}
+```
+
+This request will send any message to any room - though it will only be visible if you're a member of that room.
+
+#### So, what are some use cases for the new Context?
+
+* Content linking.  Wnat to share an item in your collection?  We could include that item's entire details in the message, where it can be parsed and used by other clients.
+* PvP challenges.  In games like Clash Royale, a player can issue a challenge in chat to play a friendly, unranked PvP match.  Add some match details and add a server-side claim functionality to upadte the message and we can pair people off in easier private matches.
+* Stickers & Emoji.  Add some flair to chat with context that links the message to art assets.
+* Shared rewards.  Some games offer IAPs where a purchase not only grants the buyer bonuses, but also allows other players to claim a smaller bonus from a chat message.  Use a server-side rewards claim / update the message if necessary.
+
+### Direct Messages
+
+Chat supports direct messages for up to 20 players.  Keep in mind that a player's token constitutes one of the spots when creating a new DM.
+
+When sending any DM, the `players` array is a requirement.  This must include valid mongo IDs - 24-digit hex strings - as they represent other accountIds.
+
+To create a new DM room:
+
+```
+POST /dm
+{
+    "lastRead": 1702371942,
+    "message": {
+        "text": "Hey buddies!",
+        "context": { ... }
+    },
+    "players": [
+        "deadbeefdeadbeefdeadbeef",
+        "badf00dbadf00dbadf00dbad",
+        ...
+    ]
+}
+```
+
+When you're starting a new DM, there's no existing room, and consequently no way to populate the `roomId` field, so it is omitted here.
+
+Once the DM room exists, you should go back to using `/message` to send subsequent messages, along with the DM roomId.
+
+<hr />
+
+#### IMPORTANT NOTES
+
+1. If the _wrong roomId_ is supplied, the message will not go to its intended recipients, but rather _whatever room is specified!_
+2. Chat filters out unread messages based on a room's members.  Message injection into a room you're not a member of isn't discoverable by other clients - though the data will still get created.
+3. DMs must contain at least one other player.
+
+<hr />
+
+We've had some discussions around PvP / Coop chat rooms.  With DM support, we now have the ability to implement this if we want!  Some considerations:
+
+* On a PvP match start, if we want to guarantee the room exists, we can send a message from a server with all players as recipients.
+* We have some options:
+  * Include the server's account ID, so that the DM is actually 3 "players".  This means the DM room will be separate from two players that match up who already have DMs together.  At the end of the match, if we want the messages to be unavailable after the match, we can have the server remove the players from it / delete the room.  This is the lightest on the database load since we can remove data as soon as it's no longer relevant.
+  * Leave the DM as just between the two players.  If we want to hide non-PvP messages, messages sent during PvP can include a value in the `context` field to act as a filter.  This gives us the option of allowing PvP messages to persist beyond the match, so if we want post-game banter or more social connection, it could be available this way.
+
+
+<hr />
+
+## Preferences
+
+In V1, preferences consisted of a squelch list, and managing it required multiple endpoints.  In V2, it's been simplified to be more flexible and client-authoritative.
+
+Now you can store any data you want and Platform won't care.
+
+To retrieve preferences:
+```
+GET /preferences
+{
+    "preferences": {
+        "accountId": "65781a2ee074f00f1e9b37e6",
+        "settings": {
+            "hello": 123,
+            "world": [
+                "abc",
+                "def",
+                "ghi"
+            ]
+        },
+        "updatedOn": 1702457871,
+        "id": "65796e0c8be2aefc0e26c79f",
+        "createdOn": 1702456844
+    }
+}
+```
+
+Then, to update them:
+
+```
+PUT /preferences/update
+{
+    "settings": {
+        // Any data you want
+    }
+}
+```
+
+This was something that was impossible before platform-common had the ability to store data agnostically.  This endpoint does have a request size limit attached to it, however.  It's large enough that it's unlikely for simple settings to grow to the point of becoming problematic - though it is smaller than normal request size limits Platform usually sees.
+
+Keep in mind though that this request **replaces whatever is stored** with the request data.  It will be easy to wipe it clean if not careful, and once that data is erased, it's gone for good.
+
+So, what are some use cases for the new Preferences?
+
+* Squelching.  This can be used to hide any messages sent by a player.  Chat won't enforce it, but this allows each client to maintain its own squelch list with data persistence across devices.
+  * Important note: now that we have DMs, we have a new edge case: if a squelched player sends you a message, even if you have a preference to squelch them, you'll still see unread messages.  If unhandled, this will cause a blank room to appear when the game client can support DMs, so squelches should also remove rooms from updates when all other players in the room are squelched.
+* Saved messages.  Maybe a player hit a really rare achievement in the game, such as pulling a really rare item that was broadcast, complete with rich item linking in the context.  Being able to save that message in its entirety guarantees the player has access to it and it won't be deleted!
+* Favorite rooms.  When we have millions of players, community members may want to pick certain rooms to meet up in.
+* Chat themes.  Perhaps as achievements, we could have different UI skins for chat.
+* Localization preferences
+* Mute PvP chat
+
+Rather than build both a client and server pairing for all of these features (and possibly more), the client can now define whatever logic it wants by throwing a blob of data at the service and having it stick.
+
+<hr />
+
+## Reports
+
+Players can report messages for objectionable content:
+
+```
+POST /report
+{
+    "messageId": "deadbeefdeadbeefdeadbeef"
+}
+
+200 OK
+{
+    "report": {
+        "offendingMessageId": "65797740214a66de422ac5ee",
+        "firstReporterId": "65781a2ee074f00f1e9b37e6",
+        "reporterIds": [
+            "65781a2ee074f00f1e9b37e6"
+        ],
+        "reportedCount": 1,
+        "messageLog": [
+            ...
             {
-                "id": "60e8d73536134314d16b207a",
-                "unreadMessages": [
-                    {
-                        "id": "eda93b9a-3862-4a6f-9a73-a02fd3408a95",
-                        "text": "Anger leads to hate.",
-                        "timestamp": 1625872345,
-                        "type": "chat",
-                        "accountId": "5f727b4dc60f5a956eb1c551"
-                    },
-                    {
-                        "id": "2eaee976-e769-4076-bdd5-d55bf6b64d70",
-                        "text": "Hate leads to suffering!",
-                        "timestamp": 1625872381,
-                        "type": "chat",
-                        "accountId": "5f727b4dc60f5a956eb1c551"
-                    }
-                ],
-                "members": [
-                    {
-                        "aid": "5f727b4dc60f5a956eb1c551",
-                        "avatar": "demon_axe_thrower",
-                        "memberSince": 1626242762,
-                        "sn": "Slartibartfast",
-                        "level": 17,
-                        "power": 9001,
-                        "discriminator": 4539
-                    },
-                    {
-                        "accountId": "60a43b0c70edc8aa7cf3bed6",
-                        "avatar": "demon_axe_thrower",
-                        "inRoomSince": 1626245489,
-                        "sn": "Arthur Dent"
-                        "level": 6,
-                        "power": 61,
-                        "discriminator": 8039
-                    }
-                ],
-                "previousMembers": []
+                "accountId": "65781a2ee074f00f1e9b37e6",
+                "text": "2",
+                "context": {
+                    "foo": 123,
+                    "bar": null,
+                    "fubar": true
+                },
+                "id": "6579773d214a66de422ac5ec",
+                "createdOn": 1702459197
             },
             {
-                "id": "60ee83aa734d06135565dda7",
-                "unreadMessages": [],
-                "members": [
-                    {
-                    "accountId": "5f727b4dc60f5a956eb1c551",
-                    "avatar": "demon_axe_thrower",
-                    "inRoomSince": 0,
-                    "screenName": "Slartibartfast"
-                    }
-                ]
-            }
-        ]
-        ...
-    }
-In this sample, two separate `RoomUpdates` are returned.  In the first `Room`, we have two unread messages that have not been seen by the client.  The `members` field contains a list of all of a room's members so that messages can be linked to appropriate accounts, avatars, and screennames.  More data may be included in this as Chat evolves.
-
-In the second room, there are no new messages.
-
-# Endpoints
-
-All chat endpoints can be accessed via the `/chat/` base API route.
-
-### Example Flow
-
-This is an example flow, as imagined by Platform, but is subject to change for implementation.
-
-1. When the game client starts up, `/launch` is called.  This retrieves more data than any other request, but includes everything necessary to initialize chat, show new messages, or display important information to the user such as stickies or ban information.
-    * When the response is received, a **data handler** stores the `unreadMessages` locally, along with their timestamps.  The largest timestamp (most recent) is stored for future requests.  This handler should take care of every response from chat.
-2. The game client starts a **timer** in the background.  When the timer **elapses**, `/messages/unread` is called to look for `roomUpdates`.  It is sent with the `lastRead` timestamp in the body, so that only newer messages are returned, if any.
-3. The player enters a message into the chat client.  `/messages/send` is called, again with the `lastRead` parameter.  The **timer** is reset, as this call also will return with all `roomUpdates` for the player.
-4. The player enters a screen where chat is not visible.  The **timer** is paused to prevent unnecessary traffic to the service.
-5. The player enters a screen where chat is accessible once again.  The **timer** is resumed. 
-6. The player quits the game.  `/rooms/global/leave` is called (or, alternatively, `/rooms/leave`, with a `roomId`).  This prevents offline `aid`s from flooding the room on the data side.
-
-## Top Level
-
-Mentioned first because of `/launch`: this endpoint is intended to be the first call to the chat service from the client.
-
-| Method | Endpoint  | Description                                                                                                                                                                                                    | Required                                     | Optional | Internal Consumers | External Consumers |
-|-------:|:----------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------|:---------|:-------------------|:-------------------|
-|    GET | `/health` | Health check; returns the status of ALL services: `banService`, `reportService`, `roomService`, and `settingsService`.  Required by the AWS Load balancer.                                                     |                                              |          | Load Balancer      |                    |
-|   POST | `/launch` | Launches the current player into chat.  This endpoint adds the user to a global room for their language, returns any current **sticky messages**, **bans**, **settings**, and **room updates** for the player. | `language`<br />`lastRead`<br />`playerInfo` |          |                    | Client             |
-
-## Admin
-
-All `Admin` endpoints other than `/admin/health` require a valid **admin token**.  For publishing app, this can be found in the dynamic config, using the `chatToken` value.  The `AdminController` class is responsible for anything requiring elevated privileges.
-
-| Method | Endpoint                     | Description                                                                                                                                              | Required                             | Optional                            | Internal Consumers | External Consumers |
-|-------:|:-----------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------|:------------------------------------|:-------------------|:-------------------|
-| DELETE | `/admin/claimChallenge`      | Clears the challenge message that was used to start a PvP match.                                                                                         | `issuer` (safer)<br>OR<br>`password` |
-|    GET | `/admin/health`              | Health check; returns the status of the `BanService` and `RoomService`.                                                                                  |                                      |                                     |                    |                    |
-|    GET | `/admin/ban/list`            | Lists all **bans** for all users, including expired **bans**.                                                                                            |                                      |                                     | Portal             |                    |
-|    GET | `/admin/messages/sticky`     | Gets a list of all **stickies**, both archived and active.                                                                                               |                                      |                                     | Portal             |                    |
-|    GET | `/admin/rooms/list`          | Lists all **rooms** and all data associated with the **rooms**.  Once live, this will probably need to be trimmed to just room IDs and basic metrics.    |                                      |                                     | Portal             |                    |
-|   POST | `/admin/challenge`           | Sends a message to a user's global room of type `pvp_challenge`.  This message can be claimed by another user upon starting a PvP match with the sender. | `aid`<br>`password`                  |
-|   POST | `/admin/rooms/removePlayers` | Removes an array of players from global rooms.  Used by the server to remove inactive players who didn't log out properly.                               | `aids`                               |                                     | Portal             |                    |
-|   POST | `/admin/ban/lift`            | Removes a specific **ban**, provided its ID.                                                                                                             | `banId`                              |                                     | Portal             |                    |
-|   POST | `/admin/ban/player`          | Issues a **ban** against a player.  Can be temporary (timed) or indefinite.                                                                              | `aid`<br />`reason`                  | `durationInSeconds`<br />`reportId` | Portal             |                    |
-|   POST | `/admin/messages/delete`     | Deletes a **message**.  It would be ideal to never use this.                                                                                             | `messageIds`<br />`roomId`           |                                     | Portal             |                    |
-|   POST | `/admin/messages/sticky`     | Creates a **sticky message**.                                                                                                                            | `message`                            | `language`                          | Portal             |                    |
-|   POST | `/admin/messages/unsticky`   | Deletes a **sticky message**.                                                                                                                            | `messageId`                          |                                     | Portal             |                    |
-|   POST | `/admin/reports/ignore`      | Marks a **report** as *benign*.  This does not delete the **report**, but is an indicator that it should be kept for archival purposes.                  | `reportId`                           |                                     | Portal             |                    |
-|   POST | `/admin/reports/delete`      | Deletes a **report**.  For clearly harmless **reports** that serve no useful purpose.                                                                    | `reportId`                           |                                     | Portal             |                    |
-|   POST | `/admin/slackHandler`        | Placeholder for processing Slack API requests.                                                                                                           |                                      |                                     |                    |                    |
-
-## Messages
-
-| Method | Endpoint              | Description                                                                                                    | Required                                  | Optional | Internal Consumers | External Consumers |
-|-------:|:----------------------|:---------------------------------------------------------------------------------------------------------------|:------------------------------------------|:---------|:-------------------|:-------------------|
-|    GET | `/messages/health`    | Health check; returns the status of the `ReportService` and the `RoomService`.                                 |                                           |          |                    |                    |
-|   POST | `/messages/broadcast` | Sends a **broadcast**.  **Broadcasts** originate from the game server and are sent to all of a player's rooms. | `aid`<br />`lastRead`<br />`message`      |          | Server             |                    |
-|   POST | `/messages/report`    | Reports a **message** for abuse.                                                                               | `lastRead`<br />`messageId`<br />`roomId` |          |                    | Client             |
-|   POST | `/messages/send`      | Sends a **message** to a **room**.                                                                             | `lastRead`<br />`message`<br />`roomId`   |          |                    | Client             |
-|   POST | `/messages/unread`    | Retrieves all unread **messages**.                                                                             | `lastRead`                                |          |                    | Client             |
-|   POST | `/messages/sticky`    | Retrieves **sticky messages**.                                                                                 | `lastRead`                                | `all`    |                    | Client             |
-
-#### Notes
-
-* The `message` parameter is an object containing a string, `text`.  There are other fields that can be included in a `message` object, but none are useful in the context of the `MessageController`.
-* Messages have a few different types that can be used:
-    * `Message.TYPE_CHAT`: This is a user-generated message.
-    * `Message.TYPE_BROADCAST`: This is a server-generated message sent to all of a player's **global rooms**.
-    * `Message.TYPE_BAN_ANNOUNCEMENT`: When a user is **banned**, a message is sent out to all of that user's rooms with their `aid` attached to it (as if they were the author)s, announcing they were banned.  This should not be displayed by any client.  Its purpose is to signal that particular user's client that they've been banned - rather than require extra frequent service requests or Mongo queries - since their client is already checking chat.
-    * `Message.TYPE_UNBAN_ANNOUNCEMENT`: Similar to above, only in reverse.  However, each announcement only reflects a single **ban**; if the user has multiple **bans** issued against them, they may still be unable to access chat.
-
-## Rooms
-
-| Method | Endpoint              | Description                                                                                                                                            | Required                                     | Optional | Internal Consumers | External Consumers |
-|-------:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------|:---------|:-------------------|:-------------------|
-|    GET | `/rooms/health`       | Health check; returns the status of the `RoomService`.                                                                                                 |                                              |          |                    |                    |
-|   POST | `/rooms/available`    | Returns a list of available **room** for the player, as dictated by the `language` parameter.                                                          | `lastRead`                                   |          |                    | Client             |
-|   POST | `/rooms/global/join`  | Joins the next available **global room**, as dictated by the `language` parameter.                                                                     | `language`<br />`lastRead`<br />`playerInfo` | `roomId` |                    | Client             |
-|   POST | `/rooms/global/leave` | Leaves all **global rooms** the player is currently in. This *should* only be one room, but if the client closed unexpectedly it may be more than one. | `lastRead`                                   |          |                    | Client             |
-|   POST | `/rooms/leave`        | Leaves a **room**, as specified by its ID.                                                                                                             | `lastRead`<br />`roomId`                     |          |                    | Client             |
-|   POST | `/rooms/list`         | Lists all the **rooms** and all their data the user is currently in.                                                                                   | `lastRead`                                   |          |                    | Client             |
-|   POST | `/rooms/update`       | Updates a player's information across all of their **rooms**.                                                                                          | `lastRead`<br />`playerInfo`                 |          |                    | Client             |
-
-#### Notes
-
-* `/rooms/global/join` requires a **language** to be specified.  While a `roomId` can be passed in to join a specific global room, if that `roomId` is tied to a different **language**, the request will fail.  The request will also fail if the room is full.
-
-## Settings
-
-The `SettingsController` is responsible for storing a user's chat-specific settings.  Right now, this is limited to muted players, but could conceivably be used for other features, such as storing custom profanity filters, starred players, etc.
-
-| Method | Endpoint           | Description                                                | Required     | Optional | Internal Consumers | External Consumers |
-|-------:|:-------------------|:-----------------------------------------------------------|:-------------|:---------|:-------------------|:-------------------|
-|    GET | `/settings`        | Returns all the settings for the current player.           |              |          |                    | Client             |
-|    GET | `/settings/health` | Health check; returns the status of the `SettingsService`. |              |          |                    |                    |
-|   POST | `/settings/mute`   | **Mutes** another player.                                  | `playerInfo` |          |                    | Client             |
-|   POST | `/settings/unmute` | **Unmutes** a previously **muted** player.                 | `playerInfo` |          |                    | Client             |
-
-## Project Requirements
-
-* The following **environment variables** must exist on the server where the service is running:
-  * `MONGODB_URI`: A connection string to the environment's respective MongoDB.
-  * `MONGODB_NAME`: The specific Mongo database to connect to.  While Mongo connection strings can contain this information in them, it must be explicitly specified in this variable for the service.
-* Mongo collections **do not need to exist** before the service runs.  The service will create any collection it needs.  The database, however, must exist.
-
-## Slack Integration
-
-Functionality with Slack is an important aspect of Chat.  This is broken down into a couple of components:
-
-1. Chat Monitor
-   
-    * Chat stores messages in a buffer.  After either a specified amount of time has passed or one room has hit a certain number of new messages, the buffer is flushed and the messages are sent to Slack.  These values are configurable via the constants `SlackLog.FREQUENCY_IN_MS` and `SlackLog.MAX_QUEUE_SIZE`.
-    * Each **room** in the log has a color associated with it to help differentiate it in Slack.  This is simply the last six digits of the `roomId`, a hex string from MongoDB.
-2. Reporting
-    * Every time a message is reported, a small subset of messages is stored.  This **report** is stored in its own MongoDB collection, but it also gets processed into a Slack message and dumped into a channel.
-  
-Planned future Slack integration: buttons for customer service to act on reports directly.  It could be interesting to allow CS to send messages to the game directly from Slack, too - perhaps to warn players, but the mechanics of a feature like that would need to be fleshed out. 
-
-Helpful resources for working with Slack:
-* [Slack Apps Page](https://api.slack.com/apps)
-* [Block Kit Builder](https://slack.com/workspace-signin?redir=%2Fapi%2F%2Ftools%2Fblock-kit-builder)
-
-## Project Maintenance
-
-* Every set of related endpoints should be contained in its own **controller** class that inherits from `PlatformController` unless there's a good reason to fragment it (such as the `AdminController`, which contains all endpoints that require elevated permissions).
-* Every `MongoDB collection` used in the project should have its own **service** class and should inherit from `PlatformMongoService`.  Examples include `BanService` and `RoomService`.
-* Every data **model** should inherit from `PlatformDataModel`.
-* Every **model** should contain two sets of constant keys for each property.  Any space savings in MongoDB will be significant with a global launch on the storage side.
-  * A `DB_KEY`: an abbreviated or other shorthand string for storage in MongoDB.
-  * A `FRIENDLY_KEY`: a more verbose key, used for parameter parsing (incoming traffic)  and response serialization (outgoing traffic).
-  * These can be set for each property separately, with the `DB_KEY` specified in `[BsonElement]` attributes and the `FRIENDLY_KEY` specified in `[JsonProperty]` attributes.
-* Any data sent back to a client should be contained in a **response object**.  Unless overridden, any `PlatformDataModel` has a `ResponseObject` that can be used.  This uses reflection to generate a JSON key / value pair of the class name and object data, and helps keep responses standardized.
-    * When sending collections of models back (such as a List of messages), use the `PlatformController`'s `CollectionResponseObject(IEnumerable<T> objects)` method instead.
-
-## Issuing and Accepting PvP Challenges
-
-Chat now supports messaging ability to issue and accept "private" PvP challenges.  The ability to issue a challenge to a chat room can be found in other games, such as Clash Royale.  Player can coordinate with each other in chat if they want to challenge specific players, but these are effectively public - anyone who sees the message can accept the challenge.  The flow for the challenge feature is as follows:
-
-1. A player taps a button to start a challenge / practice PvP match.
-2. The match-making-service (or related) hits the new chat endpoint:
-
-```
-POST /chat/admin/challenge
-{
-    "aid": "{the player's accountId}",
-    "password": "{a new GUID}"
-}
-```
-
-3. Chat looks up that player's current global room and sends a message of type `pvp_challenge` to it.  The message data appears as:
-
-```
-{
-    "aid": "{Issuer AccountId}",
-    "data": {
-        "password": "{GUID}"
+                "accountId": "deadbeefdeadbeefdeadbeef",
+                "text": "3",
+                "context": {
+                    "foo": 123,
+                    "bar": null,
+                    "fubar": true
+                },
+                "id": "65797740214a66de422ac5ee",
+                "createdOn": 1702459200
+            },
+            {
+                "accountId": "65781a2ee074f00f1e9b37e6",
+                "text": "4",
+                "context": {
+                    "foo": 123,
+                    "bar": null,
+                    "fubar": true
+                },
+                "id": "65797744214a66de422ac5f0",
+                "createdOn": 1702459204
+            },
+            ...
+        ],
+        "roomId": "65796e0c8be2aefc0e26c7a5",
+        "status": 0,
+        "adminNote": null,
+        "id": "657977708be2aefc0e26db1f",
+        "createdOn": 1702459248
     },
-    "id": "d2100695-7f39-43c9-8127-7f7405826750",
-    "text": "I'm looking for a PvP match!",  // This will probably be entirely ignored by the client
-    "timestamp": 1662145121,
-    "type": "pvp_challenge"
+    "roomUpdates": [ ... ]
 }
 ```
 
-4. The client, upon seeing a message type of `pvp_challenge`, glues the message to the bottom of the chat window (normal chat messages, including new messages, appear above challenges).  The message should show the issuer's avatar, screenname, and a button that can be clicked by anyone else in the room.
-5. A second user accepts the challenge by clicking on the button, which kicks them into matchmaking.
-6As the PvP match starts (or gets cancelled), the match-making-service (or related) hits a second chat endpoint to clear the message:
+No further action is needed on a player's side.  Players can report a message as many times as they want - this will only increase `reportedCount` when repeating a request.  As more players report the same message, `reporterIds` will also track secondary reporters.
 
-```
-DELETE /chat/admin/claimChallenge?issuer=deadbeefdeadbeefdeadbeef
-```
+The `messageLog` will also continue to evolve up to a point; up to 25 messages before and after the offending message are stored, for a total of 51 messages.  So, if the message in question is reported as soon as it's sent, and then reported 10 minutes later with more chatter, more messages will be merged into the report.
 
-7. Chat removes any `pvp_challenge` messages from the specified account, since that player is now in the requested game.
+## Regarding Bans V2
 
-### Considerations
+In July 2023, we added Bans V2 to our Platform suite.  This update allows us to ban player tokens from a central point, and selectively ban them from various Platform servers.  So, as an example, we could ban a player from just Chat or just Leaderboards, or even IAPs.
 
-* `pvp_challenge` messages should be viewable only from non-CGP screens.  Otherwise challengers will leave their current game.
-* Multiple `pvp_challenge` messages may be present, giving players in the same room options of who to challenge.
-* Players might want to challenge a specific user and may even coordinate with them in chat to challenge this way, but because the challenge is public, they may end up playing against an unwanted player.
-  * Chat can easily support direct messaging between two users, which could be used in a V2 of this feature to eliminate this problem.  However, we don't have UI for DMs at this time.
-  * Other games face this same issue, but often don't address it; there's greater weight given to just getting people to play as opposed to waiting for a specific person to accept a match.  They can always try again a few minutes later.
-* As part of labs day on 9/2/22, private matches are made using Soulslike private matchmaking; users must use text entry to filter their match pool.
-  * Guaranteed, we will have users who do, no matter how prominently we display their password, will still forget they have one on, and consequently think PvP is broken.
-  * Text entry and elements changing on the screen with branching UI flows can be complicated and unpleasant.
-* This will be a great feature to include in guild chat rooms for internal PvP practice.
+Chat V1 manages its own ban list using multiple endpoints, and caused inconsistent behaviors when a player was banned.  Now that bans are standardized, chat no longer is responsible for bans.
 
-## Future Updates, Optimizations, and Nice-to-Haves
+However, it's important that a chat ban does not cause a consuming client to crash.  When a token is banned from the service, a 401 Unauthorized error will be returned as a response from the server.  When a ban is in effect, **no endpoint** will work.  Bans may be temporary or permanent.
 
-* Requests to Chat could include `Room` `aids` so that Chat can return only new members / members that have left the room, reducing data load.  Returning partial information could yield substantial data savings on every request.  The best method may be to have the client send known accountIds, then the service could return who has left the room and any new members.
-* (Frontend) Thresholds could be set so that when chat is fairly inactive - perhaps defined by a metric like `messages / minute` - the **update timer** takes longer to fire requests off.  Conversely, if chat is *very* active, it could instead be increased.
+Bans can be issued either by a customer service rep acting on reports or _automatically_ by Chat.  Chat V2 has some features to automatically detect bad behavior and issues bans to stop it.
 
-## Troubleshooting
+Bans can be temporary or permanent.
 
-#### *I seem to be missing environment variables when working locally / mongoConnection is null.*
+### Automatic Bans
 
-.NET is a little finnicky with environment variables.  It doesn't read user variables when running directly from Rider, instead only seeing system-wide vars and those that are specified in `appsettings.json`.  Since this file is tracked in git, it's not suitable for secrets like connection strings.  Instead, add a `environment.json` file and add any missing environment variables there.  It should mirror what's on AWS, and look like the following:
+The logic of automatic bans is subject to change, so information here may be out-of-date, but the goal of automatic bans is to curb malicious actors before they become problems.  So many games have chat spam that promote links, or otherwise copy / paste spam in various channels, that chat systems become unusable Twitch-style streams of garbage posts.
 
-    {
-      "MONGODB_URI": "mongodb+srv://{...}",
-      "MONGODB_NAME": "{db name}",
-      "LOGGLY_URL": "https://logs-01.loggly.com/bulk/{...}/tag/chat-service/",
-      "RUMBLE_ENDPOINT_TOKEN_VERIFICATION": "https://dev.services.tower.cdrentertainment.com/player/verify"
-    }
+Chat discourages this in two ways:
 
-Any time you need to ask for an environment variable, use `PlatformEnvironment.Variable(string)`.  This will first look up the actual environment variable, then will look at your `environments.json` variables.  **Debug configuration only; environments.json will not exist on deployed environments.**
+1. By regularly checking to see if players have sent a large number of _identical_ messages in a short period of time.  If Chat determines the player is too spammy - and particularly if it's across multiple rooms - Chat will ban the player.  This is a progressive ban; the first offense will be light - say a few minutes - but continued offenses will start increasing the ban time.  These bans are never permanent - that's only for CS to decide - but on the upper end they will last several days. 
+2. Chat will issue a short ban for players who spam too many requests in a short period of time.  This is intended to keep our servers open for traffic, as every request to chat results in multiple database hits.  This ban will not increase in duration and is just intended to force a cooldown.  The goal is to set the bar high enough that only someone intentionally spammy would ever see it.  The error code associated with this will be `HTTP 418 I'm a teapot`; go make some tea, and maybe when you're done with it you'll be able to chat again.
