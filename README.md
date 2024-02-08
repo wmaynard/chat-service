@@ -18,7 +18,7 @@ This guide will walk you through how to use the second iteration of chat.  Befor
 | Client - Admin         | An application that is specifically hitting the service with an admin token.  This cannot be the game client, but could be a server or other Platform service.                                                                                                 |
 | Janitor                | A background task that runs in the service, responsible for ongoing maintenance tasks such as but not limited to data deletion.  For more information, see the [Data Retention](DATA_RETENTION.md) document.                                                   |
 | Message                | An object representing some text to display to users; has optional client-defined data associated with it and an internally-used type.                                                                                                                         |
-| Message - Announcement | A specific type of message representing a system-wide critical message.  Announcements appear in all chat responess when active, regardless of player rooms.                                                                                                   |
+| Message - Announcement | A specific type of message representing a system-wide critical message.  Announcements appear in all chat respones when active, regardless of player rooms.  These are sent in a separate array from `roomUpdates`.                                            |
 | Message - Broadcast    | Any message that was sent from an **admin client** that is not an **announcement**.  Examples might include summon evenets or congratulatory messages from another Platform service.  V1 had broadcasts too, but they were much narrower in scope and utility. |
 | Message - Direct (DM)  | A message that is privately sent between two or more players.  Think of these like Slack DMs.                                                                                                                                                                  |
 | Message - Unread       | Any message that has a CreatedOn timestamp that is larger than the `lastRead` timestamp sent with every non-admin client's requests.                                                                                                                           |
@@ -96,7 +96,8 @@ GET /rooms?page=0
     "page": 0,
     "roomsPerPage": 10,
     "remainingRoomCount": 0,
-    "roomUpdates": []
+    "roomUpdates": [],
+    "announcements": []
 }
 ```
 
@@ -124,7 +125,8 @@ PATCH /rooms/join
         "id": "deadbeefdeadbeefdeadbeef",
         "createdOn": 1702450444
     },
-    "roomUpdates": []
+    "roomUpdates": [],
+    "announcements": []
 }
 ```
 
@@ -139,7 +141,8 @@ DELETE /rooms/leave?roomId={...}
 
 200 OK
 {
-    "roomUpdates": []
+    "roomUpdates": [],
+    "announcements": []
 }
 ```
 
@@ -169,7 +172,8 @@ GET /?lastRead=1702603902
             "id": "657956f98be2aefc0e26982b",
             "createdOn": 1702450937
         }
-    ]
+    ],
+    "announcements": []
 }
 ```
 
@@ -370,7 +374,8 @@ POST /report
         "id": "657977708be2aefc0e26db1f",
         "createdOn": 1702459248
     },
-    "roomUpdates": [ ... ]
+    "roomUpdates": [ ... ],
+    "announcements": []
 }
 ```
 

@@ -15,7 +15,7 @@ public class Startup : PlatformStartup
         .SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)
         .DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting)
         .AddFilter<UnreadFilter>()
-        .SetIndividualRps(0.5)
+        .SetIndividualRps(5)
         .OnReady(_ =>
         {
             #if  DEBUG

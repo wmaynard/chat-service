@@ -5,6 +5,7 @@ using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
+using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
@@ -77,6 +78,7 @@ public class RoomService : MinqService<Room>
                 .AddItems(room => room.Members, accountId)
                 .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
                 .SetOnInsert(room => room.Type, RoomType.Global)
+                .SetOnInsert(room => room.Channel, BroadcastChannel.Global)
             );
 
         if (output.FriendlyId != default)
@@ -86,12 +88,12 @@ public class RoomService : MinqService<Room>
         // TODO: We may need to account for a very difficult-to-produce edge case where two global rooms are created at the same time
         // and have a collision on the FriendlyId.
         long max = mongo
-                       .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
-                       .Sort(sort => sort.OrderByDescending(room => room.FriendlyId))
-                       .Limit(1)
-                       .FirstOrDefault()
-                       ?.FriendlyId
-                   ?? 0;
+            .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
+            .Sort(sort => sort.OrderByDescending(room => room.FriendlyId))
+            .Limit(1)
+            .FirstOrDefault()
+            ?.FriendlyId
+            ?? 0;
 
         output = mongo
             .ExactId(output.Id)
@@ -165,6 +167,7 @@ public class RoomService : MinqService<Room>
         .Upsert(update => update
             .Set(room => room.MembershipUpdatedMs, TimestampMs.Now)
             .SetOnInsert(room => room.Type, RoomType.DirectMessage)
+            .SetOnInsert(room => room.Channel, BroadcastChannel.None)
         )
         .Id;
 
@@ -173,11 +176,23 @@ public class RoomService : MinqService<Room>
     /// be in one Global Room at a time.
     /// </summary>
     /// <param name="accountId"></param>
+    /// <param name="channel"></param>
     /// <returns></returns>
-    public Room[] GetMembership(string accountId)
+    public Room[] GetMembership(string accountId, BroadcastChannel channel = BroadcastChannel.All)
     {
         List<Room> output = mongo
-            .Where(query => query.Contains(room => room.Members, accountId))
+            .Where(query =>
+            {
+                query.Contains(room => room.Members, accountId);
+                if (channel == BroadcastChannel.All)
+                    return;
+                
+                BroadcastChannel[] flags = channel
+                    .GetFlags()
+                    .Where(bc => bc != BroadcastChannel.None)
+                    .ToArray();
+                query.ContainedIn(room => room.Channel, flags);
+            })
             .Limit(100)
             .Sort(sort => sort
                 .OrderByDescending(room => room.Type)

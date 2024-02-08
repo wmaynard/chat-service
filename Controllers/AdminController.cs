@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Rumble.Platform.ChatService.Models;
@@ -36,16 +37,36 @@ public class AdminController : PlatformController
         if (messages.Any(message => message == null))
             throw new PlatformException("At least one message is invalid.");
 
+        List<Message> toInsert = new();
         foreach (Message message in messages)
         {
-            message.Type = string.IsNullOrWhiteSpace(message.RoomId)
-                ? MessageType.Announcement
-                : MessageType.Administrator;
             message.Expiration = expiration;
             message.Administrator = Token;
+
+            if (message.Channel == BroadcastChannel.None)
+                message.Type = MessageType.Announcement;
+            else if (!string.IsNullOrWhiteSpace(message.RoomId))
+                message.Type = MessageType.Administrator;
+            else
+            {
+                message.Type = MessageType.Administrator;
+                string[] roomIds = _rooms
+                    .GetMembership(message.AccountId, message.Channel)
+                    .Select(room => room.Id)
+                    .ToArray();
+                
+                toInsert.AddRange(roomIds.Select(id =>
+                {
+                    Message output = message.Copy();
+                    output.RoomId = id;
+                    return output;
+                }));
+                continue;
+            }
+            toInsert.Add(message);
         }
         
-        _messages.Insert(messages);
+        _messages.Insert(toInsert.ToArray());
         if (messages.Any(message => message.Type == MessageType.Announcement)) // only allow a maximum of 10 active announcements
             _messages.ExpireExcessAnnouncements();
         
@@ -154,6 +175,7 @@ public class AdminController : PlatformController
     {
         string[] accounts = Require<string[]>("accountIds");
         RumbleJson data = Optional<RumbleJson>("data");
+        BroadcastChannel channel = Require<BroadcastChannel>("channel");
 
         if (accounts.Any(account => string.IsNullOrWhiteSpace(account) || !account.CanBeMongoId()) || !accounts.Length.Between(1, 50))
             throw new PlatformException("Invalid account ID(s) detected; cannot create private room.");
@@ -163,7 +185,8 @@ public class AdminController : PlatformController
             Members = accounts,
             Data = data,
             Editor = Token,
-            Type = RoomType.Private
+            Type = RoomType.Private,
+            Channel = channel
         };
         _rooms.Insert(output);
 

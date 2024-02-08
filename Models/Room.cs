@@ -40,6 +40,10 @@ public class Room : PlatformCollectionDocument
     [BsonElement("type")]
     [JsonIgnore]
     public RoomType Type { get; set; }
+    
+    [BsonElement("channel")]
+    [JsonPropertyName("channel")]
+    public BroadcastChannel Channel { get; set; }
 
     [BsonIgnore]
     [JsonPropertyName("type")]

@@ -28,28 +28,33 @@ POST /admin/broadcast
                     "name": "Mongorc"
                 }
             },
-            "roomId": "65796e0c8be2aefc0e26c7a5"        // Global Room
-        },
-        {
-            "accountId": "deadbeefdeadbeefdeadbeef",
-            "text": "{accountId} summoned {titan}",
-            "context": {
-                "type": "broadcast",
-                "titan":  {
-                    "rarity": 5,
-                    "name": "Mongorc"
-                }
-            },
-            "roomId": "65796e0c8be2aefc0e37d8b6"        // Guild Room
+            "channel": 3                                // BroadcastChannel flags
         },
         ...
     ]
 }
 ```
 
-Messages that specify a `roomId` will all be assigned the message type `Administrator`.  This has no bearing on how they behave as messages but is used by some background services to inspect messages.
+Messages that specify a `channel` will all be assigned the message type `Administrator`.  This has no bearing on how they behave as messages but is used by some background services to inspect messages.
 
 The endpoint uses the term "broadcast" to adopt and expand on the definition used in V1.  Now, a "broadcast" is any message sent from an admin source.  Put simply, this really is just sending a message the same as any other user - just with the caveat that there are fewer restrictions, such as being able to spoof the sender's Account ID or manually set an expiration.
+
+#### Broadcast Channels
+
+The channel is a flags enum.  If you want to send a broadcast out to multiple audiences, you would pipe it:
+
+```csharp
+ChatInterop.Broadcast(message, BroadcastChannel.Global | BroadcastChannel.Guild); // sends 3
+```
+
+| Channel | Name   | Definition                                                                        |
+|:--------|:-------|:----------------------------------------------------------------------------------|
+| 0       | None   | Rooms with this channel cannot receive broadcasts.                                |
+| 1       | Global | Rooms that are created as necessary to support player population for public chat. |
+| 2       | Guild  | Rooms that are created by the guild-service interop.                              |
+| 255     | All    | Matches all rooms above None.                                                     |
+
+There's room for more channels to be added, but there is no need at this time to add more.
 
 ### Announcements
 
@@ -68,7 +73,7 @@ POST /admin/broadcast
 }
 ```
 
-When an admin send is received and there is **no `roomId` specified**, the message type becomes an `Announcement`.  These special messages are returned exactly once in _every_ response, whether they meet the `lastRead` criteria or not.  They don't belong to any specific Room.
+When an admin send is received and there is **no `channel` specified**, the message type becomes an `Announcement`.  These special messages are returned exactly once in _every_ response, whether they meet the `lastRead` criteria or not.  They don't belong to any specific Room.
 
 A maximum of 10 announcements can be active at any time.  If an 11th is issued, only the 10 most recent announcements will remain unexpired (the oldest messages are immediately expired).  This is done to guarantee a malicious admin can't abuse the system and prevent message deliveries to players by spamming endless announcements.
 

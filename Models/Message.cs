@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
 using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
@@ -7,6 +8,7 @@ using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
+using StackExchange.Redis;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -43,6 +45,10 @@ public class Message : PlatformCollectionDocument
     [BsonElement("type")]
     [JsonIgnore]
     public MessageType Type { get; set; }
+    
+    [BsonIgnore]
+    [JsonPropertyName("channel"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public BroadcastChannel Channel { get; set; }
 
     public Message()
     {

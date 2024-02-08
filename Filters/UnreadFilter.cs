@@ -55,7 +55,10 @@ public class UnreadFilter : PlatformFilter, IActionFilter
             ok.Value ??= new RumbleJson(); // This covers 204 No Content
 
             if (ok.Value is RumbleJson response)
+            {
                 response["roomUpdates"] = rooms;
+                response["announcements"] = messages.Where(message => message.Type == MessageType.Announcement);
+            }
         }
         catch (Exception e)
         {
