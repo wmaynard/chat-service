@@ -59,8 +59,8 @@ public class Message : PlatformCollectionDocument
     {
         errors = new List<string>();
         
-        if (string.IsNullOrWhiteSpace(Body))
-            errors.Add("Messages must have text content.");
+        // if (string.IsNullOrWhiteSpace(Body))
+        //     errors.Add("Messages must have text content.");
         if (Type != MessageType.Unassigned)
             errors.Add("Sending a message with an explicit message type is not allowed, it is server-authoritative.");
     }

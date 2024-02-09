@@ -48,4 +48,10 @@ public class Room : PlatformCollectionDocument
     [BsonIgnore]
     [JsonPropertyName("type")]
     public string VerboseType => Type.GetDisplayName();
+
+    public Room PruneData()
+    {
+        Data = null;
+        return this;
+    }
 }

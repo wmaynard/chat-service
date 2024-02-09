@@ -33,7 +33,8 @@ public class UnreadFilter : PlatformFilter, IActionFilter
         _activities ??= PlatformService.Require<ActivityService>();
 
         _activities.MarkAsActive(Token.AccountId);
-        Room[] rooms = _rooms.GetMembership(Token.AccountId); // This guarantees membership in a global room
+        bool includeData = Body?.Optional<bool>("detailed") ?? false;
+        Room[] rooms = _rooms.GetMembership(Token.AccountId, includeData: includeData); // This guarantees membership in a global room
 
         long lastRead = Body?.Optional<long?>("lastRead") ?? Timestamp.OneDayAgo;
         Message[] messages = _messages.GetAllMessages(rooms.Select(room => room.Id).ToArray(), lastRead);

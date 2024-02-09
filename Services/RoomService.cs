@@ -177,8 +177,9 @@ public class RoomService : MinqService<Room>
     /// </summary>
     /// <param name="accountId"></param>
     /// <param name="channel"></param>
+    /// <param name="includeData"></param>
     /// <returns></returns>
-    public Room[] GetMembership(string accountId, BroadcastChannel channel = BroadcastChannel.All)
+    public Room[] GetMembership(string accountId, BroadcastChannel channel = BroadcastChannel.All, bool includeData = false)
     {
         List<Room> output = mongo
             .Where(query =>
@@ -224,9 +225,14 @@ public class RoomService : MinqService<Room>
         if (output.All(room => room.Type != RoomType.Global))
             output.Add(AutoJoinGlobal(accountId));
 
-        return output
-            .Where(room => room != null)
-            .ToArray();
+        return includeData
+            ? output
+                .Where(room => room != null)
+                .ToArray()
+            : output
+                .Where(room => room != null)
+                .Select(room => room.PruneData())
+                .ToArray();
     }
     
     public RoomType GetRoomType(string id) => mongo

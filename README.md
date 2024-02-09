@@ -41,7 +41,8 @@ There is only one guiding principle that carries over from V1...
 
 Any endpoint that a game client or other token representing a player hits the chat-service, Platform will return unread messages for the player.  This helps keep the traffic minimal.  For _every single request_ made to Chat, the consuming client should:
 
-* Include a UTC Unix timestamp in the body or parameters (as appropriate) with the key of `lastRead`.
+* Include a UTC Unix timestamp in the query parameters with the key of `lastRead`.
+* Optionally include a boolean in the query paramaters with the key of `detailed`.  If true, this will return `room.data` fields.
 * Find the maximum timestamp returned in the unread messages and store it for use in the next request to Chat.
 * Cache chat messages locally
 
