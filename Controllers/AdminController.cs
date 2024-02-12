@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.ChatService.Utilities;
@@ -68,8 +69,14 @@ public class AdminController : PlatformController
         
         _messages.Insert(toInsert.ToArray());
         if (messages.Any(message => message.Type == MessageType.Announcement)) // only allow a maximum of 10 active announcements
+        {
             _messages.ExpireExcessAnnouncements();
-        
+            Log.Info(Owner.Will, "New announcement(s) posted.", data: new
+            {
+                Announcement = messages.Where(message => message.Type == MessageType.Announcement)
+            });
+        }
+
         return Ok(messages);
     }
 
