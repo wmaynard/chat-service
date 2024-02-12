@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using MongoDB.Bson.Serialization.Attributes;
@@ -14,6 +15,7 @@ namespace Rumble.Platform.ChatService.Models;
 
 public class Message : PlatformCollectionDocument
 {
+    public const string FRIENDLY_KEY_DATA = "context";
     public static long StandardMessageExpiration => Timestamp.TwoWeeksFromNow;
     public static long DirectMessageExpiration => Timestamp.OneMonthFromNow;
     public static long PrivateMessageExpiration => Timestamp.ThreeMonthsFromNow;
@@ -31,7 +33,7 @@ public class Message : PlatformCollectionDocument
     public string Body { get; set; }
     
     [BsonElement("data"), BsonIgnoreIfNull]
-    [JsonPropertyName("context"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName(FRIENDLY_KEY_DATA), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RumbleJson Data { get; set; }
     
     [BsonElement("exp"), BsonIgnoreIfDefault]
@@ -59,8 +61,8 @@ public class Message : PlatformCollectionDocument
     {
         errors = new List<string>();
         
-        // if (string.IsNullOrWhiteSpace(Body))
-        //     errors.Add("Messages must have text content.");
+        if (string.IsNullOrWhiteSpace(Body) && (Data == null || !Data.Keys.Any()))
+            errors.Add($"Messages can be blank, but if this is the case, you must provide '{FRIENDLY_KEY_DATA}'.");
         if (Type != MessageType.Unassigned)
             errors.Add("Sending a message with an explicit message type is not allowed, it is server-authoritative.");
     }
