@@ -20,7 +20,7 @@ public class RoomsController : PlatformController
     {
         int page = Optional<int>("page");
 
-        Room[] results = _rooms.ListGlobalRoomsWithCapacity(page, out long remainingRooms);
+        Room[] results = _rooms.ListGlobalRooms(page, out long remainingRooms);
         
         return Ok(new RumbleJson
         {

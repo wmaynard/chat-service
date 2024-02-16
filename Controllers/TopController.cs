@@ -65,6 +65,14 @@ public class TopController : PlatformController
         return Ok(message);
     }
 
+    [HttpGet, Route("search")]
+    public ActionResult Search()
+    {
+        string terms = Require<string>("terms");
+
+        return Ok(_messages.Search(terms));
+    }
+
     private Message RequireMessage()
     {
         Message output = Require<Message>("message");

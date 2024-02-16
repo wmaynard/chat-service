@@ -3,6 +3,7 @@ using System.Linq;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Exceptions;
+using Rumble.Platform.Common.Interfaces;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Utilities;
 

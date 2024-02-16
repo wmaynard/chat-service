@@ -281,11 +281,8 @@ public class RoomService : MinqService<Room>
         .Where(query => query.ContainedIn(room => room.Id, roomIds))
         .Update(update => update.RemoveItems(room => room.Members, accountId));
     
-    public Room[] ListGlobalRoomsWithCapacity(int page, out long remainingRooms) => mongo
-        .Where(query => query
-            .EqualTo(room => room.Type, RoomType.Global)
-            .LengthLessThan(room => room.Members, Room.CAPACITY_MEMBERS)
-        )
+    public Room[] ListGlobalRooms(int page, out long remainingRooms) => mongo
+        .Where(query => query.EqualTo(room => room.Type, RoomType.Global))
         .Sort(sort => sort.OrderBy(room => room.FriendlyId))
         .Page(ROOM_LIST_PAGE_SIZE, page, out remainingRooms);
 
