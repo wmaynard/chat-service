@@ -42,12 +42,22 @@ public class ActivityService : MinqTimerService<Activity>
         Activity[] activities = mongo
             .WithTransaction(out Transaction transaction)
             .Where(query => query.ContainedIn(ts => ts.AccountId, _buffer.Select(pair => pair.Key)))
+            .ToArray()
+            .UnionBy(_buffer.Select(pair => new Activity
+            {
+                AccountId = pair.Key,
+                Counts = new Queue<int>(),
+                CreatedOn = pair.Value.CreatedOn
+            }), activity => activity.AccountId)
             .ToArray();
 
         foreach (Activity activity in activities)
         {
-            if (!_buffer.TryGetValue(activity.AccountId, out Data data))
+            activity.IsActive = _buffer.TryGetValue(activity.AccountId, out Data data);
+            
+            if (!activity.IsActive)
                 continue;
+
             activity.LastActive = data.LastActive;
             activity.Counts.Enqueue(data.ActivityCount);
 

@@ -12,7 +12,7 @@ public class Startup : PlatformStartup
         .SetProjectOwner(Owner.Will)
         .SetTokenAudience(Audience.ChatService)
         .SetRegistrationName("Chat")
-        .SetPerformanceThresholds(warnMS: 500, errorMS: 2_000, criticalMS: 30_000)
+        .SetPerformanceThresholds(warnMS: 1_000, errorMS: 10_000, criticalMS: 30_000)
         .DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting)
         .AddFilter<UnreadFilter>()
         .SetIndividualRps(5)

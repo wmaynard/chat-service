@@ -35,4 +35,8 @@
 
 
 
+	<ItemGroup>
+	  <ProjectReference Include="..\platform-common\platform-csharp-common.csproj" />
+	</ItemGroup>
+
 </Project>
