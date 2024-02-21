@@ -33,7 +33,7 @@
 	<ItemGroup>
 	  <Folder Include="Exceptions\" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<AssemblyAttribute Include="Rumble.Platform.Common.Attributes.BuildDateAttribute">
 			<_Parameter1>$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</_Parameter1>
