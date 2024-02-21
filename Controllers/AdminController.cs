@@ -84,10 +84,19 @@ public class AdminController : PlatformController
     public ActionResult EditMessage()
     {
         Message message = Require<Message>("message");
-        message.Expiration = Message.StandardMessageExpiration;
 
         if (string.IsNullOrWhiteSpace(message?.Id) || !message.Id.CanBeMongoId())
             throw new PlatformException("Invalid message; cannot replace.");
+
+        Message db = _messages.FromId(message.Id);
+        if (message.Expiration == default)
+            message.Expiration = db.Expiration;
+        
+        if (string.IsNullOrWhiteSpace(db.Id))
+            throw new PlatformException("Message does not exist.");
+
+        if (db.ContentIsEqualTo(message))
+            throw new PlatformException("Messages are identical; update not honored.");
 
         message.Administrator = Token;
         

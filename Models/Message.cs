@@ -103,4 +103,10 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
 
     public long SearchWeight { get; set; }
     public double SearchConfidence { get; set; }
+
+    public bool ContentIsEqualTo(object obj) => obj is Message message 
+        && Body == message.Body 
+        && RoomId == message.RoomId 
+        && Expiration == message.Expiration 
+        && Data?.ToJson() == message.Data?.ToJson();
 }
