@@ -11,6 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AWSSDK.KinesisFirehose" Version="3.7.2.99" />
 		<PackageReference Include="platform-csharp-common" Version="1.3.134" />
 		<PackageReference Include="System.Json" Version="4.7.1" />
 	</ItemGroup>
@@ -32,11 +33,26 @@
 	<ItemGroup>
 	  <Folder Include="Exceptions\" />
 	</ItemGroup>
-
-
-
+	
 	<ItemGroup>
-	  <ProjectReference Include="..\platform-common\platform-csharp-common.csproj" />
+		<AssemblyAttribute Include="Rumble.Platform.Common.Attributes.BuildDateAttribute">
+			<_Parameter1>$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
+
+	<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+		<Exec Command="git describe --long --always --exclude='*' --abbrev=40"
+			  ConsoleToMSBuild="True" IgnoreExitCode="False">
+			<Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+		</Exec>
+	</Target>
+
+	<Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
+		<ItemGroup>
+			<AssemblyAttribute Include="Rumble.Platform.Common.Attributes.GitHashAttribute">
+				<_Parameter1>$(SourceRevisionId)</_Parameter1>
+			</AssemblyAttribute>
+		</ItemGroup>
+	</Target>
 
 </Project>
