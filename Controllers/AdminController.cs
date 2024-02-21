@@ -88,15 +88,17 @@ public class AdminController : PlatformController
         if (string.IsNullOrWhiteSpace(message?.Id) || !message.Id.CanBeMongoId())
             throw new PlatformException("Invalid message; cannot replace.");
 
-        Message db = _messages.FromId(message.Id);
+        Message db = _messages.FromId(message.Id)
+            ?? throw new PlatformException("Message does not exist.");
+        
         if (message.Expiration == default)
             message.Expiration = db.Expiration;
-        
-        if (string.IsNullOrWhiteSpace(db.Id))
-            throw new PlatformException("Message does not exist.");
 
         if (db.ContentIsEqualTo(message))
             throw new PlatformException("Messages are identical; update not honored.");
+
+        if (!string.IsNullOrWhiteSpace(db.RoomId) && (string.IsNullOrWhiteSpace(message.RoomId) || !message.RoomId.CanBeMongoId()))
+            throw new PlatformException("Invalid room ID.");
 
         message.Administrator = Token;
         message.UpdatedOn = Timestamp.Now;

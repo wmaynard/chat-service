@@ -100,7 +100,11 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
         };
     }
 
+    [BsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long SearchWeight { get; set; }
+    [BsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public double SearchConfidence { get; set; }
 
     public bool ContentIsEqualTo(Message message) => Body == message.Body 
