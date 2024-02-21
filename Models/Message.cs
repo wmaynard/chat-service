@@ -43,6 +43,10 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
     [JsonPropertyName("expiration")]
     public long Expiration { get; set; }
     
+    [BsonElement("updated"), BsonIgnoreIfDefault]
+    [JsonPropertyName("updatedOn")]
+    public long UpdatedOn { get; set; }
+    
     [BsonElement("room")]
     [JsonPropertyName("roomId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string RoomId { get; set; }
@@ -54,11 +58,6 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
     [BsonIgnore]
     [JsonPropertyName("channel"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public BroadcastChannel Channel { get; set; }
-
-    public Message()
-    {
-        Expiration = Timestamp.TwoWeeksFromNow;
-    }
 
     protected override void Validate(out List<string> errors)
     {
@@ -104,8 +103,7 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
     public long SearchWeight { get; set; }
     public double SearchConfidence { get; set; }
 
-    public bool ContentIsEqualTo(object obj) => obj is Message message 
-        && Body == message.Body 
+    public bool ContentIsEqualTo(Message message) => Body == message.Body 
         && RoomId == message.RoomId 
         && Expiration == message.Expiration 
         && Data?.ToJson() == message.Data?.ToJson();

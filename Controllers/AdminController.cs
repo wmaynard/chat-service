@@ -99,8 +99,10 @@ public class AdminController : PlatformController
             throw new PlatformException("Messages are identical; update not honored.");
 
         message.Administrator = Token;
-        
+        message.UpdatedOn = Timestamp.Now;
         _messages.Update(message);
+        
+        Log.Local(Owner.Will, "Updated");
 
         return Ok(message);
     }

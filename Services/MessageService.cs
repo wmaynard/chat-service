@@ -108,8 +108,11 @@ public class MessageService : MinqService<Message>
     public Message[] GetAllMessages(string[] roomIds, long timestamp = 0) => mongo
         .Where(query => query
             .ContainedIn(message => message.RoomId, roomIds)
-            .GreaterThan(message => message.CreatedOn, timestamp)
             .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
+            .Or(or => or
+                .GreaterThan(message => message.CreatedOn, timestamp)
+                .GreaterThan(message => message.UpdatedOn, timestamp)
+            )
         )
         .Or(or => or.EqualTo(message => message.Type, MessageType.Announcement))
         .Sort(sort => sort.OrderBy(message => message.CreatedOn))
