@@ -149,6 +149,8 @@ PUT /admin/messages/update
 
 **Any time you edit a message, your admin token information is logged as the editor.**  This is done so that we can catch misuse of the system.
 
+An HTTP 400 is returned if the edited message would match the record that exists on the database.  This functionality can be used by clients to determine if the update was successful or not.
+
 ## Listing Reports
 
 Similar behavior to listing messages; you have multiple parameters, which are optional.  A `reportId` guarantees 0 or 1 result.  `accountId` filters out all reports that don't have an account as either a reporter or a message author in the log.  With no parameters, all reports will be returned.
