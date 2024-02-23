@@ -77,7 +77,10 @@ public class AdminController : PlatformController
             });
         }
 
-        return Ok(messages);
+        return Ok(new RumbleJson
+        {
+            { "messages", toInsert }
+        });
     }
 
     [HttpPut, Route("messages/update")]
