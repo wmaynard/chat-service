@@ -83,6 +83,14 @@ public class AdminController : PlatformController
         });
     }
 
+    [HttpDelete, Route("messages/delete")]
+    public ActionResult DeleteMessage()
+    {
+        _messages.Delete(Require<string>("id"));
+
+        return Ok();
+    }
+
     [HttpPut, Route("messages/update")]
     public ActionResult EditMessage()
     {

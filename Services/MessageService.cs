@@ -179,4 +179,8 @@ public class MessageService : MinqService<Message>
         )
         .Limit(100)
         .ToArray(); // TODO: Rank for relevance
+
+    public void Delete(string id) => mongo
+        .ExactId(id)
+        .Delete();
 }
