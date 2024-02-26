@@ -13,6 +13,7 @@ using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
 using Rumble.Platform.Data;
 using StackExchange.Redis;
+using Condition = Amazon.Auth.AccessControlPolicy.Condition;
 
 namespace Rumble.Platform.ChatService.Models;
 
@@ -46,6 +47,10 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
     [BsonElement("updated"), BsonIgnoreIfDefault]
     [JsonPropertyName("updatedOn")]
     public long UpdatedOn { get; set; }
+    
+    [BsonElement("updatedFor"), BsonIgnoreIfNull]
+    [JsonPropertyName("updatedFor"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string UpdatedForAccountId { get; set; }
     
     [BsonElement("room")]
     [JsonPropertyName("roomId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -189,7 +189,7 @@ public class AdminController : PlatformController
         {
             { "reports", output },
             { "page", page },
-            { "roomsPerPage", 10 },
+            { "roomsPerPage", RoomService.ROOM_LIST_PAGE_SIZE },
             { "remainingRoomCount", remaining }
         });
     }

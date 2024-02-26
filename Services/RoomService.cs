@@ -37,7 +37,7 @@ public class RoomService : MinqService<Room>
                     .OrderByDescending(room => room.FriendlyId)
                     .OrderBy(room => room.CreatedOn)
                 )
-                .Page(10, page, out remaining)
+                .Page(ROOM_LIST_PAGE_SIZE, page, out remaining)
             : mongo
                 .Where(query => query.Contains(room => room.Members, accountId))
                 .Sort(sort => sort
@@ -45,7 +45,7 @@ public class RoomService : MinqService<Room>
                     .OrderByDescending(room => room.FriendlyId)
                     .OrderBy(room => room.CreatedOn)
                 )
-                .Page(10, page, out remaining);
+                .Page(ROOM_LIST_PAGE_SIZE, page, out remaining);
     }
 
     public Room AdminUpdate(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
