@@ -151,6 +151,10 @@ PUT /admin/messages/update
 
 An HTTP 400 is returned if the edited message would match the record that exists on the database.  This functionality can be used by clients to determine if the update was successful or not.
 
+### Deleting Messages
+
+While deletion is technically supported with a separate endpoint, it is not documented in detail here; the preferred method of getting rid of a message is to update the message with an expiration of the current timestamp.  This allows us to keep the record of the message while also effectively hiding it from consuming clients.
+
 ## Listing Reports
 
 Similar behavior to listing messages; you have multiple parameters, which are optional.  A `reportId` guarantees 0 or 1 result.  `accountId` filters out all reports that don't have an account as either a reporter or a message author in the log.  With no parameters, all reports will be returned.
