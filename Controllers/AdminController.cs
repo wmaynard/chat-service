@@ -195,7 +195,7 @@ public class AdminController : PlatformController
         
         return Ok(new RumbleJson
         {
-            { "reports", output },
+            { "rooms", output },
             { "page", page },
             { "roomsPerPage", RoomService.ROOM_LIST_PAGE_SIZE },
             { "remainingRoomCount", remaining }
