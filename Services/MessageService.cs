@@ -110,8 +110,8 @@ public class MessageService : MinqService<Message>
             .ContainedIn(message => message.RoomId, roomIds)
             .GreaterThanOrEqualTo(message => message.Expiration, Timestamp.Now)
             .Or(or => or
-                .GreaterThan(message => message.CreatedOn, timestamp)
-                .GreaterThan(message => message.UpdatedOn, timestamp)
+                .GreaterThanOrEqualTo(message => message.CreatedOn, timestamp)
+                .GreaterThanOrEqualTo(message => message.UpdatedOn, timestamp)
             )
         )
         .Or(or => or.EqualTo(message => message.Type, MessageType.Announcement))

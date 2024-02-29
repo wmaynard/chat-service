@@ -41,11 +41,11 @@ public class Message : PlatformCollectionDocument, ISearchable<Message>
     public RumbleJson Data { get; set; }
     
     [BsonElement("exp"), BsonIgnoreIfDefault]
-    [JsonPropertyName("expiration")]
+    [JsonPropertyName("expiration"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long Expiration { get; set; }
     
     [BsonElement("updated"), BsonIgnoreIfDefault]
-    [JsonPropertyName("updatedOn")]
+    [JsonPropertyName("updatedOn"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long UpdatedOn { get; set; }
     
     [BsonElement("updatedFor"), BsonIgnoreIfNull]

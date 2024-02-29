@@ -69,7 +69,10 @@ public class RoomService : MinqService<Room>
     private Room AutoJoinGlobal(string accountId)
     {
         Room output = mongo
-            .Where(query => query.Contains(room => room.Members, accountId))
+            .Where(query => query
+                .EqualTo(room => room.Type, RoomType.Global)
+                .Contains(room => room.Members, accountId)
+            )
             .Or(or => or
                 .EqualTo(room => room.Type, RoomType.Global)
                 .LengthLessThanOrEqualTo(room => room.Members, Room.CAPACITY_MEMBERS)

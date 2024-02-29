@@ -16,6 +16,7 @@ public class Startup : PlatformStartup
         .DisableFeatures(CommonFeature.LogglyThrottling | CommonFeature.ConsoleObjectPrinting)
         .AddFilter<UnreadFilter>()
         .SetIndividualRps(5)
+        .WipeLocalDatabasesOnStartup()
         .OnReady(_ =>
         {
             #if  DEBUG
