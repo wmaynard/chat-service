@@ -252,11 +252,21 @@ public class RoomService : MinqService<Room>
         ?.Type
         ?? RoomType.PossibleHack;
 
+    /// <summary>
+    /// Joins a selected global room.
+    /// </summary>
+    /// <param name="accountId"></param>
+    /// <param name="roomId"></param>
+    /// <returns></returns>
+    /// <exception cref="PlatformException"></exception>
     public Room JoinGlobal(string accountId, string roomId)
     {
         mongo
             .WithTransaction(out Transaction transaction)
-            .Where(query => query.Contains(room => room.Members, accountId))
+            .Where(query => query
+                .Contains(room => room.Members, accountId)
+                .EqualTo(room => room.Type, RoomType.Global)
+            )
             .Update(update => update.RemoveItems(room => room.Members, accountId));
 
         Room output = mongo
