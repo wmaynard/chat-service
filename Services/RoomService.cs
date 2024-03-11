@@ -118,6 +118,7 @@ public class RoomService : MinqService<Room>
         bool output = mongo
             .WithTransaction(out Transaction transaction)
             .ExactId(id)
+            .And(and => and.NotEqualTo(room => room.Type, RoomType.Global))
             .Delete() == 0;
 
         if (!output)
@@ -225,7 +226,11 @@ public class RoomService : MinqService<Room>
             output.RemoveAll(room => toRemove.Contains(room.Id));
         }
         
-        if (output.All(room => room.Type != RoomType.Global))
+        // PLATF-6630: Without checking for this flag, guild-only broadcasts were being sent to the global room.
+        // This is because chat always assumes you're supposed to be in a global room - which is true - but this
+        // isn't appropriate when we want to filter out only guild rooms for broadcast purposes.  So, instead, when a
+        // channel is supplied, we want to avoid the AutoJoin.
+        if (channel.HasFlag(BroadcastChannel.Global) && output.All(room => room.Type != RoomType.Global))
             output.Add(AutoJoinGlobal(accountId));
 
         return includeData
