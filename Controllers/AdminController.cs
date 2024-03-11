@@ -244,7 +244,7 @@ public class AdminController : PlatformController
         if (accounts.Any(account => string.IsNullOrWhiteSpace(account) || !account.CanBeMongoId()) || !accounts.Length.Between(1, 50))
             throw new PlatformException("Invalid account ID(s) detected; cannot create private room.");
 
-        return Ok(_rooms.AdminUpdate(roomId, accounts, data, Token));
+        return Ok(_rooms.AdminUpsert(roomId, accounts, data, Token));
     }
     #endregion Rooms
 }

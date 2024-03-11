@@ -48,16 +48,19 @@ public class RoomService : MinqService<Room>
                 .Page(ROOM_LIST_PAGE_SIZE, page, out remaining);
     }
 
-    public Room AdminUpdate(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
+    public Room AdminUpsert(string roomId, string[] roster, RumbleJson data, TokenInfo admin) => mongo
         .ExactId(roomId)
-        .UpdateAndReturnOne(update =>
+        .Upsert(update =>
         {
             update
                 .Set(room => room.Members, roster)
                 .Set(room => room.Editor, admin);
 
-            if (data != null)
-                update.Set(room => room.Data, data);
+            if (data == null)
+                return;
+            update.Set(room => room.Data, data);
+            if (data.ContainsKey("guild"))
+                update.Set(room => room.Channel, BroadcastChannel.Guild);
         })
         ?? throw new PlatformException("Room not found, could not update roster.");
 
