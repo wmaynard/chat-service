@@ -58,7 +58,7 @@ There's room for more channels to be added, but there is no need at this time to
 
 ### Announcements
 
-V1 had "sticky" messages.  These lived in a special room that were piped out to new and existing Rooms as necessary, and were a pain to maintain and update.  These have been dramatically simplified in V2 as a subtype of broadcast by simply omitting the `roomId`:
+V1 had "sticky" messages.  These lived in a special room that were piped out to new and existing Rooms as necessary, and were a pain to maintain and update.  These have been dramatically simplified in V2 as a subtype of broadcast by simply omitting the `roomId` and the `channel`:
 
 ```
 POST /admin/broadcast
