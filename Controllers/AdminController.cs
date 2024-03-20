@@ -146,7 +146,10 @@ public class AdminController : PlatformController
 
         Message[] results = _messages.Search(term);
 
-        return Ok(results);
+        return Ok(new RumbleJson
+        {
+            { "messages", results }
+        });
     }
     #endregion Messages
     
