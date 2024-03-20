@@ -129,9 +129,11 @@ public class AdminController : PlatformController
         int page = Optional<int>("page");
 
         Message[] output = _messages.AdminListMessages(roomId, accountId, messageId, page, out long remaining);
+        Message[] announcements = _messages.AdminListAnnouncements();
         
         return Ok(new RumbleJson
         {
+            { "announcements", announcements },
             { "messages", output },
             { "page", page },
             { "messagesPerPage", 100 },

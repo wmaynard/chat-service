@@ -16,6 +16,10 @@ public class MessageService : MinqService<Message>
     
     public MessageService() : base("messages") { }
 
+    public Message[] AdminListAnnouncements() => mongo
+        .Where(query => query.EqualTo(message => message.Type, MessageType.Announcement))
+        .ToArray();
+
     public Message[] AdminListMessages(string roomId, string accountId, string messageId, int page, out long remaining)
     {
         remaining = 0;
