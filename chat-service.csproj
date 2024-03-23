@@ -6,7 +6,7 @@
 		<AssemblyVersion>1.0.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>10</LangVersion>
-		<Configurations>Debug;Release;Local</Configurations>
+		<Configurations>Debug;Release;Local;UnitTest</Configurations>
 		<Platforms>AnyCPU</Platforms>
 	</PropertyGroup>
 
