@@ -122,7 +122,7 @@ public class RoomService : MinqService<Room>
             .WithTransaction(out Transaction transaction)
             .ExactId(id)
             .And(and => and.NotEqualTo(room => room.Type, RoomType.Global))
-            .Delete() == 0;
+            .Delete() > 0;
 
         if (!output)
         {
