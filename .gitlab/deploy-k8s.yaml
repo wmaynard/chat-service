@@ -7,26 +7,40 @@
     K8S_SECRET_RUMBLE_REGION: "US"
     KUBE_CONTEXT: "platform-services/platform-services-agent:platform-services"
   script:
-  - |-
-    PAYLOAD=$(cat << JSON
-    {
-      "text": "Deploy Started '$CI_PROJECT_NAME' - <a href=\"$CI_PROJECT_URL/-/commit/$CI_COMMIT_SHA\">Git Commit</a> - <a href=\"$CI_PIPELINE_URL\">Pipeline Url</a>",
-      "tags": [
-        "deployment",
-        "$CI_ENVIRONMENT_NAME"
-      ]
-    }
-    JSON
-    )
-  - echo $PAYLOAD
   - kubectl config use-context $KUBE_CONTEXT
   - auto-deploy check_kube_domain
   - auto-deploy download_chart
   - auto-deploy ensure_namespace
   - auto-deploy create_secret
+  - auto-deploy deploy
+  after_script:
+  - |-
+    PAYLOAD=$(cat << JSON
+    {
+      "text": "$CI_PROJECT_NAME - Deployment Status: ${CI_JOB_STATUS} - <a href=\"$CI_PROJECT_URL/-/commit/$CI_COMMIT_SHA\">Git Commit</a> - <a href=\"$CI_PIPELINE_URL\">Pipeline Url</a>",
+      "tags": [
+        "${CI_PROJECT_NAME}",
+        "${CI_ENVIRONMENT_NAME}",
+        "${CI_JOB_STATUS}"
+      ]
+    }
+    JSON
+    )
+  - |-
+    SLACKPAYLOAD=$(cat << JSON
+    {
+      "username": "${CI_PROJECT_NAME}",
+      "channel": "C013XKM281J",
+      "icon_emoji": ":chatsvc:",
+      "unfurl_links": "false",
+      "blocks": [{"type": "section", "text": {"type":"mrkdwn", "text": "Deployment Status: *${CI_JOB_STATUS}* - Env: ${CI_ENVIRONMENT_NAME} - Job: <${CI_JOB_URL}|#${CI_JOB_ID}>"}}]
+    }
+    JSON
+    )
   - >
     curl --location --http1.1 --request POST "https://grafana.rumblegames.com/api/annotations" --header 'Content-Type: application/json' --header "Authorization: Bearer $GRAFANA_TOKEN" --data "${PAYLOAD}" || true
-  - auto-deploy deploy
+  - >
+    curl -X POST -H "Authorization: Bearer $SLACK_LOG_BOT_TOKEN" -H 'Content-type: application/json; charset=utf-8' --data "${SLACKPAYLOAD}" https://slack.com/api/chat.postMessage || true
   rules:
   - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
     when: never
