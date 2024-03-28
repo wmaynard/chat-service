@@ -47,7 +47,7 @@ public class UnreadFilter : PlatformFilter, IActionFilter
                     .ToArray()
                 : messages
                     .Where(message => message.RoomId == room.Id)
-                    .Where(message => room.Members.Contains(message.AccountId)) // Limit messages to only that group's members
+                    .Where(message => room.Members.Contains(message.AccountId) || message.Type == MessageType.Administrator) // Limit messages to only that group's members
                     .Select(message => message.Prune())
                     .ToArray();
         
