@@ -44,10 +44,10 @@ public class AdminController : PlatformController
             message.Expiration = expiration;
             message.Administrator = Token;
 
-            if (message.Channel == BroadcastChannel.None)
-                message.Type = MessageType.Announcement;
-            else if (!string.IsNullOrWhiteSpace(message.RoomId))
+            if (!string.IsNullOrWhiteSpace(message.RoomId))
                 message.Type = MessageType.Administrator;
+            else if (message.Channel == BroadcastChannel.None)
+                message.Type = MessageType.Announcement;
             else
             {
                 message.Type = MessageType.Administrator;
