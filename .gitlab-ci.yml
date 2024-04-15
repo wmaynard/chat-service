@@ -110,7 +110,7 @@ sonarqube-check:
   - dotnet nuget add source --username $BOT_USER --password $BOT_PAT --store-password-in-clear-text --name tower "$CI_SERVER_URL/api/v4/groups/6/-/packages/nuget/index.json"
   - dotnet restore
   - "export PATH=\"$PATH:$HOME/.dotnet/tools\""
-  - "dotnet sonarscanner begin /k:\"rumble-${CI_PROJECT_TITLE}\" /d:sonar.token=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" "
+  - "dotnet sonarscanner begin /o:\"rstudios\" /k:\"rumble-${CI_PROJECT_TITLE}\" /d:sonar.token=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" "
   - "dotnet build"
   - "dotnet sonarscanner end /d:sonar.token=\"$SONAR_TOKEN\""
   allow_failure: true
