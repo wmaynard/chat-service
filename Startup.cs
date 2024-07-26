@@ -1,4 +1,3 @@
-using RCL.Logging;
 using Rumble.Platform.ChatService.Filters;
 using Rumble.Platform.Common.Enums;
 using Rumble.Platform.Common.Utilities;

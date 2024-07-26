@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Rumble.Platform.ChatService.Utilities;
 using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Models;
-using Rumble.Platform.Data;
+using Rumble.Platform.Common.Utilities.JsonTools;
 using StackExchange.Redis;
 
 namespace Rumble.Platform.ChatService.Models;

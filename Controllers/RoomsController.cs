@@ -4,7 +4,7 @@ using Rumble.Platform.ChatService.Services;
 using Rumble.Platform.Common.Attributes;
 using Rumble.Platform.Common.Exceptions;
 using Rumble.Platform.Common.Web;
-using Rumble.Platform.Data;
+using Rumble.Platform.Common.Utilities.JsonTools;
 
 namespace Rumble.Platform.ChatService.Controllers;
 

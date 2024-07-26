@@ -2,6 +2,21 @@
 
  An API for in-game social messaging - now new and improved!
 
+## Acknowledgment
+
+Chat Service was originally created for Rumble Entertainment (which later became R Studios), a mobile gaming company.  This service was responsible for all in-game chatter between players, was leveraged for company announcements such as known issues, and was even leveraged for issuing / accepting PvP challenges.  We didn't have socket support, so instead we had a near-real-time chat instead; in every call to chat-service no matter what it was, the client received all relevant unread messages for rooms they were in, with an exponential backoff if no new messages were seen to reduce traffic.
+
+R Studios unfortunately closed its doors in July 2024.  This project has been released as open source with permission.
+
+As of this writing, there may still be existing references to Rumble's resources, such as Confluence links, but their absence doesn't have any significant impact.  Some documentation will also be missing until it can be recreated here, since with the company closure any feature specs and explainer articles originally written for Confluence / Slack channels were lost.
+
+While Rumble is shutting down, I'm grateful for the opportunities and human connections I had working there.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details.
+
+
 ## Introduction
 
 Chat V1 was a particularly interesting Platform project - because it predated platform-common, it had a lot of wild west-style code and a healthy amount of duct tape binding it together.  It was lightweight, responsive, and never complained about its RPS (requests per second) though, so despite the stress we hit it with, it actually performed quite well.

@@ -11,7 +11,7 @@ using Rumble.Platform.Common.Extensions;
 using Rumble.Platform.Common.Interfaces;
 using Rumble.Platform.Common.Models;
 using Rumble.Platform.Common.Utilities;
-using Rumble.Platform.Data;
+using Rumble.Platform.Common.Utilities.JsonTools;
 using StackExchange.Redis;
 using Condition = Amazon.Auth.AccessControlPolicy.Condition;
 

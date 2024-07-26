@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using RCL.Logging;
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Enums;
 using Rumble.Platform.Common.Exceptions;

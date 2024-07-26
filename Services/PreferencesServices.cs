@@ -1,7 +1,7 @@
 using Rumble.Platform.ChatService.Models;
 using Rumble.Platform.Common.Minq;
 using Rumble.Platform.Common.Utilities;
-using Rumble.Platform.Data;
+using Rumble.Platform.Common.Utilities.JsonTools;
 
 namespace Rumble.Platform.ChatService.Services;
 
